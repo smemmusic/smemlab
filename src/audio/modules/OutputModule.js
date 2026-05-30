@@ -1,9 +1,22 @@
 import { AudioModule } from "./AudioModule.js";
 import { volToGain } from "../constants.js";
+import {
+  MODULE_KIND, PORT_TYPE, PORT_DIR, CV_POLARITY,
+  CONTROL_KIND, CONTROL_CURVE,
+} from "../graph/types.js";
 
 // Final stage: outTap → master gain → soft-clip shaper → destination.
 // Exposes outTap as `input` so upstream modules connect to it.
 export class OutputModule extends AudioModule {
+  static KIND = MODULE_KIND.AUDIO;
+  static PORTS = [
+    { name: "input", dir: PORT_DIR.IN, type: PORT_TYPE.AUDIO },
+  ];
+  static CONTROLS = [
+    { name: "vol", kind: CONTROL_KIND.KNOB, range: [0, 100], curve: CONTROL_CURVE.LINEAR,
+      cvRange: 100, cvPolarity: CV_POLARITY.UNIPOLAR },
+  ];
+
   constructor(ctx, { vol }) {
     super(ctx);
     this.outTap = ctx.createAnalyser();

@@ -1,7 +1,25 @@
 import { AudioModule } from "./AudioModule.js";
 import { CUTOFF_MOD_RANGE_HZ } from "../constants.js";
+import {
+  MODULE_KIND, PORT_TYPE, PORT_DIR, CV_POLARITY,
+  CONTROL_KIND, CONTROL_CURVE,
+} from "../graph/types.js";
 
 export class FilterModule extends AudioModule {
+  static KIND = MODULE_KIND.AUDIO;
+  static PORTS = [
+    { name: "input",  dir: PORT_DIR.IN,  type: PORT_TYPE.AUDIO },
+    { name: "output", dir: PORT_DIR.OUT, type: PORT_TYPE.AUDIO },
+  ];
+  static CONTROLS = [
+    { name: "cutoff",    kind: CONTROL_KIND.KNOB,   range: [20, 20000], curve: CONTROL_CURVE.EXP,
+      cvRange: CUTOFF_MOD_RANGE_HZ, cvPolarity: CV_POLARITY.BIPOLAR },
+    { name: "resonance", kind: CONTROL_KIND.KNOB,   range: [0.1, 24],   curve: CONTROL_CURVE.LINEAR,
+      cvRange: 12, cvPolarity: CV_POLARITY.UNIPOLAR },
+    { name: "mode",      kind: CONTROL_KIND.SWITCH, values: ["lowpass", "highpass", "bandpass", "notch"],
+      cvRange: 1, cvPolarity: CV_POLARITY.UNIPOLAR },
+  ];
+
   constructor(ctx, { cutoff, q, mode = "lowpass" }) {
     super(ctx);
     this.node = ctx.createBiquadFilter();

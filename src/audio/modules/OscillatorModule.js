@@ -1,4 +1,8 @@
 import { AudioModule } from "./AudioModule.js";
+import {
+  MODULE_KIND, PORT_TYPE, PORT_DIR, CV_POLARITY,
+  CONTROL_KIND, CONTROL_CURVE,
+} from "../graph/types.js";
 
 // Source module: drives a tap analyser. The actual source is either an
 // OscillatorNode (for sine/saw/square/triangle) or an AudioBufferSourceNode
@@ -6,6 +10,24 @@ import { AudioModule } from "./AudioModule.js";
 // different APIs, so changing `type` between an oscillator kind and noise
 // requires swapping the source node entirely.
 export class OscillatorModule extends AudioModule {
+  static KIND = MODULE_KIND.AUDIO;
+  static PORTS = [
+    { name: "main",  dir: PORT_DIR.OUT, type: PORT_TYPE.AUDIO },
+    // V/oct pitch tracking (keyboard, sequencer). Drives `detune` so multiple
+    // pitch sources sum naturally. When wired, the `freq` knob (still
+    // mappable via its auto-generated `freq:cv` input) acts as transpose.
+    { name: "pitch", dir: PORT_DIR.IN,  type: PORT_TYPE.PITCH },
+  ];
+  static CONTROLS = [
+    // freq: ±4800 cents (≈±4 octaves) at full bipolar CV. Exp curve so a
+    // linear knob maps musically.
+    { name: "freq", kind: CONTROL_KIND.KNOB,   range: [20, 20000], curve: CONTROL_CURVE.EXP,
+      cvRange: 4800, cvPolarity: CV_POLARITY.BIPOLAR },
+    // type: discrete waveforms; quantised on CV input.
+    { name: "type", kind: CONTROL_KIND.SWITCH, values: ["sine", "sawtooth", "square", "triangle", "noise"],
+      cvRange: 1,   cvPolarity: CV_POLARITY.UNIPOLAR },
+  ];
+
   constructor(ctx, { type, freq }) {
     super(ctx);
     this.type = type;
