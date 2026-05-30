@@ -59,9 +59,11 @@ export class FilterModule extends AudioModule {
   getNode()    { return this.node; }
 
   // ---- typed-port setParam dispatch ----
+  // Accepts both the typed-port CV-input name ("resonance") and the legacy
+  // store slot key ("q"). Same compatibility tactic as AmplifierModule.
   setParam(name, value) {
     if (name === "cutoff")    this.setCutoff(value);
-    else if (name === "resonance") this.setQ(value);
+    else if (name === "resonance" || name === "q") this.setQ(value);
     else if (name === "mode") this.setMode(value);
   }
 

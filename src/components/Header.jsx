@@ -5,6 +5,8 @@ import { getEngine } from "../audio/engineSingleton.js";
 export function Header() {
   const resetSession    = useSynthStore((s) => s.resetSession);
   const setSettingsOpen = useSynthStore((s) => s.setSettingsOpen);
+  const freeMode        = useSynthStore((s) => s.ui.freeMode);
+  const setFreeMode     = useSynthStore((s) => s.setFreeMode);
 
   function restart() {
     try { getEngine().stop(); } catch {}
@@ -22,6 +24,13 @@ export function Header() {
         <span className="a"><i />{LEGEND.audio}</span>
         <span className="c"><i />{LEGEND.control}</span>
         <span className="g"><i />{LEGEND.gate}</span>
+        <button
+          className={"icon-btn" + (freeMode ? " on" : "")}
+          onClick={() => setFreeMode(!freeMode)}
+          title={freeMode ? "Exit free build mode" : "Add modules and patch freely"}
+        >
+          <span aria-hidden="true">⌥</span> Free Build{freeMode ? " ✓" : ""}
+        </button>
         <button className="icon-btn" onClick={() => setSettingsOpen(true)} title={SETTINGS.open}>
           <span aria-hidden="true">⚙</span> {SETTINGS.open}
         </button>

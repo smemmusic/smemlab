@@ -46,8 +46,11 @@ export class AmplifierModule extends AudioModule {
   }
 
   // ---- typed-port setParam dispatch ----
+  // Accepts both the typed-port CV-input name ("level") and the legacy store
+  // slot key ("db"). Free-mode wires use "level"; the chapter-mode store
+  // still writes {db}.
   setParam(name, value) {
-    if (name === "level") this.setDb(value);
+    if (name === "level" || name === "db") this.setDb(value);
   }
 
   dispose() {

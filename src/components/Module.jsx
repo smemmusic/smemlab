@@ -4,26 +4,57 @@ import { MODULE_META, KIND_LABEL } from "../content/moduleMeta.js";
 import { PLACARDS } from "../content/placards.js";
 import { GLYPHS } from "../content/glyphs.jsx";
 import { useSynthStore } from "../store/useSynthStore.js";
+import { ModuleInstanceContext } from "./ModuleInstanceContext.js";
+import { CANONICAL_IDS } from "../store/graphBuilder.js";
 
-const REMOVABLE = new Set(["filter", "amp", "env", "lfo", "keyboard", "gate"]);
+// `slotName` is the legacy block name (oscillator/filter/amp/env/lfo/keyboard/gate/output)
+// used to look up meta + glyphs + placard + chapter removal semantics.
+// `instanceId` is the canonical or free-mode module id. If omitted, the
+// canonical id for `slotName` is used (chapter-mode default).
+const REMOVABLE_SLOTS = new Set(["filter", "amp", "env", "lfo", "keyboard", "gate"]);
+const SLOT_TO_BLOCK = {
+  filter: "filter", amp: "amp", env: "env", lfo: "lfo",
+  keyboard: "keyboard", gate: "gate",
+};
 
-// Hover placard tooltip is rendered through a React portal to <body>. That's
-// the only reliable way to escape the stage's overflow container; with the
-// placard absolute-inside-module it gets clipped at the stage's edges and the
-// chapter rail / minimap end up painting over it.
-export function Module({ id, children }) {
-  const meta = MODULE_META[id];
+// Map a slot name to the corresponding canonical instance id (or null if
+// the slot has no engine module — keyboard/gate are UI-only).
+const SLOT_TO_CANONICAL = {
+  oscillator: CANONICAL_IDS.osc,
+  filter:     CANONICAL_IDS.filter,
+  amp:        CANONICAL_IDS.amp,
+  env:        CANONICAL_IDS.env,
+  lfo:        CANONICAL_IDS.lfo,
+  output:     CANONICAL_IDS.output,
+  keyboard:   null,
+  gate:       null,
+};
+
+export function Module({ id, instanceId, children }) {
+  const slotName = id;
+  const meta = MODULE_META[slotName];
   const removeBlock = useSynthStore((s) => s.removeBlock);
+  const removeModuleInstance = useSynthStore((s) => s.removeModuleInstance);
   const moduleRef = useRef(null);
   const [tip, setTip] = useState(null);
+
+  // Resolve the actual instance id this module renders. Free-mode panels pass
+  // an explicit id (uuid); chapter-mode panels omit it and fall through to the
+  // canonical slot id.
+  const resolvedInstanceId = instanceId || SLOT_TO_CANONICAL[slotName] || null;
+  const isFreeInstance = resolvedInstanceId && !resolvedInstanceId.startsWith("_");
+
+  function handleRemove() {
+    if (isFreeInstance) {
+      removeModuleInstance(resolvedInstanceId);
+    } else if (REMOVABLE_SLOTS.has(slotName)) {
+      removeBlock(SLOT_TO_BLOCK[slotName]);
+    }
+  }
 
   function show() {
     const r = moduleRef.current?.getBoundingClientRect();
     if (!r) return;
-    // Audio modules show their placard below the module; control modules
-    // (envelope, LFO) show theirs above. Keeps the tooltip on the "outside"
-    // of the signal flow, so it never overlaps the module above/below in
-    // a control column.
     const above = meta.kind === "control";
     setTip({
       left: r.left,
@@ -33,12 +64,17 @@ export function Module({ id, children }) {
     });
   }
 
+  // The free-mode close button is always available; chapter-mode keeps the
+  // existing rule (only certain slots are removable via the chapter flow).
+  const showRemove = isFreeInstance || REMOVABLE_SLOTS.has(slotName);
+
   return (
-    <>
+    <ModuleInstanceContext.Provider value={{ instanceId: resolvedInstanceId, type: slotName }}>
       <div
         ref={moduleRef}
         className={"module " + (meta.kind === "control" ? "control-mod" : "audio-mod")}
-        data-id={id}
+        data-id={slotName}
+        data-instance-id={resolvedInstanceId}
         onMouseEnter={show}
         onMouseLeave={() => setTip(null)}
       >
@@ -51,9 +87,9 @@ export function Module({ id, children }) {
             <div className={"m-kind " + meta.kind}>{KIND_LABEL[meta.kind]}</div>
             <div className="m-title">{meta.title}</div>
           </div>
-          {GLYPHS[id]}
-          {REMOVABLE.has(id) && (
-            <button className="m-remove" title="Patch out" onClick={() => removeBlock(id)}>✕</button>
+          {GLYPHS[slotName]}
+          {showRemove && (
+            <button className="m-remove" title="Patch out" onClick={handleRemove}>✕</button>
           )}
         </div>
         {children}
@@ -62,10 +98,10 @@ export function Module({ id, children }) {
         <div
           className={"placard" + (tip.above ? " above" : "")}
           style={{ left: `${tip.left}px`, top: `${tip.top}px`, width: `${tip.width}px` }}
-          dangerouslySetInnerHTML={{ __html: PLACARDS[id] }}
+          dangerouslySetInnerHTML={{ __html: PLACARDS[slotName] }}
         />,
         document.body
       )}
-    </>
+    </ModuleInstanceContext.Provider>
   );
 }

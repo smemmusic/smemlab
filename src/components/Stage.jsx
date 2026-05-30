@@ -1,6 +1,9 @@
 import { useEffect, useRef } from "react";
 import { Rack } from "./Rack.jsx";
 import { GateWire } from "./GateWire.jsx";
+import { FreeRack } from "./FreeRack.jsx";
+import { Palette } from "./Palette.jsx";
+import { useSynthStore } from "../store/useSynthStore.js";
 
 // Reserved at the bottom of the stage for the gate wire's drop segment.
 // Always reserved (whether the wire is shown or not) to avoid layout shift
@@ -14,6 +17,7 @@ const WIRE_RESERVE_PX = 42;
 // to the top-left so it lays out predictably regardless of scale.
 export function Stage() {
   const stageRef = useRef(null);
+  const freeMode = useSynthStore((s) => s.ui.freeMode);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -51,9 +55,11 @@ export function Stage() {
   }, []);
 
   return (
-    <div ref={stageRef} className="stage">
+    <div ref={stageRef} className={"stage" + (freeMode ? " free-mode" : "")}>
       <Rack />
+      <FreeRack />
       <GateWire containerRef={stageRef} />
+      {freeMode && <Palette />}
     </div>
   );
 }

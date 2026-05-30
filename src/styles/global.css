@@ -610,3 +610,92 @@ header {
   .narrator h2 { font-size: 22px; }
   .landing h1 { font-size: 26px; }
 }
+
+/* ---- Free Build mode (palette + free rack) ---- */
+.legend .icon-btn.on {
+  color: var(--ink);
+  border-color: var(--audio);
+  box-shadow: 0 0 0 1px var(--audio) inset, 0 0 10px rgba(255, 180, 84, 0.18);
+}
+.stage.free-mode { padding-bottom: 28px; }
+
+.free-rack {
+  margin: 26px 6px 4px;
+  padding: 12px 14px 16px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  position: relative;
+  min-width: max-content;
+}
+.free-rack-label {
+  position: absolute;
+  top: -9px;
+  left: 14px;
+  background: var(--bg);
+  padding: 0 8px;
+  font-size: 10px;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: var(--muted-dim);
+}
+.free-rack-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.palette {
+  position: absolute;
+  right: 18px;
+  top: 18px;
+  width: 168px;
+  padding: 12px;
+  background: rgba(20, 26, 30, 0.94);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  z-index: 5;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+.palette-head {
+  font-size: 10px;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: var(--muted-dim);
+  margin-bottom: 10px;
+}
+.palette-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.palette-item {
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: .04em;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 7px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  transition: .14s var(--ease);
+}
+.palette-item:hover { border-color: var(--muted); background: rgba(255, 255, 255, 0.03); }
+.palette-item .plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1;
+}
+.palette-item.audio   .plus { color: var(--audio);   background: rgba(255, 180, 84, 0.12); }
+.palette-item.control .plus { color: var(--control); background: rgba(108, 211, 230, 0.12); }
