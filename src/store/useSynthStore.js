@@ -1,14 +1,74 @@
 import { create } from "zustand";
 import { persist, subscribeWithSelector } from "zustand/middleware";
 import { BUILTINS, makePreset, packPresetsJSON, parsePresetsJSON } from "./presets.js";
+import { buildCanonicalGraph, buildCanonicalConnections, CANONICAL_IDS } from "./graphBuilder.js";
+import { newId } from "../audio/graph/types.js";
 
 const INITIAL_CONFIG = BUILTINS[0].config;
+const INITIAL_GRAPH  = buildCanonicalGraph({ ...INITIAL_CONFIG, vol: 42 });
+
+// ---- Helpers ----
+
+// Returns a new modules array with the named module's params patched.
+// No-op (returns the same reference) if the module isn't in the array, so
+// legacy setters that fire before the canonical module exists (rare, but
+// possible during early init) don't blow up.
+function patchModuleParams(modules, id, partial) {
+  let changed = false;
+  const next = modules.map((m) => {
+    if (m.id !== id) return m;
+    changed = true;
+    return { ...m, params: { ...m.params, ...partial } };
+  });
+  return changed ? next : modules;
+}
+
+// Returns a new modules array with the named module replaced (or appended if
+// not present).
+function upsertModule(modules, mod) {
+  const i = modules.findIndex((m) => m.id === mod.id);
+  if (i === -1) return [...modules, mod];
+  const next = modules.slice();
+  next[i] = mod;
+  return next;
+}
+
+function removeModuleById(modules, id) {
+  return modules.filter((m) => m.id !== id);
+}
+
+function removeConnectionsTouching(connections, id) {
+  return connections.filter((c) => c.fromId !== id && c.toId !== id);
+}
+
+// Recompute the canonical chain after a block flip. Free-mode user-added
+// connections (those whose id doesn't start with "_c_") are preserved.
+function rebuildCanonicalConnections(prevConnections, blocks) {
+  const userConns = prevConnections.filter((c) => !c.id.startsWith("_c_"));
+  const canonical = buildCanonicalConnections(blocks);
+  return [...canonical, ...userConns];
+}
+
+// ---- Store ----
 
 export const useSynthStore = create(
   subscribeWithSelector(
     persist(
       (set, get) => ({
-      // Persisted config
+      // ===== Canonical typed-port graph (v9) =====
+      modules:     INITIAL_GRAPH.modules,
+      connections: INITIAL_GRAPH.connections,
+      // Free-mode UI state.
+      ui: {
+        freeMode: false,
+        armedSource: null,            // { moduleId, portName } when a user has clicked an output port
+        selectedConnectionId: null,
+      },
+
+      // ===== Legacy mirror (kept so existing panels can read s.osc.type etc.) =====
+      // Every legacy setter dual-writes: the legacy slot AND the matching
+      // module's params in the modules array. Bridge subscribes to `modules`
+      // only — legacy fields are read-only for the engine.
       blocks: { ...INITIAL_CONFIG.blocks },
       osc:    { ...INITIAL_CONFIG.osc },
       flt:    { ...INITIAL_CONFIG.flt },
@@ -17,113 +77,208 @@ export const useSynthStore = create(
       lfo:    { ...INITIAL_CONFIG.lfo },
       keyboard: { ...INITIAL_CONFIG.keyboard },
       vol:    42,
-      scope:  { edge: "rising", threshold: 0 },    // trigger edge and threshold (-1..+1, 0 = zero-crossing)
-      chapter: 0,                                  // current narrator chapter (persisted)
-      started: false,                              // landing dismissed (NOT persisted — landing shows on every refresh)
-      settingsOpen: false,                         // settings modal visible (NOT persisted — transient UI state)
+
+      // ===== Other persisted state =====
+      scope:  { edge: "rising", threshold: 0 },
+      chapter: 0,
+      started: false,
+      settingsOpen: false,
       presets: { activeId: "init", user: [] },
 
-      // Transient
+      // ===== Transient =====
       playing:  false,
-      // Per-source gate state — which sources are currently holding the gate
-      // open. `held` is the OR of these (true if any source is active) and is
-      // what drives the env's ADSR animation. Per-source flags drive the
-      // matching gate-wire's flow animation.
       gateSources: { keyboard: false, gate: false },
       held:     false,
       envPhase: "idle",
       envStart: 0,
 
-      // Param actions
-      setOscType: (type) => set((s) => ({ osc: { ...s.osc, type } })),
-      setOscFreq: (freq) => set((s) => ({ osc: { ...s.osc, freq } })),
-      setCutoff:  (cutoff) => set((s) => ({ flt: { ...s.flt, cutoff } })),
-      setQ:       (q) => set((s) => ({ flt: { ...s.flt, q } })),
-      setMode:    (mode) => set((s) => ({ flt: { ...s.flt, mode } })),
-      setAmpDb:   (db) => set((s) => ({ amp: { ...s.amp, db } })),
-      setEnv:     (partial) => set((s) => ({ env: { ...s.env, ...partial } })),
-      setLfo:     (partial) => set((s) => ({ lfo: { ...s.lfo, ...partial } })),
+      // ---- New typed-graph actions ----
+      // Adds an arbitrary module with the given type and params. Returns the
+      // new id. Free-mode UI calls this with no id; presets/chapters can pass
+      // a stable id (e.g. CANONICAL_IDS.lfo) to use the reserved slot.
+      addModuleInstance: (type, params = {}, fixedId = null) => {
+        const id = fixedId || newId();
+        const mod = { id, type, params: { ...params } };
+        set((s) => ({ modules: upsertModule(s.modules, mod) }));
+        return id;
+      },
+      removeModuleInstance: (id) => set((s) => ({
+        modules: removeModuleById(s.modules, id),
+        connections: removeConnectionsTouching(s.connections, id),
+        ui: { ...s.ui, selectedConnectionId: null, armedSource: null },
+      })),
+      // Set a single param on an instance. Free-mode panels (step 5) use this;
+      // legacy setters below also call it under the hood.
+      setModuleParam: (id, key, value) => set((s) => ({
+        modules: patchModuleParams(s.modules, id, { [key]: value }),
+      })),
+      // Connect two ports. Returns the new connection id, or null if the
+      // ports aren't found (the bridge will surface compatibility errors).
+      connectModules: (fromId, fromPort, toId, toPort, fixedId = null) => {
+        const id = fixedId || newId();
+        set((s) => ({
+          connections: [...s.connections, { id, fromId, fromPort, toId, toPort }],
+        }));
+        return id;
+      },
+      disconnectModules: (id) => set((s) => ({
+        connections: s.connections.filter((c) => c.id !== id),
+        ui: { ...s.ui, selectedConnectionId: s.ui.selectedConnectionId === id ? null : s.ui.selectedConnectionId },
+      })),
+
+      // ---- Free-mode UI actions ----
+      setFreeMode:        (freeMode) => set((s) => ({ ui: { ...s.ui, freeMode } })),
+      armSource:          (moduleId, portName) => set((s) => ({ ui: { ...s.ui, armedSource: { moduleId, portName } } })),
+      clearArmedSource:   () => set((s) => ({ ui: { ...s.ui, armedSource: null } })),
+      selectConnection:   (id) => set((s) => ({ ui: { ...s.ui, selectedConnectionId: id } })),
+      clearSelection:     () => set((s) => ({ ui: { ...s.ui, selectedConnectionId: null } })),
+
+      // ---- Legacy param actions (dual-write: legacy slot + canonical module) ----
+      setOscType: (type) => set((s) => ({
+        osc:     { ...s.osc, type },
+        modules: patchModuleParams(s.modules, CANONICAL_IDS.osc, { type }),
+      })),
+      setOscFreq: (freq) => set((s) => ({
+        osc:     { ...s.osc, freq },
+        modules: patchModuleParams(s.modules, CANONICAL_IDS.osc, { freq }),
+      })),
+      setCutoff:  (cutoff) => set((s) => ({
+        flt:     { ...s.flt, cutoff },
+        modules: patchModuleParams(s.modules, CANONICAL_IDS.filter, { cutoff }),
+      })),
+      setQ:       (q) => set((s) => ({
+        flt:     { ...s.flt, q },
+        modules: patchModuleParams(s.modules, CANONICAL_IDS.filter, { q }),
+      })),
+      setMode:    (mode) => set((s) => ({
+        flt:     { ...s.flt, mode },
+        modules: patchModuleParams(s.modules, CANONICAL_IDS.filter, { mode }),
+      })),
+      setAmpDb:   (db) => set((s) => ({
+        amp:     { ...s.amp, db },
+        modules: patchModuleParams(s.modules, CANONICAL_IDS.amp, { db }),
+      })),
+      setEnv:     (partial) => set((s) => ({
+        env:     { ...s.env, ...partial },
+        modules: patchModuleParams(s.modules, CANONICAL_IDS.env, partial),
+      })),
+      setLfo:     (partial) => set((s) => ({
+        lfo:     { ...s.lfo, ...partial },
+        modules: patchModuleParams(s.modules, CANONICAL_IDS.lfo, partial),
+      })),
       setKeyboardOctave: (octave) => set((s) => ({ keyboard: { ...s.keyboard, octave } })),
-      setVol:     (vol) => set({ vol }),
+      setVol:     (vol) => set((s) => ({
+        vol,
+        modules: patchModuleParams(s.modules, CANONICAL_IDS.output, { vol }),
+      })),
       setScopeEdge:      (edge) => set((s) => ({ scope: { ...s.scope, edge } })),
       setScopeThreshold: (threshold) => set((s) => ({ scope: { ...s.scope, threshold } })),
       setSettingsOpen:   (settingsOpen) => set({ settingsOpen }),
 
-      // Topology
+      // ---- Topology (legacy slot toggles) ----
+      // The chapter narrator and AddSlot call these. They flip the legacy
+      // `blocks` flag AND mutate the canonical modules + connections arrays
+      // to match. Connection ids are reserved so the bridge can diff without
+      // rebuilding everything on every change.
       addBlock: (id) => set((s) => {
         const blocks = { ...s.blocks, [id]: true };
-        // Cascade: adding env also brings in its Gate trigger module
+        // Cascade: env brings in its Gate trigger module (UI-only).
         if (id === "env") blocks.gate = true;
-        return { blocks };
+
+        let modules = s.modules;
+        // Add canonical module for engine-bearing blocks.
+        if (id === "filter" && !modules.find((m) => m.id === CANONICAL_IDS.filter)) {
+          modules = [...modules, { id: CANONICAL_IDS.filter, type: "filter", params: { ...s.flt } }];
+        }
+        if (id === "amp" && !modules.find((m) => m.id === CANONICAL_IDS.amp)) {
+          modules = [...modules, { id: CANONICAL_IDS.amp, type: "amp", params: { db: s.amp.db, active: true } }];
+        }
+        if (id === "env" && !modules.find((m) => m.id === CANONICAL_IDS.env)) {
+          modules = [...modules, { id: CANONICAL_IDS.env, type: "env", params: { ...s.env } }];
+        }
+        if (id === "lfo" && !modules.find((m) => m.id === CANONICAL_IDS.lfo)) {
+          modules = [...modules, { id: CANONICAL_IDS.lfo, type: "lfo", params: { ...s.lfo } }];
+        }
+
+        const connections = rebuildCanonicalConnections(s.connections, blocks);
+        return { blocks, modules, connections };
       }),
       removeBlock: (id) => set((s) => {
         const blocks = { ...s.blocks, [id]: false };
-        // Cascade: removing amp also removes env (env attaches to amp),
-        // and the Gate trigger that was patched to env.
+        // Cascades: amp also removes env+gate; env removes gate; filter removes lfo.
         if (id === "amp")   { blocks.env = false; blocks.gate = false; }
-        // Removing env removes its Gate trigger too.
         if (id === "env")   blocks.gate = false;
-        // Removing filter removes the LFO (lfo modulates filter cutoff).
         if (id === "filter") blocks.lfo = false;
-        // Held state clears whenever its source disappears. Also drop any
-        // per-source gate flag that no longer has a module behind it.
+
+        let modules = s.modules;
+        // Remove canonical modules whose flag is now false.
+        for (const [slot, canonical] of [
+          ["filter", CANONICAL_IDS.filter], ["amp", CANONICAL_IDS.amp],
+          ["env",    CANONICAL_IDS.env],    ["lfo", CANONICAL_IDS.lfo],
+        ]) {
+          if (!blocks[slot]) modules = removeModuleById(modules, canonical);
+        }
+        const connections = rebuildCanonicalConnections(s.connections, blocks);
+
         const droppedSource = (id === "env" || id === "amp" || id === "gate" || id === "keyboard");
         const gateSources = droppedSource
           ? { keyboard: false, gate: false }
           : s.gateSources;
         const held = droppedSource ? false : s.held;
-        return { blocks, gateSources, held };
+        return { blocks, modules, connections, gateSources, held };
       }),
 
-      // Transport / transient
+      // ---- Transport / transient ----
       setPlaying:   (playing) => set({ playing }),
-      // Open / close the gate from a specific source. `held` is derived as
-      // the OR of every source's flag — any one of them being open keeps the
-      // env's ADSR animation alive. The per-source flag is what each gate
-      // wire reads to decide whether to light up.
       setGateHeld: (source, active) => set((s) => {
         const gateSources = { ...s.gateSources, [source]: !!active };
         return { gateSources, held: Object.values(gateSources).some(Boolean) };
       }),
-      // Clear every gate source at once — used when audio stops or the
-      // session resets so no source can stay "held" without a paired release.
       clearGate: () => set({ gateSources: { keyboard: false, gate: false }, held: false }),
       setEnvPhase:  (envPhase) => set({ envPhase }),
       markEnvStart: () => set({ envStart: performance.now() }),
 
-      // Chapters
+      // ---- Chapters ----
       goChapter: (i) => set({ chapter: i }),
       nextChapter: () => set((s) => ({ chapter: s.chapter + 1 })),
 
-      // Landing
+      // ---- Landing ----
       setStarted: (started) => set({ started }),
 
-      // Full session reset — wipes synth config + chapter, returns to landing.
-      // User presets are intentionally preserved.
-      resetSession: () => set({
-        blocks:   { ...INITIAL_CONFIG.blocks },
-        osc:      { ...INITIAL_CONFIG.osc },
-        flt:      { ...INITIAL_CONFIG.flt },
-        amp:      { ...INITIAL_CONFIG.amp },
-        env:      { ...INITIAL_CONFIG.env },
-        lfo:      { ...INITIAL_CONFIG.lfo },
-        keyboard: { ...INITIAL_CONFIG.keyboard },
-        chapter:  0,
-        started:  false,
-        playing:  false,
-        gateSources: { keyboard: false, gate: false },
-        held:     false,
-        envPhase: "idle",
-        envStart: 0
-      }),
+      // ---- Session reset: re-derives a fresh canonical graph too ----
+      resetSession: () => {
+        const cfg = { ...INITIAL_CONFIG, vol: 42 };
+        const { modules, connections } = buildCanonicalGraph(cfg);
+        set({
+          blocks:   { ...INITIAL_CONFIG.blocks },
+          osc:      { ...INITIAL_CONFIG.osc },
+          flt:      { ...INITIAL_CONFIG.flt },
+          amp:      { ...INITIAL_CONFIG.amp },
+          env:      { ...INITIAL_CONFIG.env },
+          lfo:      { ...INITIAL_CONFIG.lfo },
+          keyboard: { ...INITIAL_CONFIG.keyboard },
+          modules, connections,
+          ui: { freeMode: false, armedSource: null, selectedConnectionId: null },
+          chapter:  0,
+          started:  false,
+          playing:  false,
+          gateSources: { keyboard: false, gate: false },
+          held:     false,
+          envPhase: "idle",
+          envStart: 0,
+        });
+      },
 
-      // Presets
+      // ---- Presets ----
       loadPreset: (id) => {
         const builtIn = BUILTINS.find((p) => p.id === id);
         const user    = get().presets.user.find((p) => p.id === id);
         const preset  = builtIn || user;
         if (!preset) return;
         const c = preset.config;
+        // Rebuild the canonical graph from the preset's legacy-shape config.
+        const cfg = { ...c, vol: get().vol };
+        const { modules, connections } = buildCanonicalGraph(cfg);
         set((s) => ({
           blocks: { ...c.blocks },
           osc:    { ...c.osc },
@@ -132,8 +287,9 @@ export const useSynthStore = create(
           env:    { ...c.env },
           lfo:    { ...c.lfo },
           keyboard: { ...(c.keyboard || { octave: 4 }) },
+          modules, connections,
           presets: { ...s.presets, activeId: id },
-          held: false
+          held: false,
         }));
       },
       savePreset: (name) => set((s) => {
@@ -157,24 +313,24 @@ export const useSynthStore = create(
     }),
     {
       name: "smem-v1",
-      version: 8,
+      version: 9,
       partialize: (s) => ({
+        // Canonical graph
+        modules: s.modules,
+        connections: s.connections,
+        ui: { ...s.ui, armedSource: null, selectedConnectionId: null },  // don't persist transient UI
+        // Legacy mirror (kept for backwards compatibility + simpler reads)
         blocks: s.blocks,
-        osc: s.osc,
-        flt: s.flt,
-        amp: s.amp,
-        env: s.env,
-        lfo: s.lfo,
+        osc: s.osc, flt: s.flt, amp: s.amp, env: s.env, lfo: s.lfo,
         keyboard: s.keyboard,
         vol: s.vol,
         scope: s.scope,
         chapter: s.chapter,
-        // `started` and `settingsOpen` deliberately omitted — transient UI state.
-        presets: s.presets
+        presets: s.presets,
       }),
-      // Backfill defaults for older persisted snapshots so we don't crash on undefined keys.
       migrate: (persisted, version) => {
         if (!persisted) return persisted;
+        // ---- Inherit all the legacy v0..v8 migrations ----
         if (version < 2 && persisted.flt && persisted.flt.mode == null) {
           persisted.flt.mode = "lowpass";
         }
@@ -189,7 +345,6 @@ export const useSynthStore = create(
           if (persisted.lfo == null) persisted.lfo = { rate: 5, depth: 0.4, shape: "sine" };
         }
         if (version < 6 && persisted.lfo && persisted.lfo.depth > 1) {
-          // Old depth was in Hz (0..2400); new is a fraction (0..1).
           persisted.lfo.depth = persisted.lfo.depth / 2400;
         }
         if (version < 7) {
@@ -197,22 +352,39 @@ export const useSynthStore = create(
           if (persisted.keyboard == null) persisted.keyboard = { octave: 4 };
         }
         if (version < 8) {
-          // The Gate trigger is its own module now. Default it on whenever
-          // env was already on, so existing snapshots keep their trigger.
           if (persisted.blocks && persisted.blocks.gate == null) {
             persisted.blocks.gate = !!persisted.blocks?.env;
           }
+        }
+        // ---- v9: derive canonical modules + connections from legacy config ----
+        if (version < 9) {
+          const cfg = {
+            blocks: persisted.blocks || INITIAL_CONFIG.blocks,
+            osc:    persisted.osc    || INITIAL_CONFIG.osc,
+            flt:    persisted.flt    || INITIAL_CONFIG.flt,
+            amp:    persisted.amp    || INITIAL_CONFIG.amp,
+            env:    persisted.env    || INITIAL_CONFIG.env,
+            lfo:    persisted.lfo    || INITIAL_CONFIG.lfo,
+            vol:    persisted.vol    ?? 42,
+          };
+          const { modules, connections } = buildCanonicalGraph(cfg);
+          persisted.modules = modules;
+          persisted.connections = connections;
+          persisted.ui = { freeMode: false, armedSource: null, selectedConnectionId: null };
         }
         return persisted;
       },
       merge: (persisted, current) => ({
         ...current,
         ...persisted,
-        blocks:   { ...current.blocks,   ...(persisted?.blocks   || {}) },
-        flt:      { ...current.flt,      ...(persisted?.flt      || {}) },
-        lfo:      { ...current.lfo,      ...(persisted?.lfo      || {}) },
-        scope:    { ...current.scope,    ...(persisted?.scope    || {}) },
-        keyboard: { ...current.keyboard, ...(persisted?.keyboard || {}) }
+        blocks:      { ...current.blocks,      ...(persisted?.blocks      || {}) },
+        flt:         { ...current.flt,         ...(persisted?.flt         || {}) },
+        lfo:         { ...current.lfo,         ...(persisted?.lfo         || {}) },
+        scope:       { ...current.scope,       ...(persisted?.scope       || {}) },
+        keyboard:    { ...current.keyboard,    ...(persisted?.keyboard    || {}) },
+        ui:          { ...current.ui,          ...(persisted?.ui          || {}) },
+        modules:     persisted?.modules     || current.modules,
+        connections: persisted?.connections || current.connections,
       })
     }
     )

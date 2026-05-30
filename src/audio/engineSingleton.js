@@ -1,29 +1,25 @@
-import { AudioEngine } from "./AudioEngine.js";
-import { GraphEngine } from "./graph/GraphEngine.js";
-import { EngineAdapter } from "./graph/EngineAdapter.js";
+import { GraphEngineFacade } from "./graph/GraphEngineFacade.js";
 
-// Step 3: getEngine() now returns the EngineAdapter, which exposes the legacy
-// AudioEngine API on top of the typed-port GraphEngine. Set
-// `window.__legacyEngine = true` BEFORE the module first loads to fall back
-// to the hardcoded AudioEngine if the adapter misbehaves.
+// Step 4: getEngine() returns the GraphEngineFacade — a thin wrapper around
+// the typed-port GraphEngine that exposes the synchronous methods panels and
+// Transport still call (start/stop, noteOn/noteOff, setOscFreqLive, the
+// getAnalyser/getVcaValue introspection hooks).
+//
+// Module + connection lifecycle is owned by the bridge (useAudioEngine.js),
+// which subscribes to the store's `modules` and `connections` arrays and
+// diffs them against the live GraphEngine state.
 let _engine = null;
-let _graphEngine = null;
 
 export function getEngine() {
-  if (_engine === null) {
-    const useLegacy = typeof window !== "undefined" && window.__legacyEngine === true;
-    _engine = useLegacy ? new AudioEngine() : new EngineAdapter();
-  }
+  if (_engine === null) _engine = new GraphEngineFacade();
   return _engine;
 }
 
-// Direct access to the underlying GraphEngine. The adapter holds one
-// internally; calling this returns the standalone instance used by the
-// smoke test helper below. Once free-mode UI lands (step 5) this is what
-// the Palette/Wire components will drive.
+// Direct access to the same GraphEngine the facade wraps. Free-mode UI
+// (step 5) drives this through the store, but the smoke-test helper below
+// calls it directly to verify the engine in isolation.
 export function getGraphEngine() {
-  if (_graphEngine === null) _graphEngine = new GraphEngine();
-  return _graphEngine;
+  return getEngine().getGraph();
 }
 
 // Smoke test for the 2× LFO patch. Run from the dev console:

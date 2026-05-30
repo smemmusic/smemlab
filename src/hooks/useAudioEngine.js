@@ -2,44 +2,136 @@ import { useEffect } from "react";
 import { useSynthStore } from "../store/useSynthStore.js";
 import { getEngine } from "../audio/engineSingleton.js";
 
-function shallow(a, b) {
-  if (Object.is(a, b)) return true;
-  if (typeof a !== "object" || typeof b !== "object" || !a || !b) return false;
-  const ak = Object.keys(a), bk = Object.keys(b);
+// Bridge: store ↔ GraphEngine. Subscribes to the canonical `modules` and
+// `connections` arrays and diffs them against the live engine state, calling
+// addModule / removeModule / setParam / addConnection / removeConnection.
+//
+// Module/connection creation happens on demand — the engine only adds a
+// module once its AudioContext has been created via getEngine().start().
+// Until then we accumulate the desired state and replay it on first start.
+
+let _wired = false;
+
+// Shallow diff between two arrays of {id, ...}. Returns added, removed,
+// changed (where changed means the same id is present in both but the
+// content differs).
+function diffById(prev, cur, equalsFn = (a, b) => a === b) {
+  const prevMap = new Map(prev.map((x) => [x.id, x]));
+  const curMap  = new Map(cur.map((x) => [x.id, x]));
+  const added   = [];
+  const removed = [];
+  const changed = [];
+  for (const [id, x] of curMap) {
+    if (!prevMap.has(id)) added.push(x);
+    else if (!equalsFn(prevMap.get(id), x)) changed.push({ prev: prevMap.get(id), cur: x });
+  }
+  for (const [id, x] of prevMap) if (!curMap.has(id)) removed.push(x);
+  return { added, removed, changed };
+}
+
+function modulesEqual(a, b) {
+  if (a.type !== b.type) return false;
+  return paramsEqual(a.params, b.params);
+}
+function paramsEqual(a, b) {
+  const ak = Object.keys(a || {}), bk = Object.keys(b || {});
   if (ak.length !== bk.length) return false;
   for (const k of ak) if (!Object.is(a[k], b[k])) return false;
   return true;
 }
+function connectionEqual(a, b) {
+  return a.fromId === b.fromId && a.fromPort === b.fromPort && a.toId === b.toId && a.toPort === b.toPort;
+}
 
-// Guard module-level so StrictMode double-mounting doesn't create duplicate subscriptions.
-let _wired = false;
-
-// Mount once near the root to bridge Zustand state → engine method calls.
-// Returns the engine for convenience (also accessible via getEngine()).
 export function useAudioEngineBridge() {
   const engine = getEngine();
 
   useEffect(() => {
     if (_wired) return;
     _wired = true;
-    const sub = useSynthStore.subscribe;
-    const unsubs = [
-      sub((s) => s.osc.type,   (v) => engine.setOscType(v)),
-      sub((s) => s.osc.freq,   (v) => engine.setOscFreq(v)),
-      sub((s) => s.flt.cutoff, (v) => engine.setCutoff(v)),
-      sub((s) => s.flt.q,      (v) => engine.setQ(v)),
-      sub((s) => s.flt.mode,   (v) => engine.setFilterMode(v)),
-      sub((s) => s.amp.db,     (v) => engine.setAmpDb(v)),
-      sub((s) => s.env,        (v) => engine.setEnv(v), { equalityFn: shallow }),
-      sub((s) => s.lfo,        (v) => engine.setLfo(v), { equalityFn: shallow }),
-      sub((s) => s.vol,        (v) => engine.setVol(v)),
-      sub((s) => s.blocks,     (cur, prev) => {
-        // Order matters: tear down dependents (env, gate, lfo, keyboard) before their hosts.
-        for (const k of ["keyboard", "gate", "env", "lfo", "amp", "filter"]) {
-          if (cur[k] !== prev[k]) (cur[k] ? engine.addBlock(k) : engine.removeBlock(k));
+
+    const sub  = useSynthStore.subscribe;
+    const get  = useSynthStore.getState;
+    const graph = engine.getGraph();
+
+    // Bridge memory: the last-pushed params per module id. Only deltas hit the
+    // engine, so live values written outside the store (keyboard pitch via
+    // facade.setOscFreqLive) survive unrelated store updates.
+    const lastParams = new Map();   // id → { ...params }
+
+    function reconcile() {
+      if (!graph.ctx) return;
+      const { modules, connections } = get();
+
+      const wantIds = new Set(modules.map((m) => m.id));
+      // Remove modules no longer wanted (also drops touching connections).
+      for (const m of graph.listModules()) {
+        if (!wantIds.has(m.id)) {
+          graph.removeModule(m.id);
+          lastParams.delete(m.id);
         }
-      }, { equalityFn: shallow })
+      }
+      // Add new modules; their initial params come in via the constructor.
+      for (const m of modules) {
+        if (!graph.getModule(m.id)) {
+          try {
+            graph.addModule({ id: m.id, type: m.type, params: m.params });
+            lastParams.set(m.id, { ...(m.params || {}) });
+          } catch (e) { console.warn("[bridge] addModule failed:", m.id, m.type, e); }
+        }
+      }
+      // Push only the params that actually changed since the last reconcile.
+      for (const m of modules) {
+        const live = graph.getModule(m.id);
+        if (!live) continue;
+        const prev = lastParams.get(m.id) || {};
+        const cur  = m.params || {};
+        for (const [key, val] of Object.entries(cur)) {
+          if (!Object.is(prev[key], val)) {
+            try { live.setParam?.(key, val); } catch {}
+          }
+        }
+        lastParams.set(m.id, { ...cur });
+      }
+
+      // Connections: diff and apply.
+      const liveConnections = graph.listConnections();
+      const { added, removed, changed } = diffById(liveConnections, connections, connectionEqual);
+      for (const c of removed) graph.removeConnection(c.id);
+      for (const c of changed) {
+        graph.removeConnection(c.cur.id);
+        try { graph.addConnection(c.cur); }
+        catch (e) { console.warn("[bridge] addConnection (changed) failed:", c.cur, e); }
+      }
+      for (const c of added) {
+        try { graph.addConnection(c); }
+        catch (e) { console.warn("[bridge] addConnection failed:", c, e); }
+      }
+    }
+
+    reconcile();
+
+    // Subscribe to module / connection / playing state changes.
+    const unsubs = [
+      sub((s) => s.modules,     reconcile, { equalityFn: (a, b) => {
+        if (a === b) return true;
+        if (a.length !== b.length) return false;
+        for (let i = 0; i < a.length; i++) if (!modulesEqual(a[i], b[i])) return false;
+        return true;
+      } }),
+      sub((s) => s.connections, reconcile, { equalityFn: (a, b) => {
+        if (a === b) return true;
+        if (a.length !== b.length) return false;
+        for (let i = 0; i < a.length; i++) {
+          if (a[i].id !== b[i].id || !connectionEqual(a[i], b[i])) return false;
+        }
+        return true;
+      } }),
+      // When the engine flips from stopped → running, reconcile pushes
+      // everything to the freshly-created context.
+      sub((s) => s.playing, (playing) => { if (playing) reconcile(); }),
     ];
+
     return () => {
       _wired = false;
       unsubs.forEach((u) => u());
