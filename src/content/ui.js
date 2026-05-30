@@ -1,7 +1,7 @@
 // All non-narrator UI strings. Edit here to change wording without touching components.
 
 export const BRAND = {
-  mark: "SMEM",
+  logoAlt: "SMEM",
   title: "Synth Builder",
   subtitle: "/ signal flow"
 };
@@ -11,16 +11,33 @@ export const LEGEND = {
   control: "Control path"
 };
 
-export const LANE_TAGS = {
-  audio: "Audio",
-  control: "Control"
-};
+export const RESTART = "Start again";
 
 export const TRANSPORT = {
   powerOn: "On",
   powerOff: "Power",
-  trigger: "Trigger Note",
+  gate: "Gate",
+  gateSub: "hold to sound",
   vol: "Vol"
+};
+
+export const HINTS = {
+  beforePower: "Press power to begin.",
+  noEnv: "A continuous tone — no envelope yet.",
+  withEnv: "Hold the gate to trigger the envelope."
+};
+
+export const CHAPTER_RAIL = {
+  title: "Course",
+  freeBuild: { ix: "··", nm: "Free Build" }
+};
+
+export const NARRATOR_UI = {
+  chapterPrefix: "Chapter",
+  awaitPrefix: "Add the",
+  awaitSuffix: "below to continue ↓",
+  next: "Next chapter ▸",
+  done: "That completes the guided build."
 };
 
 export const PRESETS_UI = {
@@ -31,5 +48,32 @@ export const PRESETS_UI = {
   export: "Export"
 };
 
-export const CV_LABEL = "CV ▸ Gain";
+export const CV_LABEL = "CV ▸ Gain";              // env → amp default
+export const CV_LABEL_CUTOFF = "CV ▸ Cutoff";      // lfo → filter
 export const OUTPUT_TO_SPEAKER = "To speaker";
+
+export const SCOPE_TRIGGER = {
+  rising:  { label: "Rising",  short: "▲" },
+  falling: { label: "Falling", short: "▼" }
+};
+
+export const SETTINGS = {
+  open:        "Settings",
+  title:       "Settings",
+  close:       "Close",
+  scope: {
+    sectionTitle: "Oscilloscope",
+    description:  "Stabilises the trace on the X-axis. The trace starts drawing when the signal crosses the threshold in the selected direction.",
+    edgeLabel:    "Trigger edge",
+    thresholdLabel: "Threshold"
+  }
+};
+
+export const LANDING = {
+  sub: "Swiss Museum for Electronic Music Instruments",
+  title: "A synthesiser is not one machine.<br />It is a chain of small ones.",
+  prose: "Build that chain here, one block at a time. Amber wires carry sound. Cyan wires carry control — silent instructions that shape it. Follow the signal from left to right.",
+  legendAudio: "Audio — heard",
+  legendControl: "Control — silent",
+  begin: "Power on ▸"
+};

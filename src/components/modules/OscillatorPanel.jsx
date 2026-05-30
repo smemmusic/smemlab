@@ -1,33 +1,27 @@
-import { useMemo } from "react";
 import { useSynthStore } from "../../store/useSynthStore.js";
-import { getEngine } from "../../audio/engineSingleton.js";
-import { Slider } from "../controls/Slider.jsx";
-import { Segment } from "../controls/Segment.jsx";
-import { Canvas } from "../viz/Canvas.jsx";
-import { drawScope } from "../viz/drawScope.js";
+import { Knob } from "../controls/Knob.jsx";
+import { Selector } from "../controls/Selector.jsx";
+import { Oscilloscope } from "../viz/Oscilloscope.jsx";
 
 const SHAPES = [
-  { value: "sine",     label: "Sine" },
-  { value: "sawtooth", label: "Saw" },
-  { value: "square",   label: "Square" },
-  { value: "triangle", label: "Tri" }
+  { value: "sine",     label: "Sine", wf: "sine" },
+  { value: "sawtooth", label: "Saw",  wf: "sawtooth" },
+  { value: "square",   label: "Sq",   wf: "square" },
+  { value: "triangle", label: "Tri",  wf: "triangle" }
 ];
 
 export function OscillatorPanel() {
   const osc        = useSynthStore((s) => s.osc);
-  const playing    = useSynthStore((s) => s.playing);
   const setOscType = useSynthStore((s) => s.setOscType);
   const setOscFreq = useSynthStore((s) => s.setOscFreq);
 
-  // Allocate the analyser sample buffer once. FFT size is 2048 (fixed).
-  const buf = useMemo(() => new Uint8Array(2048), []);
-  const data = { analyser: playing ? getEngine().getAnalyser("osc") : null, buf };
-
   return (
     <>
-      <Canvas tag="Oscilloscope · raw output" draw={drawScope} data={data} />
-      <Segment options={SHAPES} value={osc.type} onChange={setOscType} />
-      <Slider label="Pitch" value={osc.freq} min={55} max={880} unit="Hz" log onChange={setOscFreq} />
+      <Oscilloscope tag="Oscilloscope · raw output" analyserName="osc" />
+      <Selector options={SHAPES} value={osc.type} onChange={setOscType} />
+      <div className="ctrl-grid one">
+        <Knob label="Pitch" value={osc.freq} min={55} max={880} unit="Hz" log onChange={setOscFreq} />
+      </div>
     </>
   );
 }

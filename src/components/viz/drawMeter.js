@@ -1,4 +1,4 @@
-import { grid } from "./gridHelpers.js";
+import { persist, beginGlow, endGlow, VIZ } from "./gridHelpers.js";
 import { linToDb } from "../../audio/constants.js";
 
 // data: {
@@ -8,8 +8,7 @@ import { linToDb } from "../../audio/constants.js";
 const M_TOP = 12, M_FLR = -48;
 
 export function drawMeter(ctx, w, h, data) {
-  ctx.clearRect(0, 0, w, h);
-  grid(ctx, w, h);
+  persist(ctx, w, h, "amber");
   if (!data) return;
 
   const { ampDb, blocks, playing, getVcaValue, hist } = data;
@@ -63,23 +62,20 @@ export function drawMeter(ctx, w, h, data) {
   ctx.fillStyle = "rgba(255,180,84,.12)";
   ctx.fill();
 
-  // total level over time — line
+  // total level over time — line (audio signal → amber glow)
   ctx.beginPath();
   for (let i = 0; i < n; i++) {
     if (i) ctx.lineTo(X(i), dbY(hist[i]));
     else   ctx.moveTo(X(i), dbY(hist[i]));
   }
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = "#ffb454";
-  ctx.shadowColor = "#ffb454";
-  ctx.shadowBlur = 8;
+  beginGlow(ctx, VIZ.AUDIO_COLOR);
   ctx.stroke();
-  ctx.shadowBlur = 0;
+  endGlow(ctx);
 
   // readout
   ctx.font = "600 12px 'Chakra Petch',sans-serif";
   ctx.textAlign = "right";
-  ctx.fillStyle = "#ffb454";
+  ctx.fillStyle = VIZ.AUDIO_COLOR;
   ctx.fillText((totalDb <= M_FLR ? "−∞" : (totalDb > 0 ? "+" : "") + totalDb.toFixed(1)) + " dB", w - 8, h - 9);
 
   if (blocks.env) {

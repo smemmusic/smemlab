@@ -1,5 +1,5 @@
 import { useSynthStore } from "../store/useSynthStore.js";
-import { TRANSPORT } from "../content/ui.js";
+import { TRANSPORT, HINTS } from "../content/ui.js";
 import { getEngine } from "../audio/engineSingleton.js";
 
 export function Transport() {
@@ -12,10 +12,11 @@ export function Transport() {
   const setPlay     = useSynthStore((s) => s.setPlaying);
   const setHeld     = useSynthStore((s) => s.setHeld);
   const setEnvPhase = useSynthStore((s) => s.setEnvPhase);
+  const markStart   = useSynthStore((s) => s.markEnvStart);
 
   function snapshot() {
     const s = useSynthStore.getState();
-    return { blocks: s.blocks, osc: s.osc, flt: s.flt, amp: s.amp, env: s.env, vol: s.vol };
+    return { blocks: s.blocks, osc: s.osc, flt: s.flt, amp: s.amp, env: s.env, lfo: s.lfo, vol: s.vol };
   }
 
   function togglePower() {
@@ -24,6 +25,7 @@ export function Transport() {
       engine.stop();
       setPlay(false);
       setHeld(false);
+      setEnvPhase("idle");
     } else {
       engine.start(snapshot());
       setPlay(true);
@@ -41,6 +43,7 @@ export function Transport() {
     engine.noteOn();
     setHeld(true);
     setEnvPhase("ad");
+    markStart();
   }
 
   function release(e) {
@@ -49,26 +52,34 @@ export function Transport() {
     getEngine().noteOff();
     setHeld(false);
     setEnvPhase("rel");
+    markStart();
   }
+
+  // Hint reflects synth state — what's available right now.
+  const hint = hasEnv ? HINTS.withEnv : playing ? HINTS.noEnv : HINTS.beforePower;
 
   return (
     <div className="transport">
-      <button className={"power" + (playing ? "" : " off")} onClick={togglePower}>
-        <span className="dot" />
-        <span>{playing ? TRANSPORT.powerOn : TRANSPORT.powerOff}</span>
-      </button>
-      <button
-        className={"trigger" + (held ? " held" : "")}
-        disabled={!hasEnv}
-        onPointerDown={press}
-        onPointerUp={release}
-        onPointerLeave={(e) => { if (held) release(e); }}
-      >
-        {TRANSPORT.trigger}
-      </button>
-      <div className="vol">
-        <span>{TRANSPORT.vol}</span>
-        <input type="range" min="0" max="100" value={vol} onChange={(e) => setVol(+e.target.value)} />
+      <div className="inner">
+        <button className={"power" + (playing ? "" : " off")} onClick={togglePower}>
+          <span className="dot" />
+          {playing ? TRANSPORT.powerOn : TRANSPORT.powerOff}
+        </button>
+        <button
+          className={"gate" + (held ? " held" : "")}
+          disabled={!hasEnv}
+          onPointerDown={press}
+          onPointerUp={release}
+          onPointerLeave={(e) => { if (held) release(e); }}
+        >
+          {TRANSPORT.gate}
+          <span className="sub">{TRANSPORT.gateSub}</span>
+        </button>
+        <span className="hint">{hint}</span>
+        <div className="vol">
+          <span>{TRANSPORT.vol}</span>
+          <input type="range" min="0" max="100" value={vol} onChange={(e) => setVol(+e.target.value)} />
+        </div>
       </div>
     </div>
   );

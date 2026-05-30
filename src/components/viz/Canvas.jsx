@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 // `draw` is a pure function: (ctx, w, h, data) => void.
 // `data` is held in a ref so the RAF callback always reads the latest without re-subscribing.
 // `animate=true` runs RAF; `animate=false` redraws on `deps` change.
-export function Canvas({ draw, data, animate = true, deps = [], tag, className = "" }) {
+export function Canvas({ draw, data, animate = true, deps = [], tag, screenClass = "" }) {
   const canvasRef = useRef(null);
   const dataRef   = useRef(data);
   const rafRef    = useRef(0);
@@ -63,10 +63,11 @@ export function Canvas({ draw, data, animate = true, deps = [], tag, className =
   }, []);
 
   return (
-    <div className={"screen " + className}>
+    <div className={"screen " + screenClass}>
       {tag && <span className="tag">{tag}</span>}
       <canvas ref={canvasRef} />
       <span className="scanlines" />
+      <span className="vignette" />
     </div>
   );
 }

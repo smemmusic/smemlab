@@ -1,16 +1,21 @@
 // Built-in presets and import/export helpers.
 
+// depth is normalised 0..1 — destination modules (e.g. the filter) scale it
+// to their own units. So 0.4 ≈ "40% of full-scale modulation at the target".
+const DEFAULT_LFO = { rate: 5, depth: 0.4, shape: "sine" };
+
 export const BUILTINS = [
   {
     id: "init",
     name: "Init (oscillator only)",
     builtIn: true,
     config: {
-      blocks: { filter: false, amp: false, env: false },
+      blocks: { filter: false, amp: false, env: false, lfo: false },
       osc:    { type: "sawtooth", freq: 110 },
-      flt:    { cutoff: 1200, q: 1 },
+      flt:    { cutoff: 1200, q: 1, mode: "lowpass" },
       amp:    { db: 0 },
-      env:    { a: 0.05, d: 0.2, sustainDb: -8, r: 0.4 }
+      env:    { a: 0.05, d: 0.2, sustainDb: -8, r: 0.4 },
+      lfo:    { ...DEFAULT_LFO }
     }
   },
   {
@@ -18,11 +23,12 @@ export const BUILTINS = [
     name: "Filter Sweep Pad",
     builtIn: true,
     config: {
-      blocks: { filter: true, amp: true, env: false },
+      blocks: { filter: true, amp: true, env: false, lfo: true },
       osc:    { type: "sawtooth", freq: 110 },
-      flt:    { cutoff: 600, q: 6 },
+      flt:    { cutoff: 1100, q: 6, mode: "lowpass" },
       amp:    { db: -3 },
-      env:    { a: 0.05, d: 0.2, sustainDb: -8, r: 0.4 }
+      env:    { a: 0.05, d: 0.2, sustainDb: -8, r: 0.4 },
+      lfo:    { rate: 0.4, depth: 0.35, shape: "sine" }
     }
   },
   {
@@ -30,11 +36,12 @@ export const BUILTINS = [
     name: "Mellow Pluck",
     builtIn: true,
     config: {
-      blocks: { filter: true, amp: true, env: true },
+      blocks: { filter: true, amp: true, env: true, lfo: false },
       osc:    { type: "triangle", freq: 220 },
-      flt:    { cutoff: 1800, q: 2 },
+      flt:    { cutoff: 1800, q: 2, mode: "lowpass" },
       amp:    { db: -6 },
-      env:    { a: 0.005, d: 0.18, sustainDb: -30, r: 0.25 }
+      env:    { a: 0.005, d: 0.18, sustainDb: -30, r: 0.25 },
+      lfo:    { ...DEFAULT_LFO }
     }
   },
   {
@@ -42,11 +49,12 @@ export const BUILTINS = [
     name: "Sub Stab",
     builtIn: true,
     config: {
-      blocks: { filter: true, amp: true, env: true },
+      blocks: { filter: true, amp: true, env: true, lfo: false },
       osc:    { type: "square", freq: 73 },
-      flt:    { cutoff: 900, q: 8 },
+      flt:    { cutoff: 900, q: 8, mode: "lowpass" },
       amp:    { db: 0 },
-      env:    { a: 0.005, d: 0.08, sustainDb: -48, r: 0.4 }
+      env:    { a: 0.005, d: 0.08, sustainDb: -48, r: 0.4 },
+      lfo:    { ...DEFAULT_LFO }
     }
   }
 ];

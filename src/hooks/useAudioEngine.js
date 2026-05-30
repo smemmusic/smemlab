@@ -28,11 +28,14 @@ export function useAudioEngineBridge() {
       sub((s) => s.osc.freq,   (v) => engine.setOscFreq(v)),
       sub((s) => s.flt.cutoff, (v) => engine.setCutoff(v)),
       sub((s) => s.flt.q,      (v) => engine.setQ(v)),
+      sub((s) => s.flt.mode,   (v) => engine.setFilterMode(v)),
       sub((s) => s.amp.db,     (v) => engine.setAmpDb(v)),
       sub((s) => s.env,        (v) => engine.setEnv(v), { equalityFn: shallow }),
+      sub((s) => s.lfo,        (v) => engine.setLfo(v), { equalityFn: shallow }),
       sub((s) => s.vol,        (v) => engine.setVol(v)),
       sub((s) => s.blocks,     (cur, prev) => {
-        for (const k of ["env", "amp", "filter"]) {
+        // Order matters: tear down dependents (env, lfo) before their hosts (amp, filter).
+        for (const k of ["env", "lfo", "amp", "filter"]) {
           if (cur[k] !== prev[k]) (cur[k] ? engine.addBlock(k) : engine.removeBlock(k));
         }
       }, { equalityFn: shallow })

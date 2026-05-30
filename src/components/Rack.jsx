@@ -7,7 +7,9 @@ import { OscillatorPanel } from "./modules/OscillatorPanel.jsx";
 import { FilterPanel } from "./modules/FilterPanel.jsx";
 import { AmplifierPanel } from "./modules/AmplifierPanel.jsx";
 import { EnvelopePanel } from "./modules/EnvelopePanel.jsx";
+import { LfoPanel } from "./modules/LfoPanel.jsx";
 import { OutputPanel } from "./modules/OutputPanel.jsx";
+import { CV_LABEL_CUTOFF } from "../content/ui.js";
 
 export function Rack() {
   const blocks  = useSynthStore((s) => s.blocks);
@@ -21,7 +23,15 @@ export function Rack() {
 
       {blocks.filter && (
         <>
-          <div className="col"><Module id="filter"><FilterPanel /></Module></div>
+          <div className="col">
+            <Module id="filter"><FilterPanel /></Module>
+            {blocks.lfo && (
+              <>
+                <VCable label={CV_LABEL_CUTOFF} />
+                <Module id="lfo"><LfoPanel /></Module>
+              </>
+            )}
+          </div>
           <HCable />
         </>
       )}

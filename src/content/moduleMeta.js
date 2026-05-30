@@ -5,6 +5,7 @@ export const MODULE_META = {
   filter:     { kind: "audio",   title: "Filter" },
   amp:        { kind: "audio",   title: "Amplifier" },
   env:        { kind: "control", title: "Envelope" },
+  lfo:        { kind: "control", title: "LFO" },
   output:     { kind: "audio",   title: "Output" }
 };
 

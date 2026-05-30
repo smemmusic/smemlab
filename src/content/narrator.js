@@ -1,29 +1,57 @@
-// Narrator steps. First entry whose `match(blocks)` returns true wins.
-// Add a new step = push a new object to this array.
+// Chapter-based narrator. Each chapter is a step in the guided build.
+// `adds` is the block id that must be added before the user can advance.
+// Adding a new chapter = one new entry in this array.
+// The kind ("audio" | "control") tints the eyebrow rule + the TRY badge.
 
-export const NARRATOR_STEPS = [
+export const CHAPTERS = [
   {
-    match: (b) => !b.filter && !b.amp,
-    step: "Step 1 — The sound source",
-    text: "Press <b>POWER</b>. The oscillator is the only part that actually <i>makes</i> sound — watch its raw waveform, try the four shapes, slide the pitch.",
-    hint: "Just a raw, continuous tone."
+    id: "source",
+    kind: "audio",
+    ix: "01",
+    nm: "The Source",
+    adds: null,
+    title: "A synthesiser begins with a single, continuous tone.",
+    prose: "Press <b>Power</b>. The <b>oscillator</b> is the only part that actually makes sound. Everything you add later only reshapes what it produces. Watch its raw waveform, switch between the four shapes, and slide the pitch.",
+    tryit: "Switch shapes, then move the pitch."
   },
   {
-    match: (b) => b.filter && !b.amp,
-    step: "Step 2 — Shaping the tone",
-    text: "Signal flows <b>oscillator → filter → output</b>. Pull the <b>cutoff</b> down and watch the final scope round off as harmonics vanish.",
-    hint: "Compare the two scopes: raw wave in, filtered wave out."
+    id: "tone",
+    kind: "audio",
+    ix: "02",
+    nm: "Shaping Tone",
+    adds: "filter",
+    title: "A filter carves harmonics away from the tone.",
+    prose: "Signal now flows <b>oscillator → filter → output</b>. A <b>low-pass</b> filter removes harmonics above the cutoff, darkening the sound; flip the switch to <b>high-pass</b> and it does the opposite. <b>Resonance</b> emphasises frequencies right at the cutoff.",
+    tryit: "Pull the cutoff down, then throw the LP / HP switch."
   },
   {
-    match: (b) => b.amp && !b.env,
-    step: "Step 3 — The amplifier",
-    text: "The <b>amplifier</b> applies a gain in <b>decibels</b>: an <b>offset</b>. Push it above <b>0 dB</b> and it amplifies (louder than the source); pull it below and it attenuates. Next, add an envelope whose dB will add to this offset.",
-    hint: "Audio path complete: oscillator → filter → amplifier → output."
+    id: "loud",
+    kind: "audio",
+    ix: "03",
+    nm: "Loudness",
+    adds: "amp",
+    title: "Gain is measured in decibels — an offset, not a multiply.",
+    prose: "The <b>amplifier</b> applies a gain in <b>decibels</b>. Push it above <b>0 dB</b> and it amplifies, louder than the source; pull it below and it attenuates. The meter shows that level directly. Soon a control signal's dB will simply add to this.",
+    tryit: "Push the gain above 0 dB, then well below it."
   },
   {
-    match: (b) => b.env,
-    step: "Step 4 — Control, from below",
-    text: "The <span style='color:var(--control)'>envelope</span> is a dB <b>offset</b> that <b>adds</b> to the gain — its peak rides exactly on the <span style='color:var(--control)'>gain line</span> in the meter. Move the gain and the whole shape slides up or down together. Hold <b>TRIGGER</b> to hear it.",
-    hint: "In decibels, offsets add: gain dB + envelope dB."
+    id: "control",
+    kind: "control",
+    ix: "04",
+    nm: "Control vs Audio",
+    adds: "env",
+    title: "A silent signal that reshapes the sound.",
+    prose: "The <span class='cy'>envelope</span> makes no sound on its own. It is a dB <b>offset</b> that <b>adds</b> to the gain — its peak rides exactly on the gain line in the meter. It is driven by the <b>gate</b>: held → attack, decay, sustain; released → release.",
+    tryit: "Hold the Gate and watch the contour add to the gain."
+  },
+  {
+    id: "mod",
+    kind: "control",
+    ix: "05",
+    nm: "Modulation",
+    adds: "lfo",
+    title: "An oscillator too slow to hear becomes a controller.",
+    prose: "The <span class='cy'>LFO</span> is the same circuit as your very first module — only slow, and patched somewhere other than the speaker. Here it drives the <b>filter cutoff</b>: its ±1 output is multiplied by the <b>depth</b> (in Hz) and <b>added</b> to whatever the cutoff knob is set to. Same wire, different role.",
+    tryit: "Raise the LFO depth and watch the filter breathe."
   }
 ];

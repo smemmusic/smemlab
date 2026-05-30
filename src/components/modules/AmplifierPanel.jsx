@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { useSynthStore } from "../../store/useSynthStore.js";
 import { getEngine } from "../../audio/engineSingleton.js";
-import { Slider } from "../controls/Slider.jsx";
+import { Knob } from "../controls/Knob.jsx";
 import { Canvas } from "../viz/Canvas.jsx";
 import { drawMeter } from "../viz/drawMeter.js";
 
@@ -24,8 +24,10 @@ export function AmplifierPanel() {
 
   return (
     <>
-      <Canvas tag="Amplifier · output level (dB)" draw={drawMeter} data={data} />
-      <Slider label="Gain" value={amp.db} min={-48} max={12} step={0.5} unit="dB" onChange={setAmpDb} />
+      <Canvas tag="Output level · dB" screenClass="amber" draw={drawMeter} data={data} />
+      <div className="ctrl-grid one">
+        <Knob label="Gain" value={amp.db} min={-48} max={12} step={0.5} unit="dB" onChange={setAmpDb} />
+      </div>
     </>
   );
 }

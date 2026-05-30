@@ -1,13 +1,12 @@
-import { grid } from "./gridHelpers.js";
+import { persist, beginGlow, endGlow, VIZ } from "./gridHelpers.js";
 import { DB_FLOOR } from "../../audio/constants.js";
 
-// data: { env: {a,d,sustainDb,r}, envPhase: "idle"|"ad"|"rel", envStart: ms, playing: bool }
+// data: { env: {a,d,sustainDb,r}, phase: "idle"|"ad"|"rel", start: ms, playing: bool }
 export function drawEnv(ctx, w, h, data) {
-  ctx.clearRect(0, 0, w, h);
-  grid(ctx, w, h);
+  persist(ctx, w, h, "green");
   if (!data) return;
 
-  const { env: e, envPhase, envStart, playing } = data;
+  const { env: e, phase, start, playing } = data;
   const pad = 8, top = 14, bot = h - 10;
   const total = e.a + e.d + 0.45 + e.r;
   const sx = (w - pad * 2) / total;
@@ -22,7 +21,7 @@ export function drawEnv(ctx, w, h, data) {
   const y0  = dbY(DB_FLOOR);
 
   // 0 dB ceiling marker
-  ctx.strokeStyle = "rgba(79,214,255,.25)";
+  ctx.strokeStyle = "rgba(79,214,255,.22)";
   ctx.setLineDash([2, 4]);
   ctx.beginPath();
   ctx.moveTo(0, yPk);
@@ -34,11 +33,8 @@ export function drawEnv(ctx, w, h, data) {
   ctx.textAlign = "left";
   ctx.fillText("0 dB", 4, yPk - 3);
 
-  // ADSR shape
-  ctx.lineWidth = 2.4;
-  ctx.strokeStyle = "#4fd6ff";
-  ctx.shadowColor = "#4fd6ff";
-  ctx.shadowBlur = 8;
+  // ADSR shape — control signal, cyan glow
+  beginGlow(ctx, VIZ.CONTROL_COLOR);
   ctx.beginPath();
   ctx.moveTo(pad, y0);
   ctx.lineTo(xA, yPk);
@@ -46,13 +42,13 @@ export function drawEnv(ctx, w, h, data) {
   ctx.lineTo(xS, yS);
   ctx.lineTo(xR, y0);
   ctx.stroke();
-  ctx.shadowBlur = 0;
+  endGlow(ctx);
 
-  if (envPhase !== "idle" && playing) {
-    const el = (performance.now() - envStart) / 1000;
+  if (phase && phase !== "idle" && playing) {
+    const el = (performance.now() - start) / 1000;
     let px = null;
-    if (envPhase === "ad")  { px = Math.min(pad + Math.min(el, (xS - pad) / sx) * sx, xS); }
-    else if (envPhase === "rel") { px = xS + Math.min(el, e.r) * sx; }
+    if (phase === "ad")       { px = Math.min(pad + Math.min(el, (xS - pad) / sx) * sx, xS); }
+    else if (phase === "rel") { px = xS + Math.min(el, e.r) * sx; }
     if (px !== null) {
       const yy =
         px < xA ? y0 - ((px - pad) / (xA - pad)) * (y0 - yPk) :

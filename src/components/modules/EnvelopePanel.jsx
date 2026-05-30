@@ -1,6 +1,6 @@
 import { useSynthStore } from "../../store/useSynthStore.js";
 import { getEngine } from "../../audio/engineSingleton.js";
-import { Slider } from "../controls/Slider.jsx";
+import { Knob } from "../controls/Knob.jsx";
 import { Canvas } from "../viz/Canvas.jsx";
 import { drawEnv } from "../viz/drawEnv.js";
 
@@ -11,20 +11,20 @@ export function EnvelopePanel() {
   const setEnv   = useSynthStore((s) => s.setEnv);
 
   const engine = getEngine();
-  // envStart lives on the engine for sub-frame precision; pulled via getter each frame.
   const data = {
-    env, envPhase, playing,
-    get envStart() { return engine.getEnvStart(); }
+    env, playing,
+    phase: envPhase,
+    get start() { return engine.getEnvStart(); }
   };
 
   return (
     <>
       <Canvas tag="Envelope · ADSR (dB)" draw={drawEnv} data={data} />
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 14px" }}>
-        <Slider label="Attack"   value={env.a}         min={0.005} max={2} step={0.005} unit="s"  onChange={(a) => setEnv({ a })} />
-        <Slider label="Decay"    value={env.d}         min={0.005} max={2} step={0.005} unit="s"  onChange={(d) => setEnv({ d })} />
-        <Slider label="Sustain"  value={env.sustainDb} min={-48}   max={0} step={0.5}   unit="dB" onChange={(sustainDb) => setEnv({ sustainDb })} />
-        <Slider label="Release"  value={env.r}         min={0.005} max={3} step={0.005} unit="s"  onChange={(r) => setEnv({ r })} />
+      <div className="ctrl-grid">
+        <Knob label="Attack"  value={env.a}         min={0.005} max={2} step={0.005} unit="s"  onChange={(v) => setEnv({ a: v })} />
+        <Knob label="Decay"   value={env.d}         min={0.005} max={2} step={0.005} unit="s"  onChange={(v) => setEnv({ d: v })} />
+        <Knob label="Sustain" value={env.sustainDb} min={-48}   max={0} step={0.5}   unit="dB" onChange={(v) => setEnv({ sustainDb: v })} />
+        <Knob label="Release" value={env.r}         min={0.005} max={3} step={0.005} unit="s"  onChange={(v) => setEnv({ r: v })} />
       </div>
     </>
   );
