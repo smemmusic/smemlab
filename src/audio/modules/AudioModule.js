@@ -1,17 +1,31 @@
-import { MODULE_KIND } from "../graph/types.js";
+import { MODULE_KIND, PORT_TYPE, PORT_DIR } from "../graph/types.js";
 
 // Abstract base class for an audio module.
-// Subclasses must implement `input` and `output` getters returning AudioNodes,
-// and override `dispose()` to stop/disconnect their owned nodes.
 //
-// Typed-port metadata (read by the new graph engine, ignored by the legacy path):
+// LEGACY API (used by the hardcoded AudioEngine, still in production):
+//   get input()  — single audio input node (or null)
+//   get output() — single audio output node (or null)
+//   dispose()    — stop/disconnect owned nodes
+//
+// TYPED-PORT API (used by the new GraphEngine behind window.__newEngine):
 //   static KIND     — MODULE_KIND.AUDIO | MODULE_KIND.CONTROL
-//   static PORTS    — explicit audio/gate/CV-output port declarations using
-//                     PORT_TYPE / PORT_DIR / CV_POLARITY enums
-//   static CONTROLS — knobs/switches using CONTROL_KIND / CONTROL_CURVE /
-//                     CV_POLARITY enums. The base auto-generates a CV input
-//                     port per control with a destination-owned scaler (cvRange).
-// Until the new engine is wired in, these are passive metadata.
+//   static PORTS    — explicit non-CV-input port declarations (audio/gate, plus
+//                     CV outputs and PITCH ports). CV *inputs* are auto-derived
+//                     from CONTROLS.
+//   static CONTROLS — knobs/switches. Each entry auto-generates a CV input port
+//                     of the same name with a destination-owned scaler.
+//
+//   getAudioIn(name)  / getAudioOut(name) → AudioNode | AudioParam | null
+//   getCvIn(name)     / getCvOut(name)    → AudioNode | AudioParam | null
+//   getPitchIn(name)  / getPitchOut(name) → AudioNode | AudioParam | null
+//   onGate(portName, sourceId, active)    — gate-input modules override this
+//   setParam(name, value)                 — generic param dispatcher
+//   listPorts() — combined list of declared + auto-generated CV-input ports
+//
+// The default getters look up the port name in the registries the base class
+// maintains: `_audioPorts`, `_cvPorts`, `_pitchPorts`, `_gatePorts`. Subclasses
+// populate these in their constructor (via `_registerPort` and `_makeCvInput`)
+// and rarely need to override the getters themselves.
 
 export class AudioModule {
   static KIND = MODULE_KIND.AUDIO;
@@ -20,8 +34,84 @@ export class AudioModule {
 
   constructor(ctx) {
     this.ctx = ctx;
+    // Named port → node/param registries. Direction is encoded in the key
+    // (e.g. _audioPorts.out["main"] vs _audioPorts.in["input"]).
+    this._audioPorts = { in: {}, out: {} };
+    this._cvPorts    = { in: {}, out: {} };  // .in[name] = { scaler, range, target }
+    this._pitchPorts = { in: {}, out: {} };
+    this._gateInputs = {};  // name → handler(sourceId, active)
   }
-  get input()  { throw new Error("AudioModule subclass must implement `input` getter"); }
-  get output() { throw new Error("AudioModule subclass must implement `output` getter"); }
-  dispose()    {}
+
+  // ---- Legacy single-port API (subclasses still implement these for the old engine).
+  get input()  { return null; }
+  get output() { return null; }
+
+  // ---- Typed-port API ----
+
+  getAudioIn(name)  { return this._audioPorts.in[name]  ?? null; }
+  getAudioOut(name) { return this._audioPorts.out[name] ?? null; }
+  getCvIn(name)     { return this._cvPorts.in[name]?.scaler ?? null; }
+  getCvOut(name)    { return this._cvPorts.out[name] ?? null; }
+  getPitchIn(name)  { return this._pitchPorts.in[name]  ?? null; }
+  getPitchOut(name) { return this._pitchPorts.out[name] ?? null; }
+
+  // Combined view: explicit static PORTS + auto-generated CV inputs from CONTROLS.
+  // The GraphEngine and the UI both query this to know what to render/wire.
+  listPorts() {
+    const ctor = this.constructor;
+    const cvInputs = (ctor.CONTROLS || []).map((c) => ({
+      name: c.name,
+      dir:  PORT_DIR.IN,
+      type: PORT_TYPE.CV,
+      polarity: c.cvPolarity,
+      auto: true,   // hint: came from CONTROLS, not from PORTS
+    }));
+    return [...(ctor.PORTS || []), ...cvInputs];
+  }
+
+  // Default param dispatcher. Subclasses with knobs/switches override or
+  // extend this to apply the value to the underlying nodes.
+  setParam(name, value) {
+    this[`_set_${name}`]?.(value);
+  }
+
+  // Gate input plumbing. The engine calls onGate; the subclass registers
+  // handlers in its constructor.
+  onGate(portName, sourceId, active) {
+    this._gateInputs[portName]?.(sourceId, active);
+  }
+  _registerGateInput(name, handler) {
+    this._gateInputs[name] = handler;
+  }
+
+  // ---- Port registration helpers (called by subclass constructors) ----
+
+  _registerAudioIn(name, nodeOrParam)  { this._audioPorts.in[name]  = nodeOrParam; }
+  _registerAudioOut(name, node)        { this._audioPorts.out[name] = node; }
+  _registerCvOut(name, node)           { this._cvPorts.out[name]    = node; }
+  _registerPitchIn(name, nodeOrParam)  { this._pitchPorts.in[name]  = nodeOrParam; }
+  _registerPitchOut(name, node)        { this._pitchPorts.out[name] = node; }
+
+  // Build a destination-owned CV-input scaler: a GainNode whose gain = cvRange
+  // and whose output connects to `target` (an AudioParam, or an AudioNode for
+  // further processing). Sources connect into the scaler's input; multiple
+  // sources sum at the GainNode automatically. Returns the scaler so the
+  // subclass can hold a reference (rarely needed).
+  _makeCvInput(name, cvRange, target) {
+    const scaler = this.ctx.createGain();
+    scaler.gain.value = cvRange;
+    if (target) scaler.connect(target);
+    this._cvPorts.in[name] = { scaler, range: cvRange, target };
+    return scaler;
+  }
+
+  // ---- Lifecycle ----
+
+  dispose() {
+    // Disconnect every registered CV-input scaler. Subclasses still need to
+    // dispose their own primary nodes (oscillators, filters, etc).
+    for (const entry of Object.values(this._cvPorts.in)) {
+      try { entry.scaler.disconnect(); } catch {}
+    }
+  }
 }

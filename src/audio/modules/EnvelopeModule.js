@@ -32,6 +32,33 @@ export class EnvelopeModule extends AudioModule {
     this.node.gain.value = 1;
     this.envPhase = "idle";
     this.envStart = 0;
+
+    // Parallel CV-out shadow: a ConstantSourceNode whose offset is scheduled
+    // alongside the VCA's gain ramps but normalised to the [0,1] envelope
+    // shape (0 idle, 1 peak, sustainLin sustain, 0 release-end). This is the
+    // signal the typed-port `env:cv` output emits. The VCA itself stays on
+    // its absolute boost curve so the legacy audio path is unchanged.
+    this.cvOut = ctx.createConstantSource();
+    this.cvOut.offset.value = 0;
+    this.cvOut.start();
+    // Per-source gate tracking. Multiple gate sources may be wired (keyboard +
+    // gate button + sequencer); the envelope opens on first-active and closes
+    // on last-released. `_gateSources` is the set of currently-active source IDs.
+    this._gateSources = new Set();
+
+    // ---- typed-port registration ----
+    this._registerAudioIn("input",   this.node);
+    this._registerAudioOut("output", this.node);
+    this._registerCvOut("env",       this.cvOut);
+    this._registerGateInput("trigger", (sourceId, active) => this._handleGate(sourceId, active));
+    // CV inputs for the A/D/S/R knobs. The envelope params are scheduled
+    // (not AudioParam-driven), so the scaler outputs go nowhere — connections
+    // are accepted but actual modulation of envelope params is deferred to a
+    // future polling read.
+    this._makeCvInput("a",         4,  null);
+    this._makeCvInput("d",         4,  null);
+    this._makeCvInput("sustainDb", 48, null);
+    this._makeCvInput("r",         4,  null);
   }
   get input()  { return this.node; }
   get output() { return this.node; }
@@ -49,6 +76,13 @@ export class EnvelopeModule extends AudioModule {
     g.setValueAtTime(Math.max(1e-5, g.value), t);
     g.exponentialRampToValueAtTime(dbToLin(ENV_PEAK_BOOST_DB), t + e.a);
     g.exponentialRampToValueAtTime(dbToLin(ENV_PEAK_BOOST_DB + e.sustainDb), t + e.a + e.d);
+    // Parallel normalised CV ramp: idle → 1 → sustainLin (0..1).
+    const cv = this.cvOut.offset;
+    const sustainLin01 = dbToLin(e.sustainDb);  // sustainDb is <= 0, so 0..1
+    cv.cancelScheduledValues(t);
+    cv.setValueAtTime(Math.max(1e-5, cv.value), t);
+    cv.exponentialRampToValueAtTime(1.0, t + e.a);
+    cv.exponentialRampToValueAtTime(Math.max(1e-5, sustainLin01), t + e.a + e.d);
     this.envStart = performance.now();
     this.envPhase = "ad";
   }
@@ -59,6 +93,11 @@ export class EnvelopeModule extends AudioModule {
     g.cancelScheduledValues(t);
     g.setValueAtTime(Math.max(1e-5, g.value), t);
     g.exponentialRampToValueAtTime(1.0, t + e.r);
+    // Parallel normalised CV release → 0.
+    const cv = this.cvOut.offset;
+    cv.cancelScheduledValues(t);
+    cv.setValueAtTime(Math.max(1e-5, cv.value), t);
+    cv.exponentialRampToValueAtTime(1e-5, t + e.r);
     this.envStart = performance.now();
     this.envPhase = "rel";
   }
@@ -67,7 +106,34 @@ export class EnvelopeModule extends AudioModule {
     const g = this.node.gain;
     g.cancelScheduledValues(t);
     g.setValueAtTime(1, t);
+    const cv = this.cvOut.offset;
+    cv.cancelScheduledValues(t);
+    cv.setValueAtTime(0, t);
     this.envPhase = "idle";
+    this._gateSources.clear();
   }
-  dispose() { try { this.node.disconnect(); } catch {} }
+
+  // Multi-source gate handler. Opens on first-active, closes on last-released.
+  _handleGate(sourceId, active) {
+    const wasOpen = this._gateSources.size > 0;
+    if (active) this._gateSources.add(sourceId);
+    else        this._gateSources.delete(sourceId);
+    const nowOpen = this._gateSources.size > 0;
+    if (!wasOpen && nowOpen) this.noteOn();
+    else if (wasOpen && !nowOpen) this.noteOff();
+  }
+
+  // ---- typed-port setParam dispatch ----
+  setParam(name, value) {
+    if (["a", "d", "sustainDb", "r"].includes(name)) {
+      this.setParams({ [name]: value });
+    }
+  }
+
+  dispose() {
+    try { this.cvOut.stop(); } catch {}
+    try { this.cvOut.disconnect(); } catch {}
+    try { this.node.disconnect(); } catch {}
+    super.dispose();
+  }
 }

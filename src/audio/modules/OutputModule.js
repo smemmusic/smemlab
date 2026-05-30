@@ -36,11 +36,23 @@ export class OutputModule extends AudioModule {
     this.outTap.connect(this.master);
     this.master.connect(this.shaper);
     this.shaper.connect(ctx.destination);
+
+    // ---- typed-port registration ----
+    this._registerAudioIn("input", this.outTap);
+    // CV in "vol" — unipolar 0..1 modulates master gain additively. cvRange=1
+    // so a full-scale CV doubles the gain (loud); intended as expressive
+    // modulation rather than full level control.
+    this._makeCvInput("vol", 1, this.master.gain);
   }
   get input()  { return this.outTap; }
   get output() { return this.shaper; }
 
   setVol(v) { this.master.gain.setTargetAtTime(volToGain(v), this.ctx.currentTime, 0.02); }
+
+  // ---- typed-port setParam dispatch ----
+  setParam(name, value) {
+    if (name === "vol") this.setVol(value);
+  }
 
   fadeOut() {
     const t = this.ctx.currentTime;
@@ -59,5 +71,6 @@ export class OutputModule extends AudioModule {
     try { this.outTap.disconnect(); } catch {}
     try { this.master.disconnect(); } catch {}
     try { this.shaper.disconnect(); } catch {}
+    super.dispose();
   }
 }

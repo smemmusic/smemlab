@@ -27,24 +27,47 @@ export class FilterModule extends AudioModule {
     this.node.frequency.value = cutoff;
     this.node.Q.value = q;
 
-    // Modulation input. Any source (e.g. an LFO) connects here and emits a
-    // normalised ±1 signal scaled by its own depth; this gain stage scales
-    // that into Hz before adding to the cutoff AudioParam. Owning the
-    // Hz-scaling here keeps the LFO destination-agnostic.
+    // Legacy direct cutoff modulation scaler (used by the old AudioEngine's
+    // _connectLfo path via the cutoffModInput getter). Kept until the engine
+    // flip in step 3.
     this.cutoffMod = ctx.createGain();
     this.cutoffMod.gain.value = CUTOFF_MOD_RANGE_HZ;
     this.cutoffMod.connect(this.node.frequency);
+
+    // ---- typed-port registration ----
+    // Audio in/out: BiquadFilter is read/write on the same node.
+    this._registerAudioIn("input",   this.node);
+    this._registerAudioOut("output", this.node);
+    // CV in "cutoff" — new scaler that *also* lands on node.frequency. Web
+    // Audio sums multiple sources at the AudioParam, so coexisting with the
+    // legacy cutoffMod scaler is fine — neither sees the other.
+    this._makeCvInput("cutoff",    CUTOFF_MOD_RANGE_HZ, this.node.frequency);
+    // CV in "resonance" — unipolar 0..1 swings Q by ±12 (i.e. roughly the
+    // full BiquadFilter Q range).
+    this._makeCvInput("resonance", 12, this.node.Q);
+    // CV in "mode" — dangling scaler. Switch quantization is deferred; the
+    // port exists so connections succeed.
+    this._makeCvInput("mode", 1, null);
   }
   get input()  { return this.node; }
   get output() { return this.node; }
-  get cutoffModInput() { return this.cutoffMod; }   // where modulators patch in
+  get cutoffModInput() { return this.cutoffMod; }   // legacy modulators patch in here
 
   setCutoff(f) { this.node.frequency.setTargetAtTime(f, this.ctx.currentTime, 0.01); }
   setQ(q)      { this.node.Q.setTargetAtTime(q, this.ctx.currentTime, 0.01); }
   setMode(m)   { this.node.type = m; }
   getNode()    { return this.node; }
+
+  // ---- typed-port setParam dispatch ----
+  setParam(name, value) {
+    if (name === "cutoff")    this.setCutoff(value);
+    else if (name === "resonance") this.setQ(value);
+    else if (name === "mode") this.setMode(value);
+  }
+
   dispose() {
     try { this.cutoffMod.disconnect(); } catch {}
     try { this.node.disconnect(); } catch {}
+    super.dispose();
   }
 }

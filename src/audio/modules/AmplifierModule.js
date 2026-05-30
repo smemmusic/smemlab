@@ -24,6 +24,14 @@ export class AmplifierModule extends AudioModule {
     this.active = active;
     this.db = db;
     this.node.gain.value = active ? dbToLin(db) : 1;
+
+    // ---- typed-port registration ----
+    this._registerAudioIn("input",   this.node);
+    this._registerAudioOut("output", this.node);
+    // CV in "level" — unipolar 0..1 maps to ±48 dB-worth of *linear* gain
+    // modulation. Note: gain modulation is multiplicative on the audio path,
+    // not dB-additive — accurate dB-CV would need a curve, deferred.
+    this._makeCvInput("level", 1, this.node.gain);
   }
   get input()  { return this.node; }
   get output() { return this.node; }
@@ -36,5 +44,14 @@ export class AmplifierModule extends AudioModule {
     this.db = db;
     if (this.active) this.node.gain.setTargetAtTime(dbToLin(db), this.ctx.currentTime, 0.01);
   }
-  dispose() { try { this.node.disconnect(); } catch {} }
+
+  // ---- typed-port setParam dispatch ----
+  setParam(name, value) {
+    if (name === "level") this.setDb(value);
+  }
+
+  dispose() {
+    try { this.node.disconnect(); } catch {}
+    super.dispose();
+  }
 }

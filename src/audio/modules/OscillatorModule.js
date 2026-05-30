@@ -37,6 +37,18 @@ export class OscillatorModule extends AudioModule {
     this.node = this._buildSource(type);
     this.node.connect(this.tap);
     this._started = false;
+
+    // ---- typed-port registration ----
+    // Audio out "main" — the same node the legacy `output` getter returns.
+    this._registerAudioOut("main", this.tap);
+    // Pitch in "pitch" — V/oct → detune (1.0 V = 1200 cents). Re-bound on
+    // source rebuild (setType swap to/from noise). Noise has no detune param;
+    // pitch input is no-op for noise.
+    this._bindPitchTarget();
+    // CV in "freq" — modulation cents on top of the knob's freq. Range = 4800
+    // cents (±4 octaves) on bipolar ±1 source. Routed to detune (sums with
+    // pitch sources for free).
+    this._bindFreqCvTarget();
   }
   get input()  { return null; }
   get output() { return this.tap; }
@@ -64,6 +76,9 @@ export class OscillatorModule extends AudioModule {
     this.node = this._buildSource(type);
     this.node.connect(this.tap);
     if (this._started) this.node.start();
+    // Re-bind pitch / freq-CV scalers to the new source's detune param.
+    this._bindPitchTarget();
+    this._bindFreqCvTarget();
   }
 
   setFreq(f) {
@@ -80,7 +95,46 @@ export class OscillatorModule extends AudioModule {
     try { this.tap.disconnect(); } catch {}
   }
 
+  // ---- typed-port setParam dispatch ----
+  setParam(name, value) {
+    if (name === "type") this.setType(value);
+    else if (name === "freq") this.setFreq(value);
+  }
+
   // ---- private
+  _bindPitchTarget() {
+    // Pitch input is a ConstantSource-shaped voltage in V/oct units. Web Audio's
+    // detune param works in cents, so we need a × 1200 scaler before detune.
+    // Tear down any previous scaler so re-binding on type change doesn't leak.
+    const prev = this._pitchPorts.in.pitch;
+    if (prev) { try { prev.disconnect(); } catch {} }
+    if (this.type === "noise") {
+      // Noise has no pitch. Register a stub gain node so connections succeed
+      // but go nowhere (cheap dangling node).
+      const stub = this.ctx.createGain();
+      this._registerPitchIn("pitch", stub);
+      return;
+    }
+    const scaler = this.ctx.createGain();
+    scaler.gain.value = 1200; // 1 V/oct → 1200 cents
+    scaler.connect(this.node.detune);
+    this._registerPitchIn("pitch", scaler);
+  }
+
+  _bindFreqCvTarget() {
+    // Re-create the CV scaler on each rebuild because the target AudioParam
+    // (this.node.detune) changes with the source.
+    const prev = this._cvPorts.in.freq?.scaler;
+    if (prev) { try { prev.disconnect(); } catch {} }
+    if (this.type === "noise") {
+      // Same noise handling as pitch — stub.
+      const stub = this.ctx.createGain();
+      this._cvPorts.in.freq = { scaler: stub, range: 4800, target: null };
+      return;
+    }
+    this._makeCvInput("freq", 4800, this.node.detune);
+  }
+
   _buildSource(type) {
     if (type === "noise") {
       const len = this.ctx.sampleRate * 2;

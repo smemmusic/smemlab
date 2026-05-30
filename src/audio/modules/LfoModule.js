@@ -32,13 +32,25 @@ export class LfoModule extends AudioModule {
     this.osc   = ctx.createOscillator();
     this.osc.type = shape;
     this.osc.frequency.value = rate;
+    // depth is a post-normalisation attenuator clamped to [0,1] so the CV
+    // output respects the ±1 bipolar contract regardless of caller hygiene.
     this.depth = ctx.createGain();
-    this.depth.gain.value = depth;
+    this.depth.gain.value = Math.max(0, Math.min(1, depth));
     this.osc.connect(this.depth);
     this._started = false;
+
+    // ---- typed-port registration ----
+    // CV out "cv" — the attenuated oscillator signal, bipolar in [-1, +1].
+    this._registerCvOut("cv", this.depth);
+    // CV inputs for knobs. Rate accepts modulation (LFO-on-LFO is fine);
+    // depth and shape are deferred (depth modulation would need its own
+    // attenuator stage; shape is discrete).
+    this._makeCvInput("rate",  20, this.osc.frequency);
+    this._makeCvInput("depth", 1,  null);
+    this._makeCvInput("shape", 1,  null);
   }
   get input()  { return null; }
-  get output() { return this.depth; }   // depth gain is the LFO's send
+  get output() { return this.depth; }   // depth gain is the LFO's send (legacy)
 
   start() {
     if (this._started) return;
@@ -46,12 +58,23 @@ export class LfoModule extends AudioModule {
     this._started = true;
   }
   setRate(hz)  { this.osc.frequency.setTargetAtTime(hz, this.ctx.currentTime, 0.02); }
-  setDepth(d)  { this.depth.gain.setTargetAtTime(d, this.ctx.currentTime, 0.02); }
+  setDepth(d)  {
+    const clamped = Math.max(0, Math.min(1, d));
+    this.depth.gain.setTargetAtTime(clamped, this.ctx.currentTime, 0.02);
+  }
   setShape(s)  { this.osc.type = s; }
+
+  // ---- typed-port setParam dispatch ----
+  setParam(name, value) {
+    if (name === "rate")  this.setRate(value);
+    else if (name === "depth") this.setDepth(value);
+    else if (name === "shape") this.setShape(value);
+  }
 
   dispose() {
     try { this.osc.stop(); } catch {}
     try { this.osc.disconnect(); } catch {}
     try { this.depth.disconnect(); } catch {}
+    super.dispose();
   }
 }
