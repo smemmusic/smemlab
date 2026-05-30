@@ -8,6 +8,7 @@
   --ink: #ece7da; --muted: #8b8f9c; --muted-dim: #5d616d;
   --audio: #ffb454; --audio-dim: #5a4226; --audio-glow: rgba(255,180,84,.55);
   --control: #4fd6ff; --control-dim: #1f4554; --control-glow: rgba(79,214,255,.5);
+  --gate:    #6fdc8c; --gate-dim:    #2a4a32; --gate-glow:    rgba(111,220,140,.55);
   --silk: rgba(236,231,218,.16);
   --silk-soft: rgba(236,231,218,.09);
   --crt: #0a1a10;
@@ -82,6 +83,7 @@ header {
 .legend i { display: inline-block; width: 22px; height: 3px; border-radius: 2px; margin-right: 8px; vertical-align: middle; }
 .legend .a i { background: var(--audio); box-shadow: 0 0 8px var(--audio); }
 .legend .c i { background: var(--control); box-shadow: 0 0 8px var(--control); }
+.legend .g i { background: var(--gate); box-shadow: 0 0 8px var(--gate); }
 .legend .icon-btn {
   font-family: inherit; font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
   color: var(--muted); background: transparent; border: 1px solid var(--line); border-radius: 5px;
@@ -301,12 +303,118 @@ header {
 .selector button.on { color: #0b0c0f; background: var(--audio); border-color: var(--audio); font-weight: 600; }
 .control-mod .selector button.on { background: var(--control); border-color: var(--control); }
 
+/* ---------------- piano keyboard ---------------- */
+.kb {
+  position: relative; width: 100%; height: 112px; overflow: hidden;
+  border-radius: 6px; border: 1px solid #000;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.03) inset, 0 2px 6px rgba(0,0,0,.5) inset;
+  user-select: none; touch-action: none;
+  margin-bottom: 12px;
+}
+.kb-whites { display: flex; height: 100%; }
+.kb-blacks {
+  position: absolute; top: 0; left: 0; right: 0; height: 64%;
+  pointer-events: none;            /* children re-enable */
+}
+.kb-key { display: flex; align-items: flex-end; justify-content: center; padding-bottom: 7px; cursor: pointer; transition: background .04s linear; }
+.kb-key.white {
+  flex: 1; background: linear-gradient(180deg, #efeadd, #d2cdbd);
+  border-right: 1px solid #3a3a3a;
+  color: #45413a;
+}
+.kb-key.white:last-child { border-right: none; }
+.kb-key.white.on { background: linear-gradient(180deg, var(--audio), #c98a3a); color: #2a1e08; }
+.kb-key.black {
+  position: absolute; top: 0; width: 8%; height: 100%; pointer-events: auto;
+  background: linear-gradient(180deg, #1c1c20, #0a0a0c);
+  border: 1px solid #000; border-radius: 0 0 3px 3px;
+  box-shadow: 0 2px 4px rgba(0,0,0,.6);
+  color: #d5d0c4;
+}
+.kb-key.black.on { background: linear-gradient(180deg, var(--control), #1b6c8a); color: #04222d; }
+.kb-label { font-size: 9px; font-weight: 700; letter-spacing: .1em; }
+
+.kb-octave {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+}
+.kb-octave-label b { color: var(--ink); font-weight: 600; letter-spacing: .04em; font-size: 12px; margin-left: 4px; }
+.kb-octave-btn {
+  width: 28px; height: 26px; border-radius: 5px;
+  background: var(--panel-lo); border: 1px solid var(--line); color: var(--ink);
+  font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer;
+  transition: border-color .14s var(--ease);
+}
+.kb-octave-btn:hover { border-color: var(--muted); }
+
 /* small destination label under a control module (LFO routes to filter cutoff) */
 .patch-out {
   margin-top: 10px; font-size: 9px; letter-spacing: .16em; text-transform: uppercase;
   color: var(--control); border: 1px solid var(--control-dim); border-radius: 4px;
   padding: 6px 8px; text-align: center; opacity: .85;
 }
+
+/* ---------------- Gate module ---------------- */
+/* Gate module sits in the Output column with no VCable above it (its signal
+   flows OUT across columns to the Envelope, drawn by GateWire). A simple
+   margin gives it visual breathing room below the Output module. */
+.module[data-id="gate"] { margin-top: 44px; }
+.gate-mod-body {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 10px 0 14px;
+}
+.gate-trigger {
+  position: relative;
+  width: 100%; padding: 26px 14px;
+  background: rgba(111,220,140,.08);
+  border: 1.5px solid var(--gate);
+  border-radius: 10px;
+  color: var(--gate);
+  font-family: inherit; font-weight: 600;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  cursor: pointer; user-select: none; touch-action: none;
+  transition: background .08s linear, color .08s linear, box-shadow .12s var(--ease);
+  box-shadow: 0 0 0 0 transparent;
+}
+.gate-trigger:hover { background: rgba(111,220,140,.18); }
+.gate-trigger.held, .gate-trigger:active {
+  background: var(--gate); color: #04222d;
+  box-shadow: 0 0 22px -2px var(--gate-glow);
+}
+.gate-trigger:disabled {
+  opacity: .35; cursor: default; pointer-events: none;
+}
+.gate-trigger-lamp {
+  width: 11px; height: 11px; border-radius: 50%;
+  background: var(--gate-dim);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.4) inset;
+  margin-bottom: 4px;
+  transition: background .06s linear, box-shadow .06s linear;
+}
+.gate-trigger.held .gate-trigger-lamp {
+  background: #fff;
+  box-shadow: 0 0 12px var(--gate-glow), 0 0 0 1px rgba(0,0,0,.3) inset;
+}
+.gate-trigger-label {
+  font-size: 14px; letter-spacing: .18em; text-transform: uppercase;
+}
+.gate-trigger-sub {
+  font-size: 9px; letter-spacing: .16em; text-transform: uppercase;
+  opacity: .8;
+}
+
+/* ---------------- gate wire (third signal kind) ----------------
+   A real cable — same idiom as HCable / VCable — routed from the bottom of
+   the Keyboard module to the bottom of the Envelope module via a bend below
+   the rack. Rendered by <GateWire/> as a sibling of <Rack/> inside <Stage/>.
+   The `.on` class follows the store's `held` state, so any source (Transport
+   Gate button, computer keys, on-screen piano) that opens the gate lights
+   the wire. */
+.flowg { stroke-dasharray: 4 9; animation: flowg 1.0s linear infinite; opacity: 0; }
+/* Each wire's flow lights only when its own <g> has the `on` class — the
+   GateWire component sets it from per-source flags in the store. */
+.gate-wire g.on .flowg { opacity: 1; }
+@keyframes flowg { to { stroke-dashoffset: -26; } }
 
 /* ---------------- placard (hover tooltip rendered via React portal) ----------
    The placard is mounted to <body> on hover so it escapes the stage's
@@ -316,7 +424,6 @@ header {
 .placard {
   position: fixed;
   padding: 12px 14px;
-  transform: translateY(-100%);
   background: linear-gradient(180deg, var(--panel-hi), var(--panel-lo));
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -331,6 +438,7 @@ header {
   animation: placard-in .15s var(--ease) forwards;
 }
 @keyframes placard-in { from { opacity: 0; } to { opacity: 1; } }
+.placard.above { transform: translateY(-100%); }   /* anchor top -> module top - 10 → shift up by own height */
 .placard b { color: var(--ink); font-weight: 600; }
 
 /* ---------------- cables ---------------- */

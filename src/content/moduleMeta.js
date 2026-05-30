@@ -6,6 +6,8 @@ export const MODULE_META = {
   amp:        { kind: "audio",   title: "Amplifier" },
   env:        { kind: "control", title: "Envelope" },
   lfo:        { kind: "control", title: "LFO" },
+  keyboard:   { kind: "control", title: "Keyboard" },
+  gate:       { kind: "control", title: "Gate" },
   output:     { kind: "audio",   title: "Output" }
 };
 

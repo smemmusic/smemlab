@@ -7,8 +7,9 @@ export const BRAND = {
 };
 
 export const LEGEND = {
-  audio: "Audio path",
-  control: "Control path"
+  audio: "Audio",
+  control: "CV",
+  gate: "Gate"
 };
 
 export const RESTART = "Start again";
@@ -24,12 +25,11 @@ export const TRANSPORT = {
 export const HINTS = {
   beforePower: "Press power to begin.",
   noEnv: "A continuous tone — no envelope yet.",
-  withEnv: "Hold the gate to trigger the envelope."
+  withEnv: "Hold the Gate module — or the spacebar — to trigger the envelope."
 };
 
 export const CHAPTER_RAIL = {
   title: "Course",
-  freeBuild: { ix: "··", nm: "Free Build" }
 };
 
 export const NARRATOR_UI = {
@@ -50,6 +50,7 @@ export const PRESETS_UI = {
 
 export const CV_LABEL = "CV ▸ Gain";              // env → amp default
 export const CV_LABEL_CUTOFF = "CV ▸ Cutoff";      // lfo → filter
+export const CV_LABEL_PITCH  = "CV ▸ Pitch";       // keyboard → oscillator
 export const OUTPUT_TO_SPEAKER = "To speaker";
 
 export const SCOPE_TRIGGER = {

@@ -7,8 +7,10 @@ import { FilterPanel } from "./modules/FilterPanel.jsx";
 import { AmplifierPanel } from "./modules/AmplifierPanel.jsx";
 import { EnvelopePanel } from "./modules/EnvelopePanel.jsx";
 import { LfoPanel } from "./modules/LfoPanel.jsx";
+import { KeyboardPanel } from "./modules/KeyboardPanel.jsx";
+import { GatePanel } from "./modules/GatePanel.jsx";
 import { OutputPanel } from "./modules/OutputPanel.jsx";
-import { CV_LABEL_CUTOFF } from "../content/ui.js";
+import { CV_LABEL_CUTOFF, CV_LABEL_PITCH } from "../content/ui.js";
 
 export function Rack() {
   const blocks  = useSynthStore((s) => s.blocks);
@@ -16,7 +18,15 @@ export function Rack() {
 
   return (
     <div className={"rack" + (playing ? " playing" : "")}>
-      <div className="col"><Module id="oscillator"><OscillatorPanel /></Module></div>
+      <div className="col">
+        <Module id="oscillator"><OscillatorPanel /></Module>
+        {blocks.keyboard && (
+          <>
+            <VCable label={CV_LABEL_PITCH} />
+            <Module id="keyboard"><KeyboardPanel /></Module>
+          </>
+        )}
+      </div>
 
       <HCable />
 
@@ -50,7 +60,16 @@ export function Rack() {
         </>
       )}
 
-      <div className="col"><Module id="output"><OutputPanel /></Module></div>
+      <div className="col">
+        <Module id="output"><OutputPanel /></Module>
+        {blocks.gate && (
+          <>
+            {/* No VCable here — the wire to the envelope below carries the
+                gate signal across to the envelope's column. */}
+            <Module id="gate"><GatePanel /></Module>
+          </>
+        )}
+      </div>
     </div>
   );
 }

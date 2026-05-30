@@ -21,6 +21,7 @@ export function Header() {
       <div className="legend">
         <span className="a"><i />{LEGEND.audio}</span>
         <span className="c"><i />{LEGEND.control}</span>
+        <span className="g"><i />{LEGEND.gate}</span>
         <button className="icon-btn" onClick={() => setSettingsOpen(true)} title={SETTINGS.open}>
           <span aria-hidden="true">⚙</span> {SETTINGS.open}
         </button>

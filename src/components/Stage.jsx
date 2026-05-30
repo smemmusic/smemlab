@@ -1,5 +1,11 @@
 import { useEffect, useRef } from "react";
 import { Rack } from "./Rack.jsx";
+import { GateWire } from "./GateWire.jsx";
+
+// Reserved at the bottom of the stage for the gate wire's drop segment.
+// Always reserved (whether the wire is shown or not) to avoid layout shift
+// when keyboard + envelope are both patched in.
+const WIRE_RESERVE_PX = 42;
 
 // The Stage measures its own size and the rack's natural (unscaled) size each
 // time either changes, then applies a uniform CSS transform: scale to the rack
@@ -26,7 +32,8 @@ export function Stage() {
       const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
       const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
       const availW = Math.max(0, stage.clientWidth - padX);
-      const availH = Math.max(0, stage.clientHeight - padY);
+      // Leave room under the rack for the gate wire's bend.
+      const availH = Math.max(0, stage.clientHeight - padY - WIRE_RESERVE_PX);
 
       const scale = Math.min(1, availW / naturalW, availH / naturalH);
       rack.style.transformOrigin = "top left";
@@ -46,6 +53,7 @@ export function Stage() {
   return (
     <div ref={stageRef} className="stage">
       <Rack />
+      <GateWire containerRef={stageRef} />
     </div>
   );
 }

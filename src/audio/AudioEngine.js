@@ -12,7 +12,7 @@ export class AudioEngine {
     this.ctx = null;
     this.modules = null;
     this.lfo = null;                                       // short-lived: (re)created on _connectLfo
-    this.blocks = { filter: false, amp: false, env: false, lfo: false };
+    this.blocks = { filter: false, amp: false, env: false, lfo: false, keyboard: false };
     this.config = null;
   }
 
@@ -67,6 +67,10 @@ export class AudioEngine {
   // -------- imperative param setters (no-op if ctx not started)
   setOscType(type) { this.modules?.oscillator.setType(type); if (this.config) this.config.osc.type = type; }
   setOscFreq(hz)   { this.modules?.oscillator.setFreq(hz);  if (this.config) this.config.osc.freq = hz; }
+  // Keyboard-driven pitch change: applies to the oscillator only, leaving
+  // config.osc.freq (the knob's value) untouched. Removing the keyboard
+  // block restores the knob's freq automatically.
+  setOscFreqLive(hz) { this.modules?.oscillator.setFreq(hz); }
   setCutoff(hz)    { this.modules?.filter.setCutoff(hz);    if (this.config) this.config.flt.cutoff = hz; }
   setQ(q)          { this.modules?.filter.setQ(q);          if (this.config) this.config.flt.q = q; }
   setFilterMode(m) { this.modules?.filter.setMode(m);       if (this.config) this.config.flt.mode = m; }
@@ -102,6 +106,8 @@ export class AudioEngine {
     this.blocks[id] = false;
     if (id === "amp") this.modules.amp.setActive(false);
     if (id === "env") this.modules.env.reset();
+    // Keyboard was driving the oscillator pitch — restore the knob value.
+    if (id === "keyboard" && this.config) this.modules.oscillator.setFreq(this.config.osc.freq);
     // LFO has no target once filter is gone — tear it down.
     if (id === "lfo" || id === "filter") this._disconnectLfo();
     if (id !== "lfo") this._connectGraph();

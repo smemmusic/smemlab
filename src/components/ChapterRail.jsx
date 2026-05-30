@@ -24,11 +24,6 @@ export function ChapterRail() {
             </button>
           );
         })}
-        <button className="chap locked">
-          <span className="tap" />
-          <span className="ix">{CHAPTER_RAIL.freeBuild.ix}</span>
-          <span className="nm">{CHAPTER_RAIL.freeBuild.nm}</span>
-        </button>
       </nav>
     </aside>
   );

@@ -5,7 +5,7 @@ import { PLACARDS } from "../content/placards.js";
 import { GLYPHS } from "../content/glyphs.jsx";
 import { useSynthStore } from "../store/useSynthStore.js";
 
-const REMOVABLE = new Set(["filter", "amp", "env", "lfo"]);
+const REMOVABLE = new Set(["filter", "amp", "env", "lfo", "keyboard", "gate"]);
 
 // Hover placard tooltip is rendered through a React portal to <body>. That's
 // the only reliable way to escape the stage's overflow container; with the
@@ -20,7 +20,17 @@ export function Module({ id, children }) {
   function show() {
     const r = moduleRef.current?.getBoundingClientRect();
     if (!r) return;
-    setTip({ left: r.left, top: r.top - 10, width: r.width });
+    // Audio modules show their placard below the module; control modules
+    // (envelope, LFO) show theirs above. Keeps the tooltip on the "outside"
+    // of the signal flow, so it never overlaps the module above/below in
+    // a control column.
+    const above = meta.kind === "control";
+    setTip({
+      left: r.left,
+      top:  above ? r.top - 10 : r.bottom + 10,
+      width: r.width,
+      above
+    });
   }
 
   return (
@@ -50,7 +60,7 @@ export function Module({ id, children }) {
       </div>
       {tip && createPortal(
         <div
-          className="placard"
+          className={"placard" + (tip.above ? " above" : "")}
           style={{ left: `${tip.left}px`, top: `${tip.top}px`, width: `${tip.width}px` }}
           dangerouslySetInnerHTML={{ __html: PLACARDS[id] }}
         />,

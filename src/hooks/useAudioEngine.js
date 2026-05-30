@@ -34,8 +34,8 @@ export function useAudioEngineBridge() {
       sub((s) => s.lfo,        (v) => engine.setLfo(v), { equalityFn: shallow }),
       sub((s) => s.vol,        (v) => engine.setVol(v)),
       sub((s) => s.blocks,     (cur, prev) => {
-        // Order matters: tear down dependents (env, lfo) before their hosts (amp, filter).
-        for (const k of ["env", "lfo", "amp", "filter"]) {
+        // Order matters: tear down dependents (env, gate, lfo, keyboard) before their hosts.
+        for (const k of ["keyboard", "gate", "env", "lfo", "amp", "filter"]) {
           if (cur[k] !== prev[k]) (cur[k] ? engine.addBlock(k) : engine.removeBlock(k));
         }
       }, { equalityFn: shallow })

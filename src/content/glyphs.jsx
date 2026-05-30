@@ -29,6 +29,24 @@ export const GLYPHS = {
       <path d="M28 11 L32 11 M30 9 L32 11 L30 13" />
     </svg>
   ),
+  keyboard: (
+    <svg className="m-glyph" viewBox="0 0 34 22">
+      <rect x="2" y="6" width="30" height="14" />
+      <line x1="8" y1="6" x2="8" y2="20" />
+      <line x1="14" y1="6" x2="14" y2="20" />
+      <line x1="20" y1="6" x2="20" y2="20" />
+      <line x1="26" y1="6" x2="26" y2="20" />
+      <rect x="5.5" y="6" width="3.5" height="8" />
+      <rect x="11.5" y="6" width="3.5" height="8" />
+      <rect x="22.5" y="6" width="3.5" height="8" />
+    </svg>
+  ),
+  gate: (
+    <svg className="m-glyph" viewBox="0 0 34 22">
+      {/* A simple square-pulse glyph: "high while held". */}
+      <path d="M2 18 H10 V6 H22 V18 H32" />
+    </svg>
+  ),
   output: (
     <svg className="m-glyph" viewBox="0 0 34 22">
       <path d="M5 8 H11 L18 3 V19 L11 14 H5 Z" />

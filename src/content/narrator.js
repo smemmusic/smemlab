@@ -53,5 +53,15 @@ export const CHAPTERS = [
     title: "An oscillator too slow to hear becomes a controller.",
     prose: "The <span class='cy'>LFO</span> is the same circuit as your very first module — only slow, and patched somewhere other than the speaker. Here it drives the <b>filter cutoff</b>: its ±1 output is multiplied by the <b>depth</b> (in Hz) and <b>added</b> to whatever the cutoff knob is set to. Same wire, different role.",
     tryit: "Raise the LFO depth and watch the filter breathe."
+  },
+  {
+    id: "play",
+    kind: "control",
+    ix: "06",
+    nm: "Performance",
+    adds: "keyboard",
+    title: "Stop turning. Start playing.",
+    prose: "The <span class='cy'>keyboard</span> is another manual control source — patched into the oscillator's <b>pitch</b>. Each key sends a fixed frequency, so the pitch knob steps aside. Use the on-screen keys, the computer keys <b>A&nbsp;W&nbsp;S&nbsp;E&nbsp;D&nbsp;F&nbsp;T&nbsp;G&nbsp;Y&nbsp;H&nbsp;U&nbsp;J</b>, and shift octaves with <b>Z</b> / <b>X</b>.",
+    tryit: "Hold the gate, then play a melody on A S D F G H J."
   }
 ];
