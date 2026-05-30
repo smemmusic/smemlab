@@ -1,17 +1,26 @@
 import { AudioEngine } from "./AudioEngine.js";
 import { GraphEngine } from "./graph/GraphEngine.js";
+import { EngineAdapter } from "./graph/EngineAdapter.js";
 
+// Step 3: getEngine() now returns the EngineAdapter, which exposes the legacy
+// AudioEngine API on top of the typed-port GraphEngine. Set
+// `window.__legacyEngine = true` BEFORE the module first loads to fall back
+// to the hardcoded AudioEngine if the adapter misbehaves.
 let _engine = null;
 let _graphEngine = null;
 
 export function getEngine() {
-  if (_engine === null) _engine = new AudioEngine();
+  if (_engine === null) {
+    const useLegacy = typeof window !== "undefined" && window.__legacyEngine === true;
+    _engine = useLegacy ? new AudioEngine() : new EngineAdapter();
+  }
   return _engine;
 }
 
-// Step 2: parallel access to the typed-port engine. Returned regardless of the
-// feature flag — only the bridge / chapters / palette decide whether to drive
-// it. The flag exists so dev-console smoke tests can opt in (`window.__newEngine = true`).
+// Direct access to the underlying GraphEngine. The adapter holds one
+// internally; calling this returns the standalone instance used by the
+// smoke test helper below. Once free-mode UI lands (step 5) this is what
+// the Palette/Wire components will drive.
 export function getGraphEngine() {
   if (_graphEngine === null) _graphEngine = new GraphEngine();
   return _graphEngine;
