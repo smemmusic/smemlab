@@ -16,11 +16,13 @@ import { Output }     from "./output/index.js";
 import { Inverter }    from "./inverter/index.js";
 import { CvMixer }     from "./cvmixer/index.js";
 import { Attenuverter } from "./attenuverter/index.js";
+import { Attenuator }   from "./attenuator/index.js";
+import { Offset }      from "./offset/index.js";
 
 export const MODULES = [
   Oscillator, Filter, Amp, Env, Lfo,
   Keyboard, Gate, Output,
-  Inverter, CvMixer, Attenuverter,
+  Inverter, CvMixer, Attenuator, Attenuverter, Offset,
 ];
 
 // Validate at import time. A malformed manifest crashes startup loudly
