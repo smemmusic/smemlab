@@ -8,6 +8,7 @@ import { LfoModule } from "../audio/modules/LfoModule.js";
 import { OutputModule } from "../audio/modules/OutputModule.js";
 import { GateModule } from "../audio/modules/GateModule.js";
 import { KeyboardModule } from "../audio/modules/KeyboardModule.js";
+import { InverterModule } from "../audio/modules/InverterModule.js";
 
 // Maps the legacy slot name (used by Module.jsx for meta/glyph lookups) to
 // the corresponding module class. Free-mode types use the same keys, since
@@ -21,6 +22,7 @@ const SLOT_TO_CLASS = {
   output:     OutputModule,
   gate:       GateModule,
   keyboard:   KeyboardModule,
+  inverter:   InverterModule,
 };
 
 // Layout: audio in/out on the left/right edges; everything else (cv, pitch,

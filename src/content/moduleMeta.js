@@ -8,6 +8,7 @@ export const MODULE_META = {
   lfo:        { kind: "control", title: "LFO" },
   keyboard:   { kind: "control", title: "Keyboard" },
   gate:       { kind: "control", title: "Gate" },
+  inverter:   { kind: "control", title: "Inverter" },
   output:     { kind: "audio",   title: "Output" }
 };
 

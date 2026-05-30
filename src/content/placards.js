@@ -8,5 +8,6 @@ export const PLACARDS = {
   lfo:        "An oscillator too slow to hear — the same circuit as your first module, only its speed and its destination differ. Patched here into the <b>filter cutoff</b>, it sweeps the tone open and closed.",
   keyboard:   "A manual <b>control</b> source patched to the oscillator's pitch. Each key sends a fixed frequency; the pitch knob is bypassed while this module is patched in. Play with the on-screen keys, your computer keys (<b>A&nbsp;W&nbsp;S&nbsp;E&nbsp;D&nbsp;F&nbsp;T&nbsp;G&nbsp;Y&nbsp;H&nbsp;U&nbsp;J</b>), or shift octaves with <b>Z / X</b>.",
   gate:       "A manual <b>gate</b> source. Hold the button to open the gate — the envelope sees it the same as a key press, the same as the Transport's Gate. Patched to the envelope's trigger input by the green wire.",
+  inverter:   "A utility that <b>flips</b> the sign of any CV passing through it: a +1 V input becomes −1 V at the output. Mirror an LFO so two destinations sweep in opposite directions, or invert an envelope to fade something in while another fades out.",
   output:     "The finished signal reaches the speaker. Compare this scope with the oscillator's — every block along the way has reshaped the wave."
 };

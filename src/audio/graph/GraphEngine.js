@@ -21,6 +21,7 @@ import { LfoModule }        from "../modules/LfoModule.js";
 import { OutputModule }     from "../modules/OutputModule.js";
 import { GateModule }       from "../modules/GateModule.js";
 import { KeyboardModule }   from "../modules/KeyboardModule.js";
+import { InverterModule }   from "../modules/InverterModule.js";
 import {
   PORT_TYPE, PORT_DIR, newId, portsCompatible,
 } from "./types.js";
@@ -59,6 +60,10 @@ const MODULE_REGISTRY = {
   },
   keyboard: {
     Cls: KeyboardModule,
+    defaults: () => ({}),
+  },
+  inverter: {
+    Cls: InverterModule,
     defaults: () => ({}),
   },
 };

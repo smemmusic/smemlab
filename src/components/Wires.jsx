@@ -9,6 +9,7 @@ import { LfoModule } from "../audio/modules/LfoModule.js";
 import { OutputModule } from "../audio/modules/OutputModule.js";
 import { GateModule } from "../audio/modules/GateModule.js";
 import { KeyboardModule } from "../audio/modules/KeyboardModule.js";
+import { InverterModule } from "../audio/modules/InverterModule.js";
 
 const TYPE_TO_CLASS = {
   oscillator: OscillatorModule,
@@ -19,6 +20,7 @@ const TYPE_TO_CLASS = {
   output:     OutputModule,
   gate:       GateModule,
   keyboard:   KeyboardModule,
+  inverter:   InverterModule,
 };
 
 function lookupPortType(modules, fromId, fromPort) {

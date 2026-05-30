@@ -666,6 +666,45 @@ body.module-dragging * { cursor: grabbing !important; }
 .narrator-back:hover { color: var(--ink); border-color: var(--muted); }
 .narrator { position: relative; }
 
+/* ---- Inverter module body ---- */
+.inverter-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 12px;
+  gap: 14px;
+}
+.inverter-symbol {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: inherit;
+  font-size: 13px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.inverter-symbol .inv-label {
+  color: var(--control);
+  font-weight: 700;
+}
+.inverter-symbol .inv-op {
+  color: var(--muted);
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-lo);
+  letter-spacing: .04em;
+}
+.inverter-hint {
+  font-size: 9px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--muted-dim);
+}
+
 .palette {
   position: absolute;
   right: 18px;

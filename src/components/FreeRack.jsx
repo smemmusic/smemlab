@@ -8,6 +8,7 @@ import { LfoPanel } from "./modules/LfoPanel.jsx";
 import { KeyboardPanel } from "./modules/KeyboardPanel.jsx";
 import { GatePanel } from "./modules/GatePanel.jsx";
 import { OutputPanel } from "./modules/OutputPanel.jsx";
+import { InverterPanel } from "./modules/InverterPanel.jsx";
 
 // In free mode this is the ONLY rack — every module (canonical + free) renders
 // on the absolute-positioned canvas. The chapter Rack is hidden in free mode.
@@ -23,6 +24,7 @@ const PANEL_BY_TYPE = {
   keyboard:   KeyboardPanel,
   gate:       GatePanel,
   output:     OutputPanel,
+  inverter:   InverterPanel,
 };
 
 const TYPE_TO_SLOT = {
@@ -34,6 +36,7 @@ const TYPE_TO_SLOT = {
   keyboard:   "keyboard",
   gate:       "gate",
   output:     "output",
+  inverter:   "inverter",
 };
 
 export function FreeRack() {
