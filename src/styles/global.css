@@ -31,12 +31,47 @@ body::before {
   content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .04; z-index: 0;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
 }
-.wrap { position: relative; z-index: 1; max-width: 1500px; margin: 0 auto; padding: 20px 24px 160px; }
+/* Full-viewport CSS grid. No outer scroll — the sidebar and stage scroll
+   independently. Header on top, transport on bottom, sidebar (rail + narrator)
+   on the left, synth stage on the right. */
+html, body { overflow: hidden; }
+.wrap {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-areas:
+    "header header"
+    "sidebar main"
+    "transport transport";
+  grid-template-rows: auto 1fr auto;
+  grid-template-columns: 340px 1fr;
+  width: 100vw; height: 100vh;
+  max-width: none; margin: 0; padding: 0;
+}
 
 /* ---------------- header ---------------- */
 header {
-  display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;
-  border-bottom: 1px solid var(--line); padding-bottom: 14px; flex-wrap: wrap;
+  grid-area: header;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+
+/* ---------------- sidebar (narrative) ---------------- */
+.sidebar {
+  grid-area: sidebar;
+  border-right: 1px solid var(--line);
+  padding: 18px 18px 22px;
+  overflow-y: auto;
+  display: flex; flex-direction: column; gap: 22px;
+}
+
+/* ---------------- main area (synth stage) ---------------- */
+.main-area {
+  grid-area: main;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  min-width: 0;                          /* allow grid child to shrink for inner scroll */
 }
 .brand { display: flex; align-items: center; gap: 16px; }
 .brand .logo { height: 24px; width: auto; display: block; filter: invert(1) brightness(1.6); }
@@ -55,11 +90,8 @@ header {
 }
 .legend .icon-btn:hover { color: var(--ink); border-color: var(--muted); }
 
-/* ---------------- layout: rail + stage ---------------- */
-.layout { display: grid; grid-template-columns: var(--rail-w) 1fr; gap: 30px; margin-top: 22px; align-items: start; }
-
 /* chapter rail = vertical signal bus */
-.rail { position: sticky; top: 18px; }
+.rail { position: relative; }
 .rail-title { font-size: 10px; letter-spacing: .24em; text-transform: uppercase; color: var(--muted-dim); margin: 0 0 16px 14px; }
 .bus { position: relative; padding-left: 14px; }
 .bus::before {
@@ -92,11 +124,11 @@ header {
 .narrator .eyebrow .rule { flex: 0 0 30px; height: 1px; background: var(--audio); opacity: .7; }
 .narrator .eyebrow.control .rule { background: var(--control); }
 .narrator h2 {
-  margin: 0 0 10px; font-family: "Spectral", serif; font-weight: 500; font-size: 25px;
-  letter-spacing: .01em; line-height: 1.25; color: var(--ink); max-width: 30ch; text-wrap: balance;
+  margin: 0 0 10px; font-family: "Spectral", serif; font-weight: 500; font-size: 22px;
+  letter-spacing: .01em; line-height: 1.25; color: var(--ink); text-wrap: balance;
 }
 .narrator p {
-  margin: 0; font-family: "Spectral", serif; font-size: 16px; line-height: 1.6; color: #cfcabd; max-width: 62ch; text-wrap: pretty;
+  margin: 0; font-family: "Spectral", serif; font-size: 15px; line-height: 1.55; color: #cfcabd; text-wrap: pretty;
 }
 .narrator p b { color: var(--ink); font-weight: 600; }
 .narrator p .cy { color: var(--control); font-weight: 600; }
@@ -119,7 +151,8 @@ header {
 
 /* ---------------- stage / minimap ---------------- */
 .minimap {
-  display: flex; align-items: center; gap: 0; margin: 4px 0 14px; padding: 8px 12px;
+  flex: 0 0 auto;
+  display: flex; align-items: center; gap: 0; margin: 14px 24px 4px; padding: 8px 12px;
   border: 1px solid var(--line-soft); border-radius: 8px; background: rgba(20,21,25,.5); overflow-x: auto;
 }
 .minimap .mm {
@@ -132,8 +165,8 @@ header {
 .minimap .conn { flex: 0 0 18px; height: 1px; background: var(--line); }
 .minimap .conn.control { background: var(--control-dim); }
 
-.stage { position: relative; overflow-x: auto; padding: 10px 2px 18px; scroll-behavior: smooth; }
-.stage::-webkit-scrollbar { height: 9px; }
+.stage { position: relative; flex: 1; overflow: auto; padding: 10px 24px 18px; scroll-behavior: smooth; min-height: 0; }
+.stage::-webkit-scrollbar { height: 9px; width: 9px; }
 .stage::-webkit-scrollbar-thumb { background: var(--line); border-radius: 5px; }
 .stage::-webkit-scrollbar-track { background: transparent; }
 
@@ -278,11 +311,29 @@ header {
   padding: 6px 8px; text-align: center; opacity: .85;
 }
 
-/* ---------------- placard ---------------- */
+/* ---------------- placard (hover tooltip rendered via React portal) ----------
+   The placard is mounted to <body> on hover so it escapes the stage's
+   overflow container. Inline `left`, `top`, `width` are computed in Module.jsx
+   from the hovered module's bounding rect; `transform: translateY(-100%)`
+   shifts it above the module. */
 .placard {
-  margin-top: auto; padding-top: 12px; border-top: 1px solid var(--silk-soft);
-  font-family: "Spectral", serif; font-size: 12.5px; line-height: 1.55; color: #b8b4a8; text-wrap: pretty;
+  position: fixed;
+  padding: 12px 14px;
+  transform: translateY(-100%);
+  background: linear-gradient(180deg, var(--panel-hi), var(--panel-lo));
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 14px 28px -8px rgba(0,0,0,.7);
+  font-family: "Spectral", serif;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #cfcabd;
+  text-wrap: pretty;
+  z-index: 60;
+  pointer-events: none;
+  animation: placard-in .15s var(--ease) forwards;
 }
+@keyframes placard-in { from { opacity: 0; } to { opacity: 1; } }
 .placard b { color: var(--ink); font-weight: 600; }
 
 /* ---------------- cables ---------------- */
@@ -329,7 +380,7 @@ header {
 
 /* ---------------- transport ---------------- */
 .transport {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+  grid-area: transport;
   display: flex; align-items: center; gap: 16px; padding: 14px 24px;
   border-top: 1px solid var(--line);
   background: linear-gradient(180deg, rgba(26,28,34,.86), rgba(13,14,18,.96)); backdrop-filter: blur(10px); flex-wrap: wrap;
@@ -434,16 +485,23 @@ header {
 .landing .begin .dot { width: 10px; height: 10px; border-radius: 50%; background: #0b0c0f; }
 
 @media (max-width: 960px) {
-  .layout { grid-template-columns: 1fr; }
-  .rail { position: static; }
+  /* Collapse the sidebar into a horizontal strip above the main area. */
+  .wrap {
+    grid-template-areas:
+      "header header"
+      "sidebar sidebar"
+      "main main"
+      "transport transport";
+    grid-template-rows: auto auto 1fr auto;
+    grid-template-columns: 1fr;
+  }
+  .sidebar { border-right: none; border-bottom: 1px solid var(--line); max-height: 38vh; }
   .bus { display: flex; gap: 4px; overflow-x: auto; padding-left: 0; }
   .bus::before { display: none; }
   .chap { flex: 0 0 auto; padding: 8px 12px; border: 1px solid var(--line); border-radius: 7px; }
   .chap .tap { display: none; }
 }
 @media (max-width: 600px) {
-  .wrap { padding: 16px 14px 150px; }
   .narrator h2 { font-size: 22px; }
-  .module { width: 84vw; max-width: 320px; }
   .landing h1 { font-size: 26px; }
 }

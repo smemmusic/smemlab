@@ -2,7 +2,6 @@ import { useSynthStore } from "../store/useSynthStore.js";
 import { Module } from "./Module.jsx";
 import { HCable } from "./cables/HCable.jsx";
 import { VCable } from "./cables/VCable.jsx";
-import { AddSlot } from "./AddSlot.jsx";
 import { OscillatorPanel } from "./modules/OscillatorPanel.jsx";
 import { FilterPanel } from "./modules/FilterPanel.jsx";
 import { AmplifierPanel } from "./modules/AmplifierPanel.jsx";
@@ -52,8 +51,6 @@ export function Rack() {
       )}
 
       <div className="col"><Module id="output"><OutputPanel /></Module></div>
-
-      <AddSlot />
     </div>
   );
 }

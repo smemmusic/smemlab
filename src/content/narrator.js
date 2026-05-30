@@ -11,8 +11,8 @@ export const CHAPTERS = [
     nm: "The Source",
     adds: null,
     title: "A synthesiser begins with a single, continuous tone.",
-    prose: "Press <b>Power</b>. The <b>oscillator</b> is the only part that actually makes sound. Everything you add later only reshapes what it produces. Watch its raw waveform, switch between the four shapes, and slide the pitch.",
-    tryit: "Switch shapes, then move the pitch."
+    prose: "Press <b>Power</b>. The <b>oscillator</b> is the only part that actually makes sound. Everything you add later only reshapes what it produces. Watch its raw waveform, switch between the five shapes, and slide the pitch.",
+    tryit: "Switch shapes — including noise — then move the pitch."
   },
   {
     id: "tone",
