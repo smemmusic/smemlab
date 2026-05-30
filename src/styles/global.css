@@ -165,10 +165,7 @@ header {
 .minimap .conn { flex: 0 0 18px; height: 1px; background: var(--line); }
 .minimap .conn.control { background: var(--control-dim); }
 
-.stage { position: relative; flex: 1; overflow: auto; padding: 10px 24px 18px; scroll-behavior: smooth; min-height: 0; }
-.stage::-webkit-scrollbar { height: 9px; width: 9px; }
-.stage::-webkit-scrollbar-thumb { background: var(--line); border-radius: 5px; }
-.stage::-webkit-scrollbar-track { background: transparent; }
+.stage { position: relative; flex: 1; overflow: hidden; padding: 10px 24px 18px; min-height: 0; }
 
 .rack { display: flex; align-items: flex-start; gap: 0; min-width: max-content; padding-left: 6px; }
 .col { display: flex; flex-direction: column; align-items: center; }
