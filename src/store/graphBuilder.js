@@ -20,6 +20,21 @@ export const CANONICAL_IDS = Object.freeze({
   gate:     "_gate",
 });
 
+// Default canvas positions used in free mode when a canonical module has no
+// stored `position`. Matches the chapter rack's left-to-right signal flow
+// roughly so users entering free mode see a familiar layout. User drags
+// override these on first move.
+export const CANONICAL_DEFAULT_POSITIONS = Object.freeze({
+  [CANONICAL_IDS.osc]:      { x: 0,    y: 0   },
+  [CANONICAL_IDS.filter]:   { x: 290,  y: 0   },
+  [CANONICAL_IDS.amp]:      { x: 580,  y: 0   },
+  [CANONICAL_IDS.output]:   { x: 870,  y: 0   },
+  [CANONICAL_IDS.keyboard]: { x: 0,    y: 470 },
+  [CANONICAL_IDS.lfo]:      { x: 290,  y: 470 },
+  [CANONICAL_IDS.env]:      { x: 580,  y: 470 },
+  [CANONICAL_IDS.gate]:     { x: 870,  y: 470 },
+});
+
 // Returns { modules, connections } for a given legacy config.
 //   - osc and output always exist
 //   - filter/amp/env/lfo/keyboard/gate exist iff blocks[*] is true

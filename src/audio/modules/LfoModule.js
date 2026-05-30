@@ -47,7 +47,8 @@ export class LfoModule extends AudioModule {
     // attenuator stage; shape is discrete).
     this._makeCvInput("rate",  20, this.osc.frequency);
     this._makeCvInput("depth", 1,  null);
-    this._makeCvInput("shape", 1,  null);
+    // CV in "shape" — quantised to one of the LFO waveform types.
+    this._makeSwitchInput("shape", ["sine", "triangle", "square", "sawtooth"], 1);
   }
   get input()  { return null; }
   get output() { return this.depth; }   // depth gain is the LFO's send (legacy)

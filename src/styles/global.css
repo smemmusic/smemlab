@@ -18,6 +18,11 @@
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
+/* The synth UI has no user-selectable text; suppressing selection prevents
+   accidental highlights while dragging modules / knobs / cables. Form fields
+   re-enable selection so settings inputs + preset names stay usable. */
+body { user-select: none; -webkit-user-select: none; }
+input, textarea, [contenteditable] { user-select: text; -webkit-user-select: text; }
 body {
   background:
     radial-gradient(1200px 700px at 82% -12%, #17191f 0%, transparent 60%),
@@ -620,30 +625,26 @@ header {
 .stage.free-mode { padding-bottom: 28px; }
 
 .free-rack {
-  margin: 26px 6px 4px;
-  padding: 12px 14px 16px;
-  border: 1px dashed var(--line);
-  border-radius: 8px;
+  margin: 0;
+  padding: 14px;
   position: relative;
   min-width: max-content;
 }
-.free-rack-label {
-  position: absolute;
-  top: -9px;
-  left: 14px;
-  background: var(--bg);
-  padding: 0 8px;
-  font-size: 10px;
-  letter-spacing: .24em;
-  text-transform: uppercase;
-  color: var(--muted-dim);
+/* Free-mode canvas: absolute-positioned children. Each .module inside this
+   container reads its store-provided position via inline left/top. Min size
+   keeps the canvas tall + wide enough for the default canonical layout
+   (~1130 × 890) so a fresh free-mode session has a sensible footprint. */
+.free-rack-canvas {
+  position: relative;
+  min-height: 1000px;
+  min-width: 1200px;
 }
-.free-rack-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 18px;
-  align-items: flex-start;
-}
+.module.draggable .m-head { cursor: grab; }
+.module.draggable .m-head:active { cursor: grabbing; }
+body.module-dragging,
+body.module-dragging * { cursor: grabbing !important; }
+.module.draggable { transition: box-shadow .14s var(--ease); }
+.module.draggable:hover { box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45); }
 
 .palette {
   position: absolute;

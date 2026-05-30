@@ -130,6 +130,43 @@ export class AudioModule {
     return sum / entry._tapBuf.length;
   }
 
+  // Register a CV input that quantises incoming voltage to a discrete switch
+  // value. `values` is the ordered list of possible param values; `cvRange`
+  // is the scaler gain (almost always 1 for switches). The actual switch
+  // value selection happens in _pollSwitches() — the engine polls this method
+  // each frame and fans changes back into the store via the bridge.
+  _makeSwitchInput(name, values, cvRange = 1) {
+    this._makeCvInput(name, cvRange, null, { tap: true });
+    if (!this._switchInputs) this._switchInputs = new Map();
+    this._switchInputs.set(name, { values, lastIdx: -1 });
+  }
+
+  // Called by the engine's poll loop. For each switch input, reads the
+  // tapped CV, quantises to a values[] index, and fires `onChange` when the
+  // index moves. `isConnected(moduleId, portName)` is provided by the engine
+  // so we can skip switches with nothing wired — otherwise an unmodulated
+  // switch would lock to values[0] (cv = 0).
+  //
+  // Quantisation: clamps the input to [0, 1] using abs() so the same code
+  // works for unipolar (0..1) and bipolar (±1) sources. Bipolar sources sweep
+  // all options twice per cycle; unipolar covers all options once.
+  _pollSwitches(onChange, isConnected) {
+    if (!this._switchInputs) return;
+    for (const [name, spec] of this._switchInputs) {
+      if (!isConnected(this.id, name)) {
+        spec.lastIdx = -1;   // reset so a future wire fires immediately
+        continue;
+      }
+      const cv = this.getCvLevel(name);
+      const norm = Math.min(1, Math.abs(cv));
+      const idx = Math.min(spec.values.length - 1, Math.floor(norm * spec.values.length));
+      if (idx !== spec.lastIdx) {
+        spec.lastIdx = idx;
+        onChange(this.id, name, spec.values[idx]);
+      }
+    }
+  }
+
   // ---- Lifecycle ----
 
   dispose() {

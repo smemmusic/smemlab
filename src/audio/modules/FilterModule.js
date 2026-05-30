@@ -46,9 +46,9 @@ export class FilterModule extends AudioModule {
     // CV in "resonance" — unipolar 0..1 swings Q by ±12 (i.e. roughly the
     // full BiquadFilter Q range). Tapped for the same reason.
     this._makeCvInput("resonance", 12, this.node.Q, { tap: true });
-    // CV in "mode" — dangling scaler. Switch quantization is deferred; the
-    // port exists so connections succeed.
-    this._makeCvInput("mode", 1, null);
+    // CV in "mode" — quantised to a discrete filter type. The engine's poll
+    // loop reads this tap and fans changes back into the store on transitions.
+    this._makeSwitchInput("mode", ["lowpass", "highpass", "bandpass", "notch"], 1);
   }
   get input()  { return this.node; }
   get output() { return this.node; }

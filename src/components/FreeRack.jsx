@@ -7,10 +7,12 @@ import { EnvelopePanel } from "./modules/EnvelopePanel.jsx";
 import { LfoPanel } from "./modules/LfoPanel.jsx";
 import { KeyboardPanel } from "./modules/KeyboardPanel.jsx";
 import { GatePanel } from "./modules/GatePanel.jsx";
+import { OutputPanel } from "./modules/OutputPanel.jsx";
 
-// Free-mode rack: renders every module whose id is NOT a reserved canonical id
-// (i.e. doesn't start with "_"). Canonical chapter modules stay in the
-// existing Rack.jsx above. Free instances flow auto-laid-out in a wrap row.
+// In free mode this is the ONLY rack — every module (canonical + free) renders
+// on the absolute-positioned canvas. The chapter Rack is hidden in free mode.
+// In chapter mode this component renders nothing (chapter Rack handles canonical
+// modules; free instances aren't relevant outside free mode).
 
 const PANEL_BY_TYPE = {
   oscillator: OscillatorPanel,
@@ -20,10 +22,9 @@ const PANEL_BY_TYPE = {
   lfo:        LfoPanel,
   keyboard:   KeyboardPanel,
   gate:       GatePanel,
+  output:     OutputPanel,
 };
 
-// Module-type to legacy slot name used by Module.jsx for meta lookups, glyphs,
-// placards. These match the keys MODULE_META uses.
 const TYPE_TO_SLOT = {
   oscillator: "oscillator",
   filter:     "filter",
@@ -32,19 +33,19 @@ const TYPE_TO_SLOT = {
   lfo:        "lfo",
   keyboard:   "keyboard",
   gate:       "gate",
+  output:     "output",
 };
 
 export function FreeRack() {
-  const modules = useSynthStore((s) => s.modules);
+  const modules  = useSynthStore((s) => s.modules);
+  const freeMode = useSynthStore((s) => s.ui.freeMode);
 
-  const freeModules = modules.filter((m) => !m.id.startsWith("_"));
-  if (freeModules.length === 0) return null;
+  if (!freeMode) return null;
 
   return (
-    <div className="free-rack">
-      <div className="free-rack-label">Free modules</div>
-      <div className="free-rack-row">
-        {freeModules.map((m) => {
+    <div className="free-rack free-mode-canvas">
+      <div className="free-rack-canvas">
+        {modules.map((m) => {
           const Panel = PANEL_BY_TYPE[m.type];
           const slot = TYPE_TO_SLOT[m.type];
           if (!Panel || !slot) return null;

@@ -72,6 +72,40 @@ export class GraphEngine {
     // Live state (which sources are open per destination) lives on the
     // destination module (EnvelopeModule._gateSources).
     this._gateConnections = new Map();
+    // Polling for switch-CV quantisation. The bridge sets this handler at
+    // mount; modules with switch inputs are polled each frame and the handler
+    // forwards changes to the store via setModuleParam.
+    this._onSwitchChange = null;
+    this._pollRaf = 0;
+  }
+
+  // Bridge calls this once to register a callback that fires when a switch CV
+  // quantisation produces a new value. Signature: (moduleId, switchName, value).
+  setSwitchChangeHandler(fn) {
+    this._onSwitchChange = fn;
+    if (fn && !this._pollRaf) this._startPollLoop();
+    if (!fn && this._pollRaf) { cancelAnimationFrame(this._pollRaf); this._pollRaf = 0; }
+  }
+
+  _startPollLoop() {
+    const tick = () => {
+      if (this._onSwitchChange) {
+        const cb = this._onSwitchChange;
+        const isConn = (id, port) => this._hasConnectionTo(id, port);
+        for (const m of this.modules.values()) {
+          m._pollSwitches?.(cb, isConn);
+        }
+      }
+      this._pollRaf = requestAnimationFrame(tick);
+    };
+    this._pollRaf = requestAnimationFrame(tick);
+  }
+
+  _hasConnectionTo(toId, toPort) {
+    for (const c of this.connections.values()) {
+      if (c.toId === toId && c.toPort === toPort) return true;
+    }
+    return false;
   }
 
   // ---- Lifecycle ----
@@ -90,6 +124,8 @@ export class GraphEngine {
 
   dispose() {
     if (!this.ctx) return;
+    if (this._pollRaf) { cancelAnimationFrame(this._pollRaf); this._pollRaf = 0; }
+    this._onSwitchChange = null;
     for (const c of this.connections.keys()) this.removeConnection(c);
     for (const id of this.modules.keys()) this.removeModule(id);
     try { this.ctx.close(); } catch {}

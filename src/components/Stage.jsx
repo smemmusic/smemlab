@@ -80,11 +80,11 @@ export function Stage() {
 
   return (
     <div ref={stageRef} className={"stage" + (freeMode ? " free-mode" : "")} onClick={onStageClick}>
-      <Rack />
-      <FreeRack />
-      {/* Legacy decorative gate cable owns the chapter-mode story. In free
-          mode the unified Wires overlay takes over rendering. */}
+      {/* Chapter mode: fixed Rack with the legacy decorative gate wire.
+          Free mode: unified canvas where every module is positioned + draggable. */}
+      {!freeMode && <Rack />}
       {!freeMode && <GateWire containerRef={stageRef} />}
+      <FreeRack />
       {freeMode && <Wires containerRef={stageRef} />}
       {freeMode && <Palette />}
     </div>

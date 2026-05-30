@@ -133,6 +133,9 @@ export class OscillatorModule extends AudioModule {
       return;
     }
     this._makeCvInput("freq", 4800, this.node.detune);
+    // Wave-type switch input — quantises CV to one of the discrete waveforms.
+    // Set up once here (idempotent: _makeSwitchInput resets the same Map entry).
+    this._makeSwitchInput("type", ["sine", "sawtooth", "square", "triangle", "noise"], 1);
   }
 
   _buildSource(type) {

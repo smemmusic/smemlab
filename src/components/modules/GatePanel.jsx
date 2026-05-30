@@ -40,10 +40,10 @@ export function GatePanel() {
     markEnvStart();
   }
 
-  // Spacebar only on the canonical instance — multiple free gates can't all
-  // own the spacebar.
+  // Spacebar fires every Gate instance — holding space triggers every wired
+  // destination simultaneously. If you want exclusive control, only add one
+  // Gate module.
   useEffect(() => {
-    if (!isCanonical) return;
     function typingTarget(t) {
       const tag = t?.tagName?.toLowerCase();
       return tag === "input" || tag === "textarea" || t?.isContentEditable;
@@ -73,7 +73,7 @@ export function GatePanel() {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isCanonical]);
+  }, []);
 
   function press(e)   { e.preventDefault(); open(); }
   function release(e) { e.preventDefault(); close(); }

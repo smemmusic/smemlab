@@ -87,11 +87,12 @@ export function KeyboardPanel() {
     }
   }
 
-  // Computer keyboard: register listeners once. Latest octave read via ref.
-  // Only canonical instance grabs window keys (multiple free keyboards can't
-  // share AWSEDFTGYHUJK).
+  // Computer keyboard: register listeners once per Keyboard instance. If the
+  // user has multiple Keyboard modules mounted, every instance responds to
+  // the same key press — each one emits pitch + gate to its own wired
+  // destinations. Add exclusive-focus logic later if shared listening proves
+  // surprising.
   useEffect(() => {
-    if (!isCanonical) return;
     function isTypingTarget(t) {
       const tag = t?.tagName?.toLowerCase();
       return tag === "input" || tag === "textarea" || t?.isContentEditable;
@@ -124,7 +125,7 @@ export function KeyboardPanel() {
       heldRef.current = [];
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isCanonical, setOctave]);
+  }, [setOctave]);
 
   function mDown(midi)  { return (e) => { e.preventDefault(); pressMidi(midi); }; }
   function mUp(midi)    { return ()  => { releaseMidi(midi); }; }

@@ -96,17 +96,48 @@ export const useSynthStore = create(
       // Adds an arbitrary module with the given type and params. Returns the
       // new id. Free-mode UI calls this with no id; presets/chapters can pass
       // a stable id (e.g. CANONICAL_IDS.lfo) to use the reserved slot.
-      addModuleInstance: (type, params = {}, fixedId = null) => {
+      addModuleInstance: (type, params = {}, fixedId = null, position = null) => {
         const id = fixedId || newId();
-        const mod = { id, type, params: { ...params } };
+        // Auto-place free-mode instances (canonical ids start with "_" and
+        // don't need positions — they render in the fixed chapter Rack).
+        let pos = position;
+        if (!pos && !id.startsWith("_")) {
+          const existing = get().modules.filter((m) => !m.id.startsWith("_") && m.position);
+          // Cascade new modules diagonally so they don't pile up on the same spot.
+          pos = { x: 20 + (existing.length % 6) * 250, y: 20 + Math.floor(existing.length / 6) * 240 };
+        }
+        const mod = { id, type, params: { ...params }, ...(pos ? { position: pos } : {}) };
         set((s) => ({ modules: upsertModule(s.modules, mod) }));
         return id;
       },
-      removeModuleInstance: (id) => set((s) => ({
-        modules: removeModuleById(s.modules, id),
-        connections: removeConnectionsTouching(s.connections, id),
-        ui: { ...s.ui, selectedConnectionId: null, armedSource: null },
+      // Move a module on the free-mode canvas. Clamped to non-negative coords.
+      setModulePosition: (id, x, y) => set((s) => ({
+        modules: s.modules.map((m) =>
+          m.id === id ? { ...m, position: { x: Math.max(0, x), y: Math.max(0, y) } } : m
+        ),
       })),
+      removeModuleInstance: (id) => set((s) => {
+        // If the module being removed is a canonical chapter-slot instance,
+        // also flip its block flag so chapter mode reflects the deletion
+        // (the chapter Rack reads from blocks; without this it would try to
+        // render a panel for a non-existent module).
+        const canonicalToBlock = {
+          [CANONICAL_IDS.filter]:   "filter",
+          [CANONICAL_IDS.amp]:      "amp",
+          [CANONICAL_IDS.env]:      "env",
+          [CANONICAL_IDS.lfo]:      "lfo",
+          [CANONICAL_IDS.keyboard]: "keyboard",
+          [CANONICAL_IDS.gate]:     "gate",
+        };
+        const blockKey = canonicalToBlock[id];
+        const blocks = blockKey ? { ...s.blocks, [blockKey]: false } : s.blocks;
+        return {
+          modules: removeModuleById(s.modules, id),
+          connections: removeConnectionsTouching(s.connections, id),
+          blocks,
+          ui: { ...s.ui, selectedConnectionId: null, armedSource: null },
+        };
+      }),
       // Set a single param on an instance. Free-mode panels (step 5) use this;
       // legacy setters below also call it under the hood.
       setModuleParam: (id, key, value) => set((s) => ({
@@ -324,7 +355,7 @@ export const useSynthStore = create(
     }),
     {
       name: "smem-v1",
-      version: 10,
+      version: 11,
       partialize: (s) => ({
         // Canonical graph
         modules: s.modules,
@@ -404,6 +435,18 @@ export const useSynthStore = create(
           persisted.modules = modules;
           persisted.connections = connections;
           if (cfg.blocks.keyboard) persisted.osc = cfg.osc;
+        }
+        // ---- v11: free modules now have absolute positions on the canvas.
+        // Backfill positions for any free-mode instances saved before this
+        // change so they don't render at (0,0) on top of each other.
+        if (version < 11 && Array.isArray(persisted.modules)) {
+          let i = 0;
+          persisted.modules = persisted.modules.map((m) => {
+            if (m.id.startsWith("_") || m.position) return m;
+            const pos = { x: 20 + (i % 6) * 250, y: 20 + Math.floor(i / 6) * 240 };
+            i += 1;
+            return { ...m, position: pos };
+          });
         }
         return persisted;
       },

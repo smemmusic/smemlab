@@ -54,6 +54,16 @@ export function useAudioEngineBridge() {
     const get  = useSynthStore.getState;
     const graph = engine.getGraph();
 
+    // Switch-CV quantisation: when a wired CV source crosses a quantisation
+    // boundary on a discrete switch input (osc.type, filter.mode, lfo.shape),
+    // the engine fires this callback. We forward through setModuleParam so
+    // the store update flows back through reconcile() to actually apply the
+    // new value on the audio side, and panels re-render with the new value.
+    const setModuleParam = useSynthStore.getState().setModuleParam;
+    graph.setSwitchChangeHandler((moduleId, switchName, value) => {
+      setModuleParam(moduleId, switchName, value);
+    });
+
     // Bridge memory: the last-pushed params per module id. Only deltas hit the
     // engine, so live values written outside the store (keyboard pitch via
     // facade.setOscFreqLive) survive unrelated store updates.
