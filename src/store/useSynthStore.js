@@ -63,6 +63,7 @@ export const useSynthStore = create(
         freeMode: false,
         armedSource: null,            // { moduleId, portName } when a user has clicked an output port
         selectedConnectionId: null,
+        focusedModuleSlot: null,      // module slot name ("oscillator", "filter"...) when a module placard is shown in the narrator
       },
 
       // ===== Legacy mirror (kept so existing panels can read s.osc.type etc.) =====
@@ -165,6 +166,8 @@ export const useSynthStore = create(
       clearArmedSource:   () => set((s) => ({ ui: { ...s.ui, armedSource: null } })),
       selectConnection:   (id) => set((s) => ({ ui: { ...s.ui, selectedConnectionId: id } })),
       clearSelection:     () => set((s) => ({ ui: { ...s.ui, selectedConnectionId: null } })),
+      focusModule:        (slot) => set((s) => ({ ui: { ...s.ui, focusedModuleSlot: slot } })),
+      clearFocus:         () => set((s) => ({ ui: { ...s.ui, focusedModuleSlot: null } })),
 
       // ---- Legacy param actions (dual-write: legacy slot + canonical module) ----
       setOscType: (type) => set((s) => ({

@@ -20,26 +20,30 @@ export function Stage() {
   const stageRef = useRef(null);
   const freeMode = useSynthStore((s) => s.ui.freeMode);
   const armedSource      = useSynthStore((s) => s.ui.armedSource);
+  const focusedSlot      = useSynthStore((s) => s.ui.focusedModuleSlot);
   const clearArmedSource = useSynthStore((s) => s.clearArmedSource);
   const clearSelection   = useSynthStore((s) => s.clearSelection);
+  const clearFocus       = useSynthStore((s) => s.clearFocus);
 
-  // Esc clears any armed source mid-patch.
+  // Esc clears any armed source mid-patch, then any module focus, then selection.
   useEffect(() => {
     function onKey(e) {
       if (e.key === "Escape") {
         if (armedSource) clearArmedSource();
+        else if (focusedSlot) clearFocus();
         else clearSelection();
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [armedSource, clearArmedSource, clearSelection]);
+  }, [armedSource, focusedSlot, clearArmedSource, clearSelection, clearFocus]);
 
-  // Click on empty stage cancels arm + selection.
+  // Click on empty stage cancels arm + selection + focus.
   function onStageClick(e) {
     if (e.target === stageRef.current) {
       if (armedSource) clearArmedSource();
       clearSelection();
+      clearFocus();
     }
   }
 
