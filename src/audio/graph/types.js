@@ -95,15 +95,18 @@ export function newId() {
 // Returns the unified port spec for a module class (explicit PORTS plus
 // CV inputs auto-generated from CONTROLS). Mirrors AudioModule.listPorts()
 // but works from the class, not an instance — used by the UI to render
-// port markers before the engine has built anything.
+// port markers before the engine has built anything. Controls with
+// `cvInput: false` skip the auto-generated port (kept in sync with base).
 export function listStaticPorts(Cls) {
-  const cvInputs = (Cls.CONTROLS || []).map((c) => ({
-    name: c.name,
-    dir:  PORT_DIR.IN,
-    type: PORT_TYPE.CV,
-    polarity: c.cvPolarity,
-    auto: true,
-  }));
+  const cvInputs = (Cls.CONTROLS || [])
+    .filter((c) => c.cvInput !== false)
+    .map((c) => ({
+      name: c.name,
+      dir:  PORT_DIR.IN,
+      type: PORT_TYPE.CV,
+      polarity: c.cvPolarity,
+      auto: true,
+    }));
   return [...(Cls.PORTS || []), ...cvInputs];
 }
 

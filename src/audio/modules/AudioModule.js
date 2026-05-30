@@ -57,15 +57,19 @@ export class AudioModule {
 
   // Combined view: explicit static PORTS + auto-generated CV inputs from CONTROLS.
   // The GraphEngine and the UI both query this to know what to render/wire.
+  // Controls with `cvInput: false` skip the auto-generated port (used by
+  // dense modules like the CV mixer where every knob would clutter the layout).
   listPorts() {
     const ctor = this.constructor;
-    const cvInputs = (ctor.CONTROLS || []).map((c) => ({
-      name: c.name,
-      dir:  PORT_DIR.IN,
-      type: PORT_TYPE.CV,
-      polarity: c.cvPolarity,
-      auto: true,   // hint: came from CONTROLS, not from PORTS
-    }));
+    const cvInputs = (ctor.CONTROLS || [])
+      .filter((c) => c.cvInput !== false)
+      .map((c) => ({
+        name: c.name,
+        dir:  PORT_DIR.IN,
+        type: PORT_TYPE.CV,
+        polarity: c.cvPolarity,
+        auto: true,
+      }));
     return [...(ctor.PORTS || []), ...cvInputs];
   }
 

@@ -22,6 +22,7 @@ import { OutputModule }     from "../modules/OutputModule.js";
 import { GateModule }       from "../modules/GateModule.js";
 import { KeyboardModule }   from "../modules/KeyboardModule.js";
 import { InverterModule }   from "../modules/InverterModule.js";
+import { CvMixerModule }    from "../modules/CvMixerModule.js";
 import {
   PORT_TYPE, PORT_DIR, newId, portsCompatible,
 } from "./types.js";
@@ -65,6 +66,14 @@ const MODULE_REGISTRY = {
   inverter: {
     Cls: InverterModule,
     defaults: () => ({}),
+  },
+  cvmixer: {
+    Cls: CvMixerModule,
+    defaults: () => ({
+      g1: 0, g2: 0, g3: 0, g4: 0,
+      p1: false, p2: false, p3: false, p4: false,
+      master: 0,
+    }),
   },
 };
 

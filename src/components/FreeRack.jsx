@@ -9,6 +9,7 @@ import { KeyboardPanel } from "./modules/KeyboardPanel.jsx";
 import { GatePanel } from "./modules/GatePanel.jsx";
 import { OutputPanel } from "./modules/OutputPanel.jsx";
 import { InverterPanel } from "./modules/InverterPanel.jsx";
+import { CvMixerPanel } from "./modules/CvMixerPanel.jsx";
 
 // In free mode this is the ONLY rack — every module (canonical + free) renders
 // on the absolute-positioned canvas. The chapter Rack is hidden in free mode.
@@ -25,6 +26,7 @@ const PANEL_BY_TYPE = {
   gate:       GatePanel,
   output:     OutputPanel,
   inverter:   InverterPanel,
+  cvmixer:    CvMixerPanel,
 };
 
 const TYPE_TO_SLOT = {
@@ -37,6 +39,7 @@ const TYPE_TO_SLOT = {
   gate:       "gate",
   output:     "output",
   inverter:   "inverter",
+  cvmixer:    "cvmixer",
 };
 
 export function FreeRack() {

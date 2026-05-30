@@ -705,6 +705,60 @@ body.module-dragging * { cursor: grabbing !important; }
   color: var(--muted-dim);
 }
 
+/* ---- CV Mixer body ---- */
+.cvmix-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 10px;
+  gap: 18px;
+}
+.cvmix-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-around;
+  width: 100%;
+  gap: 6px;
+}
+.cvmix-strip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.cvmix-phase {
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--panel-lo);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  width: 26px;
+  height: 22px;
+  cursor: pointer;
+  transition: .14s var(--ease);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.cvmix-phase:hover { border-color: var(--muted); }
+.cvmix-phase.on {
+  color: var(--bg);
+  background: var(--control);
+  border-color: var(--control);
+  box-shadow: 0 0 8px var(--control-glow);
+}
+.cvmix-master {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+}
+
 .palette {
   position: absolute;
   right: 18px;

@@ -9,6 +9,7 @@ export const MODULE_META = {
   keyboard:   { kind: "control", title: "Keyboard" },
   gate:       { kind: "control", title: "Gate" },
   inverter:   { kind: "control", title: "Inverter" },
+  cvmixer:    { kind: "control", title: "CV Mixer" },
   output:     { kind: "audio",   title: "Output" }
 };
 
