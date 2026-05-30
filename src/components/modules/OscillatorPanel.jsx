@@ -53,9 +53,7 @@ export function OscillatorPanel() {
 
   return (
     <>
-      {/* Oscilloscope only reads from the canonical osc tap today; free-mode
-          oscillators show controls but share the visualiser slot. */}
-      {isCanonical && <Oscilloscope tag="Oscilloscope · raw output" analyserName="osc" />}
+      <Oscilloscope tag="Oscilloscope · raw output" instanceId={id} />
       <Selector options={SHAPES} value={params.type} onChange={setType} />
       <div className="ctrl-grid one">{pitchControl}</div>
     </>

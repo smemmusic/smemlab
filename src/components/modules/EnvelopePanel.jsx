@@ -15,7 +15,6 @@ export function EnvelopePanel() {
 
   const params   = useSynthStore((s) => s.modules.find((m) => m.id === id)?.params) || DEFAULT_PARAMS;
   const playing  = useSynthStore((s) => s.playing);
-  const envPhase = useSynthStore((s) => s.envPhase);
   const setEnv   = useSynthStore((s) => s.setEnv);
   const setModuleParam = useSynthStore((s) => s.setModuleParam);
 
@@ -25,15 +24,18 @@ export function EnvelopePanel() {
   }
 
   const engine = getEngine();
+  // Phase + start come from the engine module itself (updated by onGate),
+  // not the store — so free-mode envelope panels work the same as canonical
+  // without needing the legacy setEnvPhase/markEnvStart bookkeeping.
   const data = {
     env: params, playing,
-    phase: envPhase,
-    get start() { return engine.getEnvStart(); }
+    get phase() { return engine.getInstanceEnvPhase(id); },
+    get start() { return engine.getInstanceEnvStart(id); }
   };
 
   return (
     <>
-      {isCanonical && <Canvas tag="Envelope · ADSR (dB)" draw={drawEnv} data={data} />}
+      <Canvas tag="Envelope · ADSR (dB)" draw={drawEnv} data={data} />
       <div className="ctrl-grid">
         <Knob label="Attack"  value={params.a}         min={0.005} max={2} step={0.005} unit="s"  onChange={(v) => applyPartial({ a: v })} />
         <Knob label="Decay"   value={params.d}         min={0.005} max={2} step={0.005} unit="s"  onChange={(v) => applyPartial({ d: v })} />

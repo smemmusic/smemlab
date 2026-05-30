@@ -1,4 +1,5 @@
 import { useSynthStore } from "../../store/useSynthStore.js";
+import { getEngine } from "../../audio/engineSingleton.js";
 import { Knob } from "../controls/Knob.jsx";
 import { Toggle } from "../controls/Toggle.jsx";
 import { Canvas } from "../viz/Canvas.jsx";
@@ -31,12 +32,30 @@ export function FilterPanel() {
   const applyQ      = isCanonical ? setQ      : (v) => setModuleParam(id, "q", v);
   const applyMode   = isCanonical ? setMode   : (v) => setModuleParam(id, "mode", v);
 
+  // Live cutoff/q getters reflect the post-CV-mix values: intrinsic AudioParam
+  // (driven by the knob) plus the tapped CV contribution. The Canvas's rAF
+  // loop reads via the getters every frame, so the response curve animates
+  // with any wired LFO / env / S&H modulation.
+  const engine = getEngine();
   const data = {
-    cutoff: params.cutoff,
-    q:      params.q,
+    get cutoff() {
+      const m = engine.getGraph().getModule(id);
+      if (!m) return params.cutoff;
+      const intrinsic = m.node?.frequency?.value ?? params.cutoff;
+      const cv = m.getCvLevel?.("cutoff") ?? 0;
+      return Math.max(20, intrinsic + cv);
+    },
+    get q() {
+      const m = engine.getGraph().getModule(id);
+      if (!m) return params.q;
+      const intrinsic = m.node?.Q?.value ?? params.q;
+      const cv = m.getCvLevel?.("resonance") ?? 0;
+      return Math.max(0.1, intrinsic + cv);
+    },
     mode:   params.mode,
-    // LFO overlay on frequency response only shown on the canonical filter
-    // (where the chapter-mode LFO → cutoff wiring lives).
+    // Canonical-only LFO overlay stays as a static modulation-range reference
+    // (the live curve already shows the instantaneous post-CV cutoff, but the
+    // overlay helps show "how wide the sweep is" at a glance).
     lfo:    isCanonical && lfoOn ? lfo : null,
     playing
   };

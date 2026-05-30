@@ -97,12 +97,37 @@ export class AudioModule {
   // further processing). Sources connect into the scaler's input; multiple
   // sources sum at the GainNode automatically. Returns the scaler so the
   // subclass can hold a reference (rarely needed).
-  _makeCvInput(name, cvRange, target) {
+  //
+  // Pass `{ tap: true }` to also fan the scaler output into a dedicated
+  // AnalyserNode, exposing the live post-mix CV contribution via getCvLevel().
+  // Use for inputs whose effect should be reflected in panel visualisers
+  // (amp.level → meter, filter.cutoff → response curve, etc.).
+  _makeCvInput(name, cvRange, target, { tap = false } = {}) {
     const scaler = this.ctx.createGain();
     scaler.gain.value = cvRange;
     if (target) scaler.connect(target);
-    this._cvPorts.in[name] = { scaler, range: cvRange, target };
+    let analyser = null;
+    if (tap) {
+      analyser = this.ctx.createAnalyser();
+      analyser.fftSize = 256;
+      scaler.connect(analyser);
+    }
+    this._cvPorts.in[name] = { scaler, range: cvRange, target, analyser };
     return scaler;
+  }
+
+  // Returns the current post-mix CV value at a tapped input (mean of the
+  // analyser's last frame). Returns 0 for inputs that weren't created with
+  // `tap: true`, or for unknown input names. Cheap enough to poll at
+  // requestAnimationFrame cadence.
+  getCvLevel(name) {
+    const entry = this._cvPorts.in[name];
+    if (!entry?.analyser) return 0;
+    if (!entry._tapBuf) entry._tapBuf = new Float32Array(entry.analyser.fftSize);
+    entry.analyser.getFloatTimeDomainData(entry._tapBuf);
+    let sum = 0;
+    for (let i = 0; i < entry._tapBuf.length; i++) sum += entry._tapBuf[i];
+    return sum / entry._tapBuf.length;
   }
 
   // ---- Lifecycle ----

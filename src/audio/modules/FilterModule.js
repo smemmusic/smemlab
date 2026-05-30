@@ -40,11 +40,12 @@ export class FilterModule extends AudioModule {
     this._registerAudioOut("output", this.node);
     // CV in "cutoff" — new scaler that *also* lands on node.frequency. Web
     // Audio sums multiple sources at the AudioParam, so coexisting with the
-    // legacy cutoffMod scaler is fine — neither sees the other.
-    this._makeCvInput("cutoff",    CUTOFF_MOD_RANGE_HZ, this.node.frequency);
+    // legacy cutoffMod scaler is fine — neither sees the other. Tapped so the
+    // panel response curve can show the post-CV cutoff.
+    this._makeCvInput("cutoff",    CUTOFF_MOD_RANGE_HZ, this.node.frequency, { tap: true });
     // CV in "resonance" — unipolar 0..1 swings Q by ±12 (i.e. roughly the
-    // full BiquadFilter Q range).
-    this._makeCvInput("resonance", 12, this.node.Q);
+    // full BiquadFilter Q range). Tapped for the same reason.
+    this._makeCvInput("resonance", 12, this.node.Q, { tap: true });
     // CV in "mode" — dangling scaler. Switch quantization is deferred; the
     // port exists so connections succeed.
     this._makeCvInput("mode", 1, null);

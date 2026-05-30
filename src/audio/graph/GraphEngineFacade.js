@@ -91,10 +91,25 @@ export class GraphEngineFacade {
     if (name === "out") return this.graph.getModule(CANONICAL_IDS.output)?.getAnalyser?.() || null;
     return null;
   }
+
+  // Per-instance analyser lookup for free-mode visualisers. Oscillators
+  // expose `.tap`, outputs expose `getAnalyser()`. Anything else returns null.
+  getInstanceAnalyser(instanceId) {
+    const m = this.graph.getModule(instanceId);
+    if (!m) return null;
+    return m.tap || m.getAnalyser?.() || null;
+  }
   getVcaValue()   { return this.graph.getModule(CANONICAL_IDS.env)?.getValue?.() ?? 1; }
   getEnvPhase()   { return this.graph.getModule(CANONICAL_IDS.env)?.getPhase?.() ?? "idle"; }
   getEnvStart()   { return this.graph.getModule(CANONICAL_IDS.env)?.getStart?.() ?? 0; }
   getFilterNode() { return this.graph.getModule(CANONICAL_IDS.filter)?.getNode?.() ?? null; }
+
+  // Per-instance env state for free-mode envelope panels. Reads directly off
+  // the EnvelopeModule (which tracks phase + start internally via onGate),
+  // so this works whether or not the canonical store-level envPhase is set.
+  getInstanceEnvValue(instanceId) { return this.graph.getModule(instanceId)?.getValue?.() ?? 1; }
+  getInstanceEnvPhase(instanceId) { return this.graph.getModule(instanceId)?.getPhase?.() ?? "idle"; }
+  getInstanceEnvStart(instanceId) { return this.graph.getModule(instanceId)?.getStart?.() ?? 0; }
 
   // Accessor for the bridge: drive the underlying GraphEngine directly.
   getGraph() { return this.graph; }

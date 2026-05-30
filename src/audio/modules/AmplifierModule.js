@@ -28,10 +28,9 @@ export class AmplifierModule extends AudioModule {
     // ---- typed-port registration ----
     this._registerAudioIn("input",   this.node);
     this._registerAudioOut("output", this.node);
-    // CV in "level" — unipolar 0..1 maps to ±48 dB-worth of *linear* gain
-    // modulation. Note: gain modulation is multiplicative on the audio path,
-    // not dB-additive — accurate dB-CV would need a curve, deferred.
-    this._makeCvInput("level", 1, this.node.gain);
+    // CV in "level" — unipolar 0..1 sums into amp.gain (linear). Tapped so
+    // the panel meter can read post-CV-mix gain.
+    this._makeCvInput("level", 1, this.node.gain, { tap: true });
   }
   get input()  { return this.node; }
   get output() { return this.node; }
