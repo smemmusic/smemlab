@@ -1,13 +1,11 @@
 import { GraphEngineFacade } from "./graph/GraphEngineFacade.js";
 
-// Step 4: getEngine() returns the GraphEngineFacade — a thin wrapper around
-// the typed-port GraphEngine that exposes the synchronous methods panels and
-// Transport still call (start/stop, noteOn/noteOff, setOscFreqLive, the
-// getAnalyser/getVcaValue introspection hooks).
-//
-// Module + connection lifecycle is owned by the bridge (useAudioEngine.js),
-// which subscribes to the store's `modules` and `connections` arrays and
-// diffs them against the live GraphEngine state.
+// getEngine() returns the GraphEngineFacade — a thin wrapper around the
+// typed-port GraphEngine that exposes the synchronous methods panels +
+// Transport call directly (start/stop, emitGate, playMidi, the visualiser
+// hooks). Module + connection lifecycle is owned by the bridge
+// (useAudioEngine.js), which diffs the store's modules + connections arrays
+// against the live GraphEngine state.
 let _engine = null;
 
 export function getEngine() {
@@ -15,9 +13,6 @@ export function getEngine() {
   return _engine;
 }
 
-// Direct access to the same GraphEngine the facade wraps. Free-mode UI
-// (step 5) drives this through the store, but the smoke-test helper below
-// calls it directly to verify the engine in isolation.
 export function getGraphEngine() {
   return getEngine().getGraph();
 }

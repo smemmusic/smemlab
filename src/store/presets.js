@@ -90,3 +90,11 @@ export function makePreset(name, config) {
     config: JSON.parse(JSON.stringify(config))
   };
 }
+
+// Detect the legacy {blocks, osc, flt, amp, env, lfo, keyboard} preset shape
+// vs. the new {modules, connections} shape. Built-in presets stay in legacy
+// shape for readability; the store converts on load via buildCanonicalGraph.
+// User-saved presets use the new shape from v12 onwards.
+export function isLegacyConfig(cfg) {
+  return cfg && (cfg.blocks != null || cfg.osc != null) && !Array.isArray(cfg.modules);
+}

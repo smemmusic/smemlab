@@ -1,36 +1,14 @@
 import { useEffect, useRef, useState, useLayoutEffect } from "react";
 import { useSynthStore } from "../store/useSynthStore.js";
 import { PORT_TYPE, listStaticPorts } from "../audio/graph/types.js";
-import { OscillatorModule } from "../audio/modules/OscillatorModule.js";
-import { FilterModule } from "../audio/modules/FilterModule.js";
-import { AmplifierModule } from "../audio/modules/AmplifierModule.js";
-import { EnvelopeModule } from "../audio/modules/EnvelopeModule.js";
-import { LfoModule } from "../audio/modules/LfoModule.js";
-import { OutputModule } from "../audio/modules/OutputModule.js";
-import { GateModule } from "../audio/modules/GateModule.js";
-import { KeyboardModule } from "../audio/modules/KeyboardModule.js";
-import { InverterModule } from "../audio/modules/InverterModule.js";
-import { CvMixerModule } from "../audio/modules/CvMixerModule.js";
-
-const TYPE_TO_CLASS = {
-  oscillator: OscillatorModule,
-  filter:     FilterModule,
-  amp:        AmplifierModule,
-  env:        EnvelopeModule,
-  lfo:        LfoModule,
-  output:     OutputModule,
-  gate:       GateModule,
-  keyboard:   KeyboardModule,
-  inverter:   InverterModule,
-  cvmixer:    CvMixerModule,
-};
+import { byType } from "../modules/_registry.js";
 
 function lookupPortType(modules, fromId, fromPort) {
   const m = modules.find((x) => x.id === fromId);
   if (!m) return null;
-  const Cls = TYPE_TO_CLASS[m.type];
-  if (!Cls) return null;
-  const port = listStaticPorts(Cls).find((p) => p.name === fromPort);
+  const manifest = byType(m.type);
+  if (!manifest) return null;
+  const port = listStaticPorts(manifest.Cls).find((p) => p.name === fromPort);
   return port?.type || null;
 }
 

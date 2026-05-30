@@ -1,36 +1,30 @@
 import { useSynthStore } from "../store/useSynthStore.js";
 import { TRANSPORT, HINTS } from "../content/ui.js";
 import { getEngine } from "../audio/engineSingleton.js";
+import { isCanonicalPresent } from "../modules/_registry.js";
+import { CANONICAL_IDS } from "../store/graphBuilder.js";
 
 export function Transport() {
   const playing = useSynthStore((s) => s.playing);
   const vol     = useSynthStore((s) => s.vol);
-  const hasEnv  = useSynthStore((s) => s.blocks.env);
+  const hasEnv  = useSynthStore((s) => isCanonicalPresent(CANONICAL_IDS.env, s.modules));
 
-  const setVol      = useSynthStore((s) => s.setVol);
-  const setPlay     = useSynthStore((s) => s.setPlaying);
-  const clearGate   = useSynthStore((s) => s.clearGate);
-  const setEnvPhase = useSynthStore((s) => s.setEnvPhase);
-
-  function snapshot() {
-    const s = useSynthStore.getState();
-    return { blocks: s.blocks, osc: s.osc, flt: s.flt, amp: s.amp, env: s.env, lfo: s.lfo, vol: s.vol };
-  }
+  const setVol  = useSynthStore((s) => s.setVol);
+  const setPlay = useSynthStore((s) => s.setPlaying);
 
   function togglePower() {
     const engine = getEngine();
     if (playing) {
       engine.stop();
       setPlay(false);
-      clearGate();
-      setEnvPhase("idle");
     } else {
-      engine.start(snapshot());
+      // Engine pulls modules + connections from the store via the bridge —
+      // no snapshot config needed.
+      engine.start();
       setPlay(true);
     }
   }
 
-  // Hint reflects synth state — what's available right now.
   const hint = hasEnv ? HINTS.withEnv : playing ? HINTS.noEnv : HINTS.beforePower;
 
   return (

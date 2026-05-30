@@ -15,9 +15,7 @@ export function Landing() {
 
   // The Power On button counts as the user gesture needed to create the AudioContext.
   function begin() {
-    const s = useSynthStore.getState();
-    const snapshot = { blocks: s.blocks, osc: s.osc, flt: s.flt, amp: s.amp, env: s.env, lfo: s.lfo, vol: s.vol };
-    try { getEngine().start(snapshot); setPlaying(true); } catch {}
+    try { getEngine().start(); setPlaying(true); } catch {}
     setStarted(true);
   }
 

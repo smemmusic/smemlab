@@ -1,47 +1,10 @@
 import { useSynthStore } from "../store/useSynthStore.js";
 import { Module } from "./Module.jsx";
-import { OscillatorPanel } from "./modules/OscillatorPanel.jsx";
-import { FilterPanel } from "./modules/FilterPanel.jsx";
-import { AmplifierPanel } from "./modules/AmplifierPanel.jsx";
-import { EnvelopePanel } from "./modules/EnvelopePanel.jsx";
-import { LfoPanel } from "./modules/LfoPanel.jsx";
-import { KeyboardPanel } from "./modules/KeyboardPanel.jsx";
-import { GatePanel } from "./modules/GatePanel.jsx";
-import { OutputPanel } from "./modules/OutputPanel.jsx";
-import { InverterPanel } from "./modules/InverterPanel.jsx";
-import { CvMixerPanel } from "./modules/CvMixerPanel.jsx";
+import { byType } from "../modules/_registry.js";
 
-// In free mode this is the ONLY rack — every module (canonical + free) renders
-// on the absolute-positioned canvas. The chapter Rack is hidden in free mode.
-// In chapter mode this component renders nothing (chapter Rack handles canonical
-// modules; free instances aren't relevant outside free mode).
-
-const PANEL_BY_TYPE = {
-  oscillator: OscillatorPanel,
-  filter:     FilterPanel,
-  amp:        AmplifierPanel,
-  env:        EnvelopePanel,
-  lfo:        LfoPanel,
-  keyboard:   KeyboardPanel,
-  gate:       GatePanel,
-  output:     OutputPanel,
-  inverter:   InverterPanel,
-  cvmixer:    CvMixerPanel,
-};
-
-const TYPE_TO_SLOT = {
-  oscillator: "oscillator",
-  filter:     "filter",
-  amp:        "amp",
-  env:        "env",
-  lfo:        "lfo",
-  keyboard:   "keyboard",
-  gate:       "gate",
-  output:     "output",
-  inverter:   "inverter",
-  cvmixer:    "cvmixer",
-};
-
+// In free mode this is the only rack — every module (canonical + free) renders
+// on the absolute-positioned canvas. The Panel for each module comes from its
+// manifest, so no per-type imports live here.
 export function FreeRack() {
   const modules  = useSynthStore((s) => s.modules);
   const freeMode = useSynthStore((s) => s.ui.freeMode);
@@ -52,11 +15,11 @@ export function FreeRack() {
     <div className="free-rack free-mode-canvas">
       <div className="free-rack-canvas">
         {modules.map((m) => {
-          const Panel = PANEL_BY_TYPE[m.type];
-          const slot = TYPE_TO_SLOT[m.type];
-          if (!Panel || !slot) return null;
+          const manifest = byType(m.type);
+          if (!manifest) return null;
+          const Panel = manifest.Panel;
           return (
-            <Module key={m.id} id={slot} instanceId={m.id}>
+            <Module key={m.id} type={m.type} instanceId={m.id}>
               <Panel />
             </Module>
           );

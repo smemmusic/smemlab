@@ -1,30 +1,34 @@
 import { useSynthStore } from "../store/useSynthStore.js";
 import { CHAPTERS } from "../content/narrator.js";
-import { MODULE_META, KIND_LABEL } from "../content/moduleMeta.js";
-import { PLACARDS } from "../content/placards.js";
 import { NARRATOR_UI } from "../content/ui.js";
+import { byType, byBlocksFlag, isCanonicalPresent } from "../modules/_registry.js";
+
+const KIND_LABEL = {
+  audio:   "Audio · Module",
+  control: "Control · Module",
+};
 
 export function Narrator() {
   const chapter      = useSynthStore((s) => s.chapter);
-  const blocks       = useSynthStore((s) => s.blocks);
-  const addBlock     = useSynthStore((s) => s.addBlock);
+  const modules      = useSynthStore((s) => s.modules);
+  const addCanonical = useSynthStore((s) => s.addCanonicalModule);
   const nextChapter  = useSynthStore((s) => s.nextChapter);
-  const focusedSlot  = useSynthStore((s) => s.ui.focusedModuleSlot);
+  const focusedType  = useSynthStore((s) => s.ui.focusedModuleSlot);
   const clearFocus   = useSynthStore((s) => s.clearFocus);
 
-  // When a module is focused (user clicked on its body), the narrator panel
-  // shows that module's placard + title in place of the chapter content.
-  if (focusedSlot && PLACARDS[focusedSlot]) {
-    const meta = MODULE_META[focusedSlot];
+  // Clicked-module view: replaces chapter content with the module's placard.
+  const focused = focusedType ? byType(focusedType) : null;
+  if (focused) {
+    const kind = focused.Cls.KIND;
     return (
-      <div className={"narrator " + (meta?.kind || "audio")}>
+      <div className={"narrator " + kind}>
         <button className="narrator-back" onClick={clearFocus} title="Back to chapter">← Back</button>
-        <div className={"eyebrow " + meta?.kind}>
+        <div className={"eyebrow " + kind}>
           <span className="rule" />
-          {meta ? KIND_LABEL[meta.kind] : "Module"}
+          {KIND_LABEL[kind]}
         </div>
-        <h2>{meta?.title || focusedSlot}</h2>
-        <p dangerouslySetInnerHTML={{ __html: PLACARDS[focusedSlot] }} />
+        <h2>{focused.meta.title}</h2>
+        <p dangerouslySetInnerHTML={{ __html: focused.placard }} />
       </div>
     );
   }
@@ -36,12 +40,18 @@ export function Narrator() {
 
   function handleNext() {
     if (!upcoming) return;
-    if (upcoming.adds && !blocks[upcoming.adds]) addBlock(upcoming.adds);
+    if (upcoming.adds) {
+      const manifest = byBlocksFlag(upcoming.adds);
+      if (manifest && !isCanonicalPresent(manifest.canonical.id, modules)) {
+        addCanonical(manifest.canonical.id);
+      }
+    }
     nextChapter();
   }
 
-  const label = upcoming?.adds
-    ? `Add ${MODULE_META[upcoming.adds].title} ▸`
+  const upcomingManifest = upcoming?.adds ? byBlocksFlag(upcoming.adds) : null;
+  const label = upcomingManifest
+    ? `Add ${upcomingManifest.meta.title} ▸`
     : NARRATOR_UI.next;
 
   return (
