@@ -13,8 +13,13 @@ import { OutputPanel } from "./modules/OutputPanel.jsx";
 import { CV_LABEL_CUTOFF, CV_LABEL_PITCH } from "../content/ui.js";
 
 export function Rack() {
-  const blocks  = useSynthStore((s) => s.blocks);
-  const playing = useSynthStore((s) => s.playing);
+  const blocks   = useSynthStore((s) => s.blocks);
+  const playing  = useSynthStore((s) => s.playing);
+  const freeMode = useSynthStore((s) => s.ui.freeMode);
+
+  // In free mode, the unified <Wires> overlay renders every connection. The
+  // hardcoded decorative HCable / VCable would visually duplicate them.
+  const showDeco = !freeMode;
 
   return (
     <div className={"rack" + (playing ? " playing" : "")}>
@@ -22,13 +27,13 @@ export function Rack() {
         <Module id="oscillator"><OscillatorPanel /></Module>
         {blocks.keyboard && (
           <>
-            <VCable label={CV_LABEL_PITCH} />
+            {showDeco && <VCable label={CV_LABEL_PITCH} />}
             <Module id="keyboard"><KeyboardPanel /></Module>
           </>
         )}
       </div>
 
-      <HCable />
+      {showDeco && <HCable />}
 
       {blocks.filter && (
         <>
@@ -36,12 +41,12 @@ export function Rack() {
             <Module id="filter"><FilterPanel /></Module>
             {blocks.lfo && (
               <>
-                <VCable label={CV_LABEL_CUTOFF} />
+                {showDeco && <VCable label={CV_LABEL_CUTOFF} />}
                 <Module id="lfo"><LfoPanel /></Module>
               </>
             )}
           </div>
-          <HCable />
+          {showDeco && <HCable />}
         </>
       )}
 
@@ -51,23 +56,19 @@ export function Rack() {
             <Module id="amp"><AmplifierPanel /></Module>
             {blocks.env && (
               <>
-                <VCable />
+                {showDeco && <VCable />}
                 <Module id="env"><EnvelopePanel /></Module>
               </>
             )}
           </div>
-          <HCable />
+          {showDeco && <HCable />}
         </>
       )}
 
       <div className="col">
         <Module id="output"><OutputPanel /></Module>
         {blocks.gate && (
-          <>
-            {/* No VCable here — the wire to the envelope below carries the
-                gate signal across to the envelope's column. */}
-            <Module id="gate"><GatePanel /></Module>
-          </>
+          <Module id="gate"><GatePanel /></Module>
         )}
       </div>
     </div>

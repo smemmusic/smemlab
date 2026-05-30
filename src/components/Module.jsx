@@ -6,6 +6,7 @@ import { GLYPHS } from "../content/glyphs.jsx";
 import { useSynthStore } from "../store/useSynthStore.js";
 import { ModuleInstanceContext } from "./ModuleInstanceContext.js";
 import { CANONICAL_IDS } from "../store/graphBuilder.js";
+import { ModulePorts } from "./ModulePorts.jsx";
 
 // `slotName` is the legacy block name (oscillator/filter/amp/env/lfo/keyboard/gate/output)
 // used to look up meta + glyphs + placard + chapter removal semantics.
@@ -35,6 +36,7 @@ export function Module({ id, instanceId, children }) {
   const meta = MODULE_META[slotName];
   const removeBlock = useSynthStore((s) => s.removeBlock);
   const removeModuleInstance = useSynthStore((s) => s.removeModuleInstance);
+  const freeMode = useSynthStore((s) => s.ui.freeMode);
   const moduleRef = useRef(null);
   const [tip, setTip] = useState(null);
 
@@ -93,6 +95,9 @@ export function Module({ id, instanceId, children }) {
           )}
         </div>
         {children}
+        {freeMode && resolvedInstanceId && (
+          <ModulePorts moduleId={resolvedInstanceId} type={slotName} />
+        )}
       </div>
       {tip && createPortal(
         <div

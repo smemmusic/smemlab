@@ -699,3 +699,65 @@ header {
 }
 .palette-item.audio   .plus { color: var(--audio);   background: rgba(255, 180, 84, 0.12); }
 .palette-item.control .plus { color: var(--control); background: rgba(108, 211, 230, 0.12); }
+
+/* ---- Port markers ---- */
+.module { position: relative; }   /* needed for absolute port positioning */
+
+.ports {
+  position: absolute;
+  display: flex;
+  gap: 6px;
+  z-index: 3;
+  pointer-events: none;   /* container is transparent; individual .port re-enables */
+}
+.ports .port { pointer-events: auto; }
+
+.ports-left   { left: -10px;  top: 50%; transform: translateY(-50%); flex-direction: column; }
+.ports-right  { right: -10px; top: 50%; transform: translateY(-50%); flex-direction: column; }
+.ports-bottom { left: 8px; right: 8px; bottom: -10px; flex-wrap: wrap; justify-content: center; }
+
+.port {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 6px 2px 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: inherit;
+  font-size: 9px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted-dim);
+  cursor: pointer;
+  transition: .14s var(--ease);
+}
+.port:hover { color: var(--ink); border-color: var(--port-color); }
+.port-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--port-color);
+  box-shadow: 0 0 4px var(--port-color);
+}
+.port-label { line-height: 1; }
+.port.armed {
+  border-color: var(--port-color);
+  box-shadow: 0 0 0 1px var(--port-color), 0 0 10px var(--port-color);
+  color: var(--ink);
+}
+.port.candidate {
+  border-color: var(--port-color);
+  color: var(--ink);
+  animation: portPulse 1.4s ease-in-out infinite;
+}
+@keyframes portPulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--port-color); }
+  50%      { box-shadow: 0 0 0 4px transparent; }
+}
+
+/* ---- Unified wires (free mode) ---- */
+.stage.free-mode { cursor: default; }
+.wires { overflow: visible; }
+.wires .wire { transition: opacity .14s var(--ease); }
+.wires .wire:hover path:not([stroke="transparent"]) { opacity: 1; filter: drop-shadow(0 0 4px currentColor); }

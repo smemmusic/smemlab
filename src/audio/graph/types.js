@@ -91,6 +91,22 @@ export function newId() {
   return "id-" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
 
+// ---- Static port lookup ----
+// Returns the unified port spec for a module class (explicit PORTS plus
+// CV inputs auto-generated from CONTROLS). Mirrors AudioModule.listPorts()
+// but works from the class, not an instance — used by the UI to render
+// port markers before the engine has built anything.
+export function listStaticPorts(Cls) {
+  const cvInputs = (Cls.CONTROLS || []).map((c) => ({
+    name: c.name,
+    dir:  PORT_DIR.IN,
+    type: PORT_TYPE.CV,
+    polarity: c.cvPolarity,
+    auto: true,
+  }));
+  return [...(Cls.PORTS || []), ...cvInputs];
+}
+
 // ---- Shape factories (for documentation + tests) ----
 
 export function makeModule({ id, type, params = {} }) {

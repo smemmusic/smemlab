@@ -5,6 +5,8 @@ import { FilterPanel } from "./modules/FilterPanel.jsx";
 import { AmplifierPanel } from "./modules/AmplifierPanel.jsx";
 import { EnvelopePanel } from "./modules/EnvelopePanel.jsx";
 import { LfoPanel } from "./modules/LfoPanel.jsx";
+import { KeyboardPanel } from "./modules/KeyboardPanel.jsx";
+import { GatePanel } from "./modules/GatePanel.jsx";
 
 // Free-mode rack: renders every module whose id is NOT a reserved canonical id
 // (i.e. doesn't start with "_"). Canonical chapter modules stay in the
@@ -16,6 +18,8 @@ const PANEL_BY_TYPE = {
   amp:        AmplifierPanel,
   env:        EnvelopePanel,
   lfo:        LfoPanel,
+  keyboard:   KeyboardPanel,
+  gate:       GatePanel,
 };
 
 // Module-type to legacy slot name used by Module.jsx for meta lookups, glyphs,
@@ -26,6 +30,8 @@ const TYPE_TO_SLOT = {
   amp:        "amp",
   env:        "env",
   lfo:        "lfo",
+  keyboard:   "keyboard",
+  gate:       "gate",
 };
 
 export function FreeRack() {

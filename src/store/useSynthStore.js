@@ -128,7 +128,9 @@ export const useSynthStore = create(
 
       // ---- Free-mode UI actions ----
       setFreeMode:        (freeMode) => set((s) => ({ ui: { ...s.ui, freeMode } })),
-      armSource:          (moduleId, portName) => set((s) => ({ ui: { ...s.ui, armedSource: { moduleId, portName } } })),
+      armSource:          (moduleId, portName, portType) => set((s) => ({
+        ui: { ...s.ui, armedSource: { moduleId, portName, portType } }
+      })),
       clearArmedSource:   () => set((s) => ({ ui: { ...s.ui, armedSource: null } })),
       selectConnection:   (id) => set((s) => ({ ui: { ...s.ui, selectedConnectionId: id } })),
       clearSelection:     () => set((s) => ({ ui: { ...s.ui, selectedConnectionId: null } })),
@@ -182,26 +184,35 @@ export const useSynthStore = create(
       // rebuilding everything on every change.
       addBlock: (id) => set((s) => {
         const blocks = { ...s.blocks, [id]: true };
-        // Cascade: env brings in its Gate trigger module (UI-only).
+        // Cascade: env brings in its Gate trigger module.
         if (id === "env") blocks.gate = true;
 
+        // Keyboard uses A4 = 440 Hz as the V/oct anchor (KeyboardModule emits
+        // (midi-69)/12). For the played note to match the labelled key, the
+        // oscillator's intrinsic frequency must equal 440 Hz when pitch is wired.
+        let osc = s.osc;
         let modules = s.modules;
+        if (id === "keyboard") {
+          osc = { ...s.osc, freq: 440 };
+          modules = patchModuleParams(modules, CANONICAL_IDS.osc, { freq: 440 });
+        }
         // Add canonical module for engine-bearing blocks.
-        if (id === "filter" && !modules.find((m) => m.id === CANONICAL_IDS.filter)) {
-          modules = [...modules, { id: CANONICAL_IDS.filter, type: "filter", params: { ...s.flt } }];
-        }
-        if (id === "amp" && !modules.find((m) => m.id === CANONICAL_IDS.amp)) {
-          modules = [...modules, { id: CANONICAL_IDS.amp, type: "amp", params: { db: s.amp.db, active: true } }];
-        }
-        if (id === "env" && !modules.find((m) => m.id === CANONICAL_IDS.env)) {
-          modules = [...modules, { id: CANONICAL_IDS.env, type: "env", params: { ...s.env } }];
-        }
-        if (id === "lfo" && !modules.find((m) => m.id === CANONICAL_IDS.lfo)) {
-          modules = [...modules, { id: CANONICAL_IDS.lfo, type: "lfo", params: { ...s.lfo } }];
+        const adds = [
+          ["filter",   CANONICAL_IDS.filter,   "filter",     () => ({ ...s.flt })],
+          ["amp",      CANONICAL_IDS.amp,      "amp",        () => ({ db: s.amp.db, active: true })],
+          ["env",      CANONICAL_IDS.env,      "env",        () => ({ ...s.env })],
+          ["lfo",      CANONICAL_IDS.lfo,      "lfo",        () => ({ ...s.lfo })],
+          ["keyboard", CANONICAL_IDS.keyboard, "keyboard",   () => ({})],
+          ["gate",     CANONICAL_IDS.gate,     "gate",       () => ({})],
+        ];
+        for (const [slot, canonical, type, mkParams] of adds) {
+          if (blocks[slot] && !modules.find((m) => m.id === canonical)) {
+            modules = [...modules, { id: canonical, type, params: mkParams() }];
+          }
         }
 
         const connections = rebuildCanonicalConnections(s.connections, blocks);
-        return { blocks, modules, connections };
+        return { blocks, osc, modules, connections };
       }),
       removeBlock: (id) => set((s) => {
         const blocks = { ...s.blocks, [id]: false };
@@ -211,10 +222,10 @@ export const useSynthStore = create(
         if (id === "filter") blocks.lfo = false;
 
         let modules = s.modules;
-        // Remove canonical modules whose flag is now false.
         for (const [slot, canonical] of [
-          ["filter", CANONICAL_IDS.filter], ["amp", CANONICAL_IDS.amp],
-          ["env",    CANONICAL_IDS.env],    ["lfo", CANONICAL_IDS.lfo],
+          ["filter",   CANONICAL_IDS.filter],   ["amp",  CANONICAL_IDS.amp],
+          ["env",      CANONICAL_IDS.env],      ["lfo",  CANONICAL_IDS.lfo],
+          ["keyboard", CANONICAL_IDS.keyboard], ["gate", CANONICAL_IDS.gate],
         ]) {
           if (!blocks[slot]) modules = removeModuleById(modules, canonical);
         }
@@ -313,7 +324,7 @@ export const useSynthStore = create(
     }),
     {
       name: "smem-v1",
-      version: 9,
+      version: 10,
       partialize: (s) => ({
         // Canonical graph
         modules: s.modules,
@@ -371,6 +382,28 @@ export const useSynthStore = create(
           persisted.modules = modules;
           persisted.connections = connections;
           persisted.ui = { freeMode: false, armedSource: null, selectedConnectionId: null };
+        }
+        // ---- v10: env is now control-only (no audio I/O), kb + gate are real
+        // engine modules, and the canonical chain wires env.env → amp.level and
+        // kb.pitch → osc.pitch + gate.gate → env.trigger. Re-derive the graph
+        // so existing v9 sessions pick up the new modules + connections.
+        if (version < 10) {
+          const cfg = {
+            blocks: persisted.blocks || INITIAL_CONFIG.blocks,
+            osc:    persisted.osc    || INITIAL_CONFIG.osc,
+            flt:    persisted.flt    || INITIAL_CONFIG.flt,
+            amp:    persisted.amp    || INITIAL_CONFIG.amp,
+            env:    persisted.env    || INITIAL_CONFIG.env,
+            lfo:    persisted.lfo    || INITIAL_CONFIG.lfo,
+            vol:    persisted.vol    ?? 42,
+          };
+          // Existing keyboard users had osc.freq write the played note absolutely.
+          // The new V/oct flow requires osc.freq = 440 as the A4 reference.
+          if (cfg.blocks.keyboard) cfg.osc = { ...cfg.osc, freq: 440 };
+          const { modules, connections } = buildCanonicalGraph(cfg);
+          persisted.modules = modules;
+          persisted.connections = connections;
+          if (cfg.blocks.keyboard) persisted.osc = cfg.osc;
         }
         return persisted;
       },

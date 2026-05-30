@@ -9,9 +9,8 @@ import { MODULE_META } from "../content/moduleMeta.js";
 // Module-type → slot-name mapping. The store stores `type: "oscillator"` etc.,
 // but MODULE_META is keyed by the slot name. They happen to match for most
 // modules; the exception is "amp" which maps to "amp" — also identical.
-const PALETTE_TYPES = ["oscillator", "filter", "amp", "env", "lfo"];
-// Output is intentionally excluded — there's exactly one speaker. Keyboard /
-// gate are UI-only (no engine module) and aren't free-mode-addable yet.
+const PALETTE_TYPES = ["oscillator", "filter", "amp", "env", "lfo", "keyboard", "gate"];
+// Output is intentionally excluded — there's exactly one speaker.
 
 export function Palette() {
   const addModuleInstance = useSynthStore((s) => s.addModuleInstance);

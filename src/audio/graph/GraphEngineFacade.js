@@ -62,17 +62,24 @@ export class GraphEngineFacade {
 
   // ---- Synchronous panel hooks ----
 
-  // Gate. The store's gateSources map is what UI components watch for
-  // highlights; this hook only opens/closes the actual envelope.
-  noteOn(source = "default") {
-    this.graph.getModule(CANONICAL_IDS.env)?.onGate("trigger", source, true);
-  }
-  noteOff(source = "default") {
-    this.graph.getModule(CANONICAL_IDS.env)?.onGate("trigger", source, false);
+  // Emit a gate from a specific module's output port. Routes through the
+  // GraphEngine's _gateConnections table to whatever destinations the user
+  // (or canonical chain) wired up.
+  emitGate(fromId, fromPort, sourceId, active) {
+    this.graph.emitGate(fromId, fromPort, sourceId, active);
   }
 
-  // Live pitch from keyboard. Bypasses the store so the freq knob's persisted
-  // value isn't clobbered — matches legacy setOscFreqLive semantics.
+  // Tell a KeyboardModule instance to play a MIDI note. Updates its pitchOut
+  // ConstantSourceNode; the V/oct signal flows through whatever destinations
+  // the instance's `pitch` port is wired to.
+  playMidi(moduleId, midi) {
+    this.graph.getModule(moduleId)?.playMidi?.(midi);
+  }
+
+  // Legacy convenience for chapter-mode KeyboardPanel during transition —
+  // bypasses the V/oct flow and writes the absolute Hz directly to the
+  // canonical oscillator. Kept until the canonical KeyboardModule fully
+  // replaces it.
   setOscFreqLive(hz) {
     this.graph.setParam(CANONICAL_IDS.osc, "freq", hz);
   }

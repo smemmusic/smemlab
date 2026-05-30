@@ -9,14 +9,15 @@ import {
 // noteOn ramps to a peak at ENV_PEAK_BOOST_DB above amp, decays to peak+sustainDb,
 // noteOff releases back to idle (1.0).
 export class EnvelopeModule extends AudioModule {
-  // The envelope is dual-role: a VCA in the audio path AND a unipolar CV source.
-  // Per the plan it's a "control" module that *also* exposes audio I/O ports.
+  // Pure control module: gate in, unipolar CV out (0..1 envelope shape).
+  // Audio modulation of downstream stages happens by wiring `env:cv` into
+  // the destination's CV input (e.g. amp.level for VCA behaviour). The
+  // internal GainNode stays around to serve the legacy meter readout via
+  // getValue(), but is not exposed as an audio port.
   static KIND = MODULE_KIND.CONTROL;
   static PORTS = [
     { name: "trigger", dir: PORT_DIR.IN,  type: PORT_TYPE.GATE },
     { name: "env",     dir: PORT_DIR.OUT, type: PORT_TYPE.CV, polarity: CV_POLARITY.UNIPOLAR },
-    { name: "input",   dir: PORT_DIR.IN,  type: PORT_TYPE.AUDIO },
-    { name: "output",  dir: PORT_DIR.OUT, type: PORT_TYPE.AUDIO },
   ];
   static CONTROLS = [
     { name: "a",         kind: CONTROL_KIND.KNOB, range: [0.001, 4], curve: CONTROL_CURVE.EXP,    cvRange: 4,  cvPolarity: CV_POLARITY.UNIPOLAR },
@@ -47,8 +48,8 @@ export class EnvelopeModule extends AudioModule {
     this._gateSources = new Set();
 
     // ---- typed-port registration ----
-    this._registerAudioIn("input",   this.node);
-    this._registerAudioOut("output", this.node);
+    // No audio in/out — env is a pure control module. The internal GainNode
+    // (this.node) stays for the meter readout but isn't routed as an audio port.
     this._registerCvOut("env",       this.cvOut);
     this._registerGateInput("trigger", (sourceId, active) => this._handleGate(sourceId, active));
     // CV inputs for the A/D/S/R knobs. The envelope params are scheduled

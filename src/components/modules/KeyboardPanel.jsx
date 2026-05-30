@@ -1,19 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useSynthStore } from "../../store/useSynthStore.js";
 import { getEngine } from "../../audio/engineSingleton.js";
+import { useModuleInstance } from "../ModuleInstanceContext.js";
+import { CANONICAL_IDS } from "../../store/graphBuilder.js";
 
-// AWSEDFTGYHUJK — classic synth-row mapping. 12 keys cover one full octave
-// (C to B) and K reaches the next C, so the on-screen piano shows the
-// canonical "octave + high C" range.
 const KEY_TO_SEMI = {
   a: 0, w: 1, s: 2, e: 3, d: 4, f: 5,
   t: 6, g: 7, y: 8, h: 9, u: 10, j: 11,
   k: 12
 };
-
-// Display layout for the on-screen piano. 8 white keys → each takes 12.5%.
-// Black keys are 8% wide, centred on the white/white boundary, so
-// left = (n/8 * 100) - 4 for the boundary after the n-th white key.
 const WHITE_NOTES = [
   { semi: 0,  pcName: "C", kbd: "A" },
   { semi: 2,  pcName: "D", kbd: "S" },
@@ -36,42 +31,41 @@ const OCTAVE_MIN = 0;
 const OCTAVE_MAX = 6;
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
-// Equal-temperament: A4 = 440 Hz at MIDI 69, semitones from there.
-function midiToHz(midi) { return 440 * Math.pow(2, (midi - 69) / 12); }
-
 export function KeyboardPanel() {
+  const { instanceId } = useModuleInstance();
+  const id = instanceId || CANONICAL_IDS.keyboard;
+  const isCanonical = id === CANONICAL_IDS.keyboard;
+
   const octave       = useSynthStore((s) => s.keyboard.octave);
   const setOctave    = useSynthStore((s) => s.setKeyboardOctave);
-  const envOn        = useSynthStore((s) => s.blocks.env);
   const setGateHeld  = useSynthStore((s) => s.setGateHeld);
   const setEnvPhase  = useSynthStore((s) => s.setEnvPhase);
   const markEnvStart = useSynthStore((s) => s.markEnvStart);
 
-  // Note-stack: most recently pressed wins (monophonic legato). Held in a
-  // ref because audio decisions don't need a re-render, only the visual
-  // highlight does.
+  // Mono-legato note stack (most recent wins). Ref because audio decisions
+  // don't need a re-render — only the visual highlight does.
   const heldRef = useRef([]);
   const [pressed, setPressed] = useState(new Set());
-  // Read latest values in event handlers without re-registering listeners.
   const octaveRef = useRef(octave);
   octaveRef.current = octave;
-  const envOnRef  = useRef(envOn);
-  envOnRef.current = envOn;
+  const idRef = useRef(id);
+  idRef.current = id;
 
   function pressMidi(midi) {
     if (heldRef.current.includes(midi)) return;
     heldRef.current = [...heldRef.current, midi];
     setPressed(new Set(heldRef.current));
     const engine = getEngine();
-    engine.setOscFreqLive(midiToHz(midi));
-    if (envOnRef.current) {
-      // Open the gate as "keyboard" — the GateWire reads the per-source
-      // flag to light only the keyboard→env wire, not other sources.
-      engine.noteOn();
-      setGateHeld("keyboard", true);
-      setEnvPhase("ad");
-      markEnvStart();
-    }
+    // V/oct pitch update via the KeyboardModule's pitchOut. The canonical
+    // chain wires kb.pitch → osc.pitch, so the connected oscillator's detune
+    // tracks the played note. For free-mode instances the user wires it up.
+    engine.playMidi(idRef.current, midi);
+    // Gate emit: fans out via the connections table to env.trigger (chapter
+    // mode) or whatever the user wired up (free mode).
+    engine.emitGate(idRef.current, "gate", idRef.current, true);
+    setGateHeld("keyboard", true);
+    setEnvPhase("ad");
+    markEnvStart();
   }
 
   function releaseMidi(midi) {
@@ -83,18 +77,21 @@ export function KeyboardPanel() {
     setPressed(new Set(next));
     const engine = getEngine();
     if (next.length > 0) {
-      // Latch back to the most recent surviving note (mono legato).
-      engine.setOscFreqLive(midiToHz(next[next.length - 1]));
-    } else if (envOnRef.current) {
-      engine.noteOff();
+      // Latch back to the most recent surviving note (mono legato). Gate stays open.
+      engine.playMidi(idRef.current, next[next.length - 1]);
+    } else {
+      engine.emitGate(idRef.current, "gate", idRef.current, false);
       setGateHeld("keyboard", false);
       setEnvPhase("rel");
       markEnvStart();
     }
   }
 
-  // Computer keyboard: register listeners once. Latest octave/envOn read via refs.
+  // Computer keyboard: register listeners once. Latest octave read via ref.
+  // Only canonical instance grabs window keys (multiple free keyboards can't
+  // share AWSEDFTGYHUJK).
   useEffect(() => {
+    if (!isCanonical) return;
     function isTypingTarget(t) {
       const tag = t?.tagName?.toLowerCase();
       return tag === "input" || tag === "textarea" || t?.isContentEditable;
@@ -108,7 +105,7 @@ export function KeyboardPanel() {
       const offset = KEY_TO_SEMI[k];
       if (offset === undefined) return;
       e.preventDefault();
-      pressMidi(12 * (octaveRef.current + 1) + offset);   // MIDI C-1 = 0, so octave N starts at 12*(N+1)
+      pressMidi(12 * (octaveRef.current + 1) + offset);
     }
     function onUp(e) {
       const k = e.key.toLowerCase();
@@ -121,19 +118,18 @@ export function KeyboardPanel() {
     return () => {
       window.removeEventListener("keydown", onDown);
       window.removeEventListener("keyup", onUp);
-      // Release any held notes when the module unmounts.
-      const engine = getEngine();
-      if (envOnRef.current && heldRef.current.length > 0) engine.noteOff();
+      if (heldRef.current.length > 0) {
+        getEngine().emitGate(idRef.current, "gate", idRef.current, false);
+      }
       heldRef.current = [];
     };
-  }, [setOctave]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCanonical, setOctave]);
 
-  // Mouse helpers — same as keyboard, dispatched per visual key.
   function mDown(midi)  { return (e) => { e.preventDefault(); pressMidi(midi); }; }
   function mUp(midi)    { return ()  => { releaseMidi(midi); }; }
   function mLeave(midi) { return (e) => { if (e.buttons === 1) releaseMidi(midi); }; }
 
-  // MIDI of the octave's C: octave 4 → MIDI 60 (middle C).
   const baseMidi = 12 * (octave + 1);
   const octaveLabel = `C${octave}`;
 

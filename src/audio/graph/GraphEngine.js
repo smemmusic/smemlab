@@ -19,6 +19,8 @@ import { AmplifierModule }  from "../modules/AmplifierModule.js";
 import { EnvelopeModule }   from "../modules/EnvelopeModule.js";
 import { LfoModule }        from "../modules/LfoModule.js";
 import { OutputModule }     from "../modules/OutputModule.js";
+import { GateModule }       from "../modules/GateModule.js";
+import { KeyboardModule }   from "../modules/KeyboardModule.js";
 import {
   PORT_TYPE, PORT_DIR, newId, portsCompatible,
 } from "./types.js";
@@ -50,6 +52,14 @@ const MODULE_REGISTRY = {
   output: {
     Cls: OutputModule,
     defaults: () => ({ vol: 80 }),
+  },
+  gate: {
+    Cls: GateModule,
+    defaults: () => ({}),
+  },
+  keyboard: {
+    Cls: KeyboardModule,
+    defaults: () => ({}),
   },
 };
 

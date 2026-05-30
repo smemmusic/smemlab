@@ -3,6 +3,7 @@ import { Rack } from "./Rack.jsx";
 import { GateWire } from "./GateWire.jsx";
 import { FreeRack } from "./FreeRack.jsx";
 import { Palette } from "./Palette.jsx";
+import { Wires } from "./Wires.jsx";
 import { useSynthStore } from "../store/useSynthStore.js";
 
 // Reserved at the bottom of the stage for the gate wire's drop segment.
@@ -18,6 +19,29 @@ const WIRE_RESERVE_PX = 42;
 export function Stage() {
   const stageRef = useRef(null);
   const freeMode = useSynthStore((s) => s.ui.freeMode);
+  const armedSource      = useSynthStore((s) => s.ui.armedSource);
+  const clearArmedSource = useSynthStore((s) => s.clearArmedSource);
+  const clearSelection   = useSynthStore((s) => s.clearSelection);
+
+  // Esc clears any armed source mid-patch.
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === "Escape") {
+        if (armedSource) clearArmedSource();
+        else clearSelection();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [armedSource, clearArmedSource, clearSelection]);
+
+  // Click on empty stage cancels arm + selection.
+  function onStageClick(e) {
+    if (e.target === stageRef.current) {
+      if (armedSource) clearArmedSource();
+      clearSelection();
+    }
+  }
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -55,10 +79,13 @@ export function Stage() {
   }, []);
 
   return (
-    <div ref={stageRef} className={"stage" + (freeMode ? " free-mode" : "")}>
+    <div ref={stageRef} className={"stage" + (freeMode ? " free-mode" : "")} onClick={onStageClick}>
       <Rack />
       <FreeRack />
-      <GateWire containerRef={stageRef} />
+      {/* Legacy decorative gate cable owns the chapter-mode story. In free
+          mode the unified Wires overlay takes over rendering. */}
+      {!freeMode && <GateWire containerRef={stageRef} />}
+      {freeMode && <Wires containerRef={stageRef} />}
       {freeMode && <Palette />}
     </div>
   );
