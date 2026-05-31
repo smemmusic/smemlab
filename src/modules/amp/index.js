@@ -11,10 +11,4 @@ export const Amp = {
   placard:
     "Applies a gain in <b>decibels</b> — an <b>offset</b>, not a scaling. Above 0 dB it amplifies, below it attenuates. A control signal's dB simply <b>adds</b> to this offset.",
   glyph: AmpGlyph,
-  canonical: {
-    id: "_amp",
-    blocksFlag: "amp",
-    defaultPosition: { x: 580, y: 0 },
-    audioChain: { inPort: "input", outPort: "output", order: 3 },
-  },
 };

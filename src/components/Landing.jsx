@@ -9,7 +9,7 @@ import { JOURNEYS } from "../content/journeys/index.js";
 export function Landing() {
   const started      = useSynthStore((s) => s.started);
   const startJourney = useSynthStore((s) => s.startJourney);
-  const enterFree    = useSynthStore((s) => s.enterFreeMode);
+  const enterFree    = useSynthStore((s) => s.enterFreeBuild);
   const setPlaying   = useSynthStore((s) => s.setPlaying);
   const canvasRef    = useRef(null);
   const rafRef       = useRef(0);

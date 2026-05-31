@@ -1,11 +1,9 @@
 import { Oscilloscope } from "../../components/viz/Oscilloscope.jsx";
 import { OUTPUT_TO_SPEAKER } from "../../content/ui.js";
 import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
-import { CANONICAL_IDS } from "../../store/graphBuilder.js";
 
 export function OutputPanel() {
-  const { instanceId } = useModuleInstance();
-  const id = instanceId || CANONICAL_IDS.output;
+  const { instanceId: id } = useModuleInstance();
   return (
     <>
       <Oscilloscope tag="Oscilloscope · final signal" instanceId={id} />

@@ -10,11 +10,10 @@ import { useAudioEngineBridge } from "./hooks/useAudioEngine.js";
 
 export function App() {
   useAudioEngineBridge();
-  const freeMode      = useSynthStore((s) => s.ui.freeMode);
   const journeyId     = useSynthStore((s) => s.journeyId);
   const mobileView    = useSynthStore((s) => s.ui.mobileView);
   const setMobileView = useSynthStore((s) => s.setMobileView);
-  const showSidebar   = !freeMode && !!journeyId;
+  const showSidebar   = !!journeyId;
 
   // Mobile-only tabs (CSS hides .mobile-tabs above the breakpoint). The
   // `mobile-view-*` class on .wrap drives which pane is visible on mobile.

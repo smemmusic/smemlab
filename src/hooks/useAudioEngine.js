@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useSynthStore } from "../store/useSynthStore.js";
 import { getEngine } from "../audio/engineSingleton.js";
 
-// Bridge: store ↔ GraphEngine. Subscribes to the canonical `modules` and
+// Bridge: store ↔ GraphEngine. Subscribes to the store's `modules` and
 // `connections` arrays and diffs them against the live engine state, calling
 // addModule / removeModule / setParam / addConnection / removeConnection.
 //

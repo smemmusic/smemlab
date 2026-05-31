@@ -5,8 +5,6 @@ import { Toggle } from "../../components/controls/Toggle.jsx";
 import { Canvas } from "../../components/viz/Canvas.jsx";
 import { drawFilter } from "../../components/viz/drawFilter.js";
 import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
-import { CANONICAL_IDS } from "../../store/graphBuilder.js";
-import { isCanonicalPresent } from "../_registry.js";
 
 const FILTER_MODES = [
   { value: "lowpass",  label: "Low-pass",  short: "LP" },
@@ -16,16 +14,18 @@ const FILTER_MODES = [
 const DEFAULT_PARAMS = { cutoff: 1200, resonance: 1, mode: "lowpass" };
 
 export function FilterPanel() {
-  const { instanceId } = useModuleInstance();
-  const id = instanceId || CANONICAL_IDS.filter;
-  const isCanonical = id === CANONICAL_IDS.filter;
+  const { instanceId: id } = useModuleInstance();
 
   const params  = useSynthStore((s) => s.modules.find((m) => m.id === id)?.params) || DEFAULT_PARAMS;
-  // Canonical LFO overlay on the response: only shown for the canonical filter
-  // when the canonical LFO exists (it visualises the chapter-mode auto-wired
-  // LFO→cutoff modulation range).
-  const lfoParams = useSynthStore((s) => s.modules.find((m) => m.id === CANONICAL_IDS.lfo)?.params);
-  const lfoOn     = useSynthStore((s) => isCanonicalPresent(CANONICAL_IDS.lfo, s.modules));
+  // LFO overlay on the response curve: find an LFO module wired to this
+  // filter's cutoff port. The overlay visualises that modulation's range.
+  // We resolve the source module's params by id from the matching connection.
+  const lfoParams = useSynthStore((s) => {
+    const conn = s.connections.find((c) => c.toId === id && c.toPort === "cutoff");
+    if (!conn) return null;
+    const src = s.modules.find((m) => m.id === conn.fromId);
+    return src?.type === "lfo" ? src.params : null;
+  });
   const playing   = useSynthStore((s) => s.playing);
   const setModuleParam = useSynthStore((s) => s.setModuleParam);
 
@@ -49,7 +49,7 @@ export function FilterPanel() {
       return Math.max(0.1, intrinsic + cv);
     },
     mode:   params.mode,
-    lfo:    isCanonical && lfoOn ? lfoParams : null,
+    lfo:    lfoParams,
     playing,
   };
 

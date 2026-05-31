@@ -6,13 +6,11 @@ import { Knob } from "../../components/controls/Knob.jsx";
 import { Canvas } from "../../components/viz/Canvas.jsx";
 import { drawMeter } from "../../components/viz/drawMeter.js";
 import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
-import { CANONICAL_IDS } from "../../store/graphBuilder.js";
 
 const DEFAULT_PARAMS = { level: 0 };
 
 export function AmplifierPanel() {
-  const { instanceId } = useModuleInstance();
-  const id = instanceId || CANONICAL_IDS.amp;
+  const { instanceId: id } = useModuleInstance();
 
   const params  = useSynthStore((s) => s.modules.find((m) => m.id === id)?.params) || DEFAULT_PARAMS;
   const playing = useSynthStore((s) => s.playing);

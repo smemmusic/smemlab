@@ -4,7 +4,6 @@
 // can't go through React state.
 
 import { GraphEngine } from "./GraphEngine.js";
-import { CANONICAL_IDS } from "../../store/graphBuilder.js";
 
 export class GraphEngineFacade {
   constructor() {
@@ -21,17 +20,24 @@ export class GraphEngineFacade {
   }
 
   stop() {
-    // Fade the output and rebuild the canonical oscillator so the next
-    // start() finds a fresh OscillatorNode (start() can only be called once).
-    this.graph.getModule(CANONICAL_IDS.output)?.fadeOut?.();
+    // Fade every output module's master gain, then rebuild every oscillator
+    // (WebAudio's OscillatorNode.start() can only be called once per node, so
+    // re-using the same instance after stop is impossible — we tear it down
+    // and recreate with the same params + outgoing connections).
+    for (const m of this.graph.listModules()) {
+      m.fadeOut?.();
+    }
     setTimeout(() => {
-      const osc = this.graph.getModule(CANONICAL_IDS.osc);
-      if (!osc) return;
-      const oscParams = { ...osc.params };
-      const downstream = this._snapshotOutgoing(CANONICAL_IDS.osc);
-      this.graph.removeModule(CANONICAL_IDS.osc);
-      this.graph.addModule({ id: CANONICAL_IDS.osc, type: "oscillator", params: oscParams });
-      for (const c of downstream) this.graph.addConnection(c);
+      for (const m of this.graph.listModules().slice()) {
+        if (m.type !== "oscillator") continue;
+        const params = { ...m.params };
+        const downstream = this._snapshotOutgoing(m.id);
+        this.graph.removeModule(m.id);
+        this.graph.addModule({ id: m.id, type: "oscillator", params });
+        for (const c of downstream) {
+          try { this.graph.addConnection(c); } catch {}
+        }
+      }
     }, 90);
   }
 

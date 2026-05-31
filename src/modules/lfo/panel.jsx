@@ -4,7 +4,6 @@ import { Selector } from "../../components/controls/Selector.jsx";
 import { Canvas } from "../../components/viz/Canvas.jsx";
 import { drawLfo } from "../../components/viz/drawLfo.js";
 import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
-import { CANONICAL_IDS } from "../../store/graphBuilder.js";
 
 const LFO_SHAPES = [
   { value: "sine",     label: "Sine", wf: "sine" },
@@ -16,8 +15,7 @@ const LFO_SHAPES = [
 const DEFAULT_PARAMS = { rate: 5, depth: 0.4, shape: "sine" };
 
 export function LfoPanel() {
-  const { instanceId } = useModuleInstance();
-  const id = instanceId || CANONICAL_IDS.lfo;
+  const { instanceId: id } = useModuleInstance();
 
   const params    = useSynthStore((s) => s.modules.find((m) => m.id === id)?.params) || DEFAULT_PARAMS;
   const edge      = useSynthStore((s) => s.scope.edge);

@@ -4,8 +4,6 @@ import { Selector } from "../../components/controls/Selector.jsx";
 import { Stepper } from "../../components/controls/Stepper.jsx";
 import { Oscilloscope } from "../../components/viz/Oscilloscope.jsx";
 import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
-import { CANONICAL_IDS } from "../../store/graphBuilder.js";
-import { isCanonicalPresent } from "../_registry.js";
 
 const SHAPES = [
   { value: "sine",     label: "Sine",  wf: "sine" },
@@ -33,15 +31,16 @@ function PitchPlaceholder({ caption }) {
 }
 
 export function OscillatorPanel() {
-  const { instanceId } = useModuleInstance();
-  const id = instanceId || CANONICAL_IDS.osc;
-  const isCanonical = id === CANONICAL_IDS.osc;
+  const { instanceId: id } = useModuleInstance();
 
   const params = useSynthStore((s) => s.modules.find((m) => m.id === id)?.params) || DEFAULT_PARAMS;
-  // Keyboard override is shown only when the canonical oscillator is in chapter
-  // mode with a canonical keyboard module wired up. Free-mode oscillators are
-  // never driven by the global keyboard.
-  const kbOn = useSynthStore((s) => isCanonicalPresent(CANONICAL_IDS.keyboard, s.modules)) && isCanonical;
+  // Show the "from keyboard" override when a keyboard module is wired into
+  // THIS oscillator's pitch port. Works for any pairing, multi-instance safe.
+  const kbOn = useSynthStore((s) => s.connections.some((c) => {
+    if (c.toId !== id || c.toPort !== "pitch") return false;
+    const src = s.modules.find((m) => m.id === c.fromId);
+    return src?.type === "keyboard";
+  }));
   const setModuleParam = useSynthStore((s) => s.setModuleParam);
   const octave = params.octave ?? 0;
   const setOctave = (v) => setModuleParam(id, "octave", v);

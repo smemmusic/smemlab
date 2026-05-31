@@ -2,7 +2,8 @@ import { OutputModule } from "./module.js";
 import { OutputPanel } from "./panel.jsx";
 import { OutputGlyph } from "./glyph.jsx";
 
-// Output is the speaker. Always present, never deletable, not in the palette.
+// The Output module is the speaker — its `input` audio port flows to
+// AudioContext.destination. Any patch that wants to be heard needs at least one.
 export const Output = {
   type: "output",
   Cls: OutputModule,
@@ -12,10 +13,4 @@ export const Output = {
   placard:
     "The finished signal reaches the speaker. Compare this scope with the oscillator's — every block along the way has reshaped the wave.",
   glyph: OutputGlyph,
-  canonical: {
-    id: "_output",
-    required: true,
-    defaultPosition: { x: 870, y: 0 },
-    audioChain: { inPort: "input", outPort: null, order: 4 },
-  },
 };

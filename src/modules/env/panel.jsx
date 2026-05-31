@@ -4,13 +4,11 @@ import { Knob } from "../../components/controls/Knob.jsx";
 import { Canvas } from "../../components/viz/Canvas.jsx";
 import { drawEnv } from "../../components/viz/drawEnv.js";
 import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
-import { CANONICAL_IDS } from "../../store/graphBuilder.js";
 
 const DEFAULT_PARAMS = { a: 0.05, d: 0.2, sustainDb: -8, r: 0.4 };
 
 export function EnvelopePanel() {
-  const { instanceId } = useModuleInstance();
-  const id = instanceId || CANONICAL_IDS.env;
+  const { instanceId: id } = useModuleInstance();
 
   const params  = useSynthStore((s) => s.modules.find((m) => m.id === id)?.params) || DEFAULT_PARAMS;
   const playing = useSynthStore((s) => s.playing);
@@ -21,9 +19,7 @@ export function EnvelopePanel() {
   }
 
   const engine = getEngine();
-  // Phase + start read from the engine module directly (updated by onGate),
-  // so free-mode envelope panels work the same as canonical without store-level
-  // bookkeeping.
+  // Phase + start read from the engine module directly (updated by onGate).
   const data = {
     env: params, playing,
     get phase() { return engine.getInstanceEnvPhase(id); },

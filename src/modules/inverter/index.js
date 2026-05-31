@@ -2,7 +2,6 @@ import { InverterModule } from "./module.js";
 import { InverterPanel } from "./panel.jsx";
 import { InverterGlyph } from "./glyph.jsx";
 
-// Free-mode utility, no chapter/canonical integration.
 export const Inverter = {
   type: "inverter",
   Cls: InverterModule,

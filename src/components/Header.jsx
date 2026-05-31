@@ -8,8 +8,6 @@ export function Header() {
   const resetSession    = useSynthStore((s) => s.resetSession);
   const backToJourneys  = useSynthStore((s) => s.backToJourneys);
   const setSettingsOpen = useSynthStore((s) => s.setSettingsOpen);
-  const freeMode        = useSynthStore((s) => s.ui.freeMode);
-  const setFreeMode     = useSynthStore((s) => s.setFreeMode);
   const journeyId       = useSynthStore((s) => s.journeyId);
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -43,19 +41,12 @@ export function Header() {
   }
 
   const journey  = journeyId ? journeyById(journeyId) : null;
-  const subtitle = freeMode ? "/ Free Build" : journey ? `/ ${journey.title}` : "";
+  const subtitle = journey ? `/ ${journey.title}` : "/ Free Build";
 
   // Buttons are rendered once and reused inside the legend (desktop) and the
   // burger dropdown (mobile). CSS controls which group is visible.
   const actions = (
     <>
-      <button
-        className={"icon-btn" + (freeMode ? " on" : "")}
-        onClick={run(() => setFreeMode(!freeMode))}
-        title={freeMode ? "Exit free build mode" : "Add modules and patch freely"}
-      >
-        <span aria-hidden="true">⌥</span> Free Build{freeMode ? " ✓" : ""}
-      </button>
       <button className="icon-btn" onClick={run(() => setSettingsOpen(true))} title={SETTINGS.open}>
         <span aria-hidden="true">⚙</span> {SETTINGS.open}
       </button>

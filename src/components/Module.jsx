@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { useSynthStore } from "../store/useSynthStore.js";
 import { ModuleInstanceContext } from "./ModuleInstanceContext.js";
 import { ModulePorts } from "./ModulePorts.jsx";
-import { byType, byCanonical } from "../modules/_registry.js";
+import { byType } from "../modules/_registry.js";
 
 const KIND_LABEL = {
   audio:   "Audio · Module",
@@ -15,51 +15,32 @@ const KIND_LABEL = {
 const INTERACTIVE_SELECTOR = "button, input, select, textarea, .knob, .toggle, .selector, .kb, .port, .screen, canvas, svg";
 
 // `type` is the manifest type ("oscillator", "filter", …). `instanceId` is
-// the canonical id ("_osc") or a free-mode UUID. If omitted, falls through
-// to the canonical id from the manifest (chapter-mode default).
+// the module's id in the store. Modules are absolute-positioned via their
+// `position` field; the header acts as the drag handle.
 export function Module({ type, instanceId, children }) {
   const manifest = byType(type);
 
   const removeModuleInstance = useSynthStore((s) => s.removeModuleInstance);
   const setModulePosition    = useSynthStore((s) => s.setModulePosition);
-  const freeMode             = useSynthStore((s) => s.ui.freeMode);
   const focusModule          = useSynthStore((s) => s.focusModule);
   const viewScale            = useSynthStore((s) => s.ui.viewScale);
 
   const moduleRef = useRef(null);
-
-  const canonicalId = manifest?.canonical?.id || null;
-  const resolvedInstanceId = instanceId || canonicalId;
-  const isFreeInstance = resolvedInstanceId && !resolvedInstanceId.startsWith("_");
-  const isRequired = manifest?.canonical?.required === true;
-  const kind = manifest?.Cls?.KIND;
-
-  const position = useSynthStore((s) =>
-    resolvedInstanceId ? s.modules.find((m) => m.id === resolvedInstanceId)?.position : null
-  );
-  const effectivePosition = position
-    || manifest?.canonical?.defaultPosition
-    || (isFreeInstance ? { x: 0, y: 0 } : null);
-
-  // Drag is only active in free mode.
-  const isDraggable = freeMode && effectivePosition;
   const dragDidMoveRef = useRef(false);
+  const position = useSynthStore((s) =>
+    instanceId ? s.modules.find((m) => m.id === instanceId)?.position : null
+  );
+  const effectivePosition = position || { x: 0, y: 0 };
+  const kind = manifest?.Cls?.KIND;
 
   if (!manifest) return null;
 
-  // In free mode every module is removable except `required` (output).
-  // In chapter mode only canonical instances with a `blocksFlag` are removable.
-  const removableInChapterMode = isFreeInstance
-    || (canonicalId && byCanonical(canonicalId)?.canonical?.blocksFlag != null);
-  const showRemove = freeMode ? !isRequired : removableInChapterMode;
-
   function handleRemove(e) {
     e.stopPropagation();
-    if (resolvedInstanceId && !isRequired) removeModuleInstance(resolvedInstanceId);
+    if (instanceId) removeModuleInstance(instanceId);
   }
 
   function onHeaderPointerDown(e) {
-    if (!isDraggable) return;
     if (e.target.closest("button")) return;
     e.preventDefault();
     dragDidMoveRef.current = false;
@@ -75,7 +56,7 @@ export function Module({ type, instanceId, children }) {
       const dy = (ev.clientY - startY) / scale;
       if (Math.abs(dx) + Math.abs(dy) > 3) dragDidMoveRef.current = true;
       if (dragDidMoveRef.current) {
-        setModulePosition(resolvedInstanceId, origX + dx, origY + dy);
+        setModulePosition(instanceId, origX + dx, origY + dy);
       }
     }
     function onUp() {
@@ -97,17 +78,19 @@ export function Module({ type, instanceId, children }) {
     focusModule(type);
   }
 
-  const moduleStyle = (freeMode && effectivePosition)
-    ? { position: "absolute", left: `${effectivePosition.x}px`, top: `${effectivePosition.y}px` }
-    : undefined;
+  const moduleStyle = {
+    position: "absolute",
+    left: `${effectivePosition.x}px`,
+    top:  `${effectivePosition.y}px`,
+  };
 
   return (
-    <ModuleInstanceContext.Provider value={{ instanceId: resolvedInstanceId, type }}>
+    <ModuleInstanceContext.Provider value={{ instanceId, type }}>
       <div
         ref={moduleRef}
-        className={"module " + (kind === "control" ? "control-mod" : "audio-mod") + (isDraggable ? " draggable" : "")}
+        className={"module draggable " + (kind === "control" ? "control-mod" : "audio-mod")}
         data-id={type}
-        data-instance-id={resolvedInstanceId}
+        data-instance-id={instanceId}
         style={moduleStyle}
         onClick={onModuleClick}
       >
@@ -121,14 +104,10 @@ export function Module({ type, instanceId, children }) {
             <div className="m-title">{manifest.meta.title}</div>
           </div>
           {manifest.glyph}
-          {showRemove && (
-            <button className="m-remove" title="Patch out" onClick={handleRemove}>✕</button>
-          )}
+          <button className="m-remove" title="Patch out" onClick={handleRemove}>✕</button>
         </div>
         {children}
-        {freeMode && resolvedInstanceId && (
-          <ModulePorts moduleId={resolvedInstanceId} type={type} />
-        )}
+        {instanceId && <ModulePorts moduleId={instanceId} type={type} />}
       </div>
     </ModuleInstanceContext.Provider>
   );

@@ -1,16 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { getEngine } from "../../audio/engineSingleton.js";
 import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
-import { CANONICAL_IDS } from "../../store/graphBuilder.js";
 
 // Manual gate trigger. Press-and-hold button: opens the gate while pressed,
 // releases on lift. The gate emits from this instance's `gate` port and fans
 // out via engine.emitGate to whatever destinations are wired. Spacebar fires
 // every Gate instance simultaneously — only add one if you want exclusive control.
 export function GatePanel() {
-  const { instanceId } = useModuleInstance();
-  const id = instanceId || CANONICAL_IDS.gate;
-  const isCanonical = id === CANONICAL_IDS.gate;
+  const { instanceId: id } = useModuleInstance();
 
   // Local visual "held" state. Per-instance; no store coordination needed
   // since each Gate module routes its own gate.
@@ -71,11 +68,11 @@ export function GatePanel() {
         onPointerDown={press}
         onPointerUp={release}
         onPointerLeave={(e) => { if (held) release(e); }}
-        title={isCanonical ? "Hold to open the gate (also: spacebar)" : "Hold to open this gate"}
+        title="Hold to open the gate (also: spacebar)"
       >
         <span className="gate-trigger-lamp" />
         <span className="gate-trigger-label">Hold</span>
-        <span className="gate-trigger-sub">{isCanonical ? "space ▸ trigger" : "trigger"}</span>
+        <span className="gate-trigger-sub">space ▸ trigger</span>
       </button>
     </div>
   );

@@ -5,10 +5,9 @@ import { CHAPTER_RAIL } from "../content/ui.js";
 export function ChapterRail() {
   const chapter   = useSynthStore((s) => s.chapter);
   const journeyId = useSynthStore((s) => s.journeyId);
-  const freeMode  = useSynthStore((s) => s.ui.freeMode);
   const goChapter = useSynthStore((s) => s.goChapter);
 
-  if (freeMode || !journeyId) return null;
+  if (!journeyId) return null;
   const chapters = journeyById(journeyId)?.chapters ?? [];
   if (!chapters.length) return null;
 

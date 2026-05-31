@@ -1,15 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Rack } from "./Rack.jsx";
-import { GateWire } from "./GateWire.jsx";
-import { FreeRack } from "./FreeRack.jsx";
 import { Palette } from "./Palette.jsx";
 import { Wires } from "./Wires.jsx";
 import { useSynthStore } from "../store/useSynthStore.js";
-
-// Reserved at the bottom of the stage for the gate wire's drop segment.
-// Always reserved (whether the wire is shown or not) to avoid layout shift
-// when keyboard + envelope are both patched in.
-const WIRE_RESERVE_PX = 42;
 
 const MIN_SCALE = 0.15;
 const MAX_SCALE = 2;
@@ -17,7 +10,7 @@ const ZOOM_STEP = 1.2;
 
 // "Background" elements that should start a pan when the user clicks them
 // (i.e. anything that isn't a module, palette item, wire, or zoom control).
-const PAN_BG_CLASSES = ["stage", "rack", "free-rack", "free-rack-canvas", "free-mode-canvas"];
+const PAN_BG_CLASSES = ["stage", "rack-canvas"];
 function isPanBackground(target, stageEl) {
   if (!target || !stageEl) return false;
   if (target === stageEl) return true;
@@ -39,7 +32,6 @@ function isPanBackground(target, stageEl) {
 //                from the current auto-fit values so the view doesn't jump.
 export function Stage() {
   const stageRef = useRef(null);
-  const freeMode = useSynthStore((s) => s.ui.freeMode);
   const armedSource      = useSynthStore((s) => s.ui.armedSource);
   const focusedSlot      = useSynthStore((s) => s.ui.focusedModuleSlot);
   const clearArmedSource = useSynthStore((s) => s.clearArmedSource);
@@ -76,13 +68,11 @@ export function Stage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [armedSource, focusedSlot, clearArmedSource, clearSelection, clearFocus]);
 
-  // Pick the right scaled element for the current mode. Chapter mode uses
-  // Rack.jsx → `.rack`; free mode uses FreeRack.jsx → `.free-rack` (whose
-  // inner `.free-rack-canvas` holds absolute-positioned modules).
+  // The element that receives the scale + pan transform.
   const getRackEl = useCallback(() => {
     const stage = stageRef.current;
     if (!stage) return null;
-    return stage.querySelector(".rack") || stage.querySelector(".free-rack");
+    return stage.querySelector(".rack-canvas");
   }, []);
 
   // Effect 1: recompute auto-fit scale on viewport or rack-content changes.
@@ -104,7 +94,7 @@ export function Stage() {
       const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
       const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
       const availW = Math.max(0, stage.clientWidth - padX);
-      const availH = Math.max(0, stage.clientHeight - padY - WIRE_RESERVE_PX);
+      const availH = Math.max(0, stage.clientHeight - padY);
       const fit = Math.min(1, availW / naturalW, availH / naturalH);
       setAutoScale(fit);
     }
@@ -115,7 +105,7 @@ export function Stage() {
     const rack = getRackEl();
     if (rack) ro.observe(rack);
     return () => ro.disconnect();
-  }, [freeMode, getRackEl]);
+  }, [getRackEl]);
 
   // Effect 2: write the current scale + pan to the rack as a CSS transform,
   // and mirror the effective scale into the store (so Module drag handlers
@@ -129,7 +119,7 @@ export function Stage() {
     rack.style.transformOrigin = "top left";
     rack.style.transform = `translate(${px}px, ${py}px) scale(${scale})`;
     setViewScale(scale);
-  }, [zoomMode, userScale, pan.x, pan.y, autoScale, freeMode, getRackEl, setViewScale]);
+  }, [zoomMode, userScale, pan.x, pan.y, autoScale, getRackEl, setViewScale]);
 
   function currentScale() {
     return zoomModeRef.current === "auto" ? autoScaleRef.current : userScaleRef.current;
@@ -355,19 +345,15 @@ export function Stage() {
   return (
     <div
       ref={stageRef}
-      className={"stage" + (freeMode ? " free-mode" : "")}
+      className="stage"
       onPointerDown={onStagePointerDown}
       onPointerMove={onStagePointerMove}
       onPointerUp={onStagePointerEnd}
       onPointerCancel={onStagePointerEnd}
     >
-      {/* Chapter mode: fixed Rack with the legacy decorative gate wire.
-          Free mode: unified canvas where every module is positioned + draggable. */}
-      {!freeMode && <Rack />}
-      {!freeMode && <GateWire containerRef={stageRef} />}
-      <FreeRack />
-      {freeMode && <Wires containerRef={stageRef} />}
-      {freeMode && <Palette />}
+      <Rack />
+      <Wires containerRef={stageRef} />
+      <Palette />
 
       <div
         className="zoom-ctrls"

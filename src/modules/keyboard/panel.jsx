@@ -3,7 +3,6 @@ import { useSynthStore } from "../../store/useSynthStore.js";
 import { getEngine } from "../../audio/engineSingleton.js";
 import { Stepper } from "../../components/controls/Stepper.jsx";
 import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
-import { CANONICAL_IDS } from "../../store/graphBuilder.js";
 
 const KEY_TO_SEMI = {
   a: 0, w: 1, s: 2, e: 3, d: 4, f: 5,
@@ -34,8 +33,7 @@ const OCTAVE_MAX = 6;
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
 export function KeyboardPanel() {
-  const { instanceId } = useModuleInstance();
-  const id = instanceId || CANONICAL_IDS.keyboard;
+  const { instanceId: id } = useModuleInstance();
 
   const params = useSynthStore((s) => s.modules.find((m) => m.id === id)?.params) || DEFAULT_PARAMS;
   const octave = params.octave ?? 4;

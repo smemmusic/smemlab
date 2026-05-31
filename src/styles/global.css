@@ -199,22 +199,7 @@ header {
 }
 .narrator .nextbtn:hover { border-color: var(--muted); background: rgba(255,255,255,.03); }
 
-/* ---------------- stage / minimap ---------------- */
-.minimap {
-  flex: 0 0 auto;
-  display: flex; align-items: center; gap: 0; margin: 14px 24px 4px; padding: 8px 12px;
-  border: 1px solid var(--line-soft); border-radius: 8px; background: rgba(20,21,25,.5); overflow-x: auto;
-}
-.minimap .mm {
-  display: flex; align-items: center; gap: 6px; flex: 0 0 auto; padding: 5px 10px; border-radius: 5px;
-  font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); cursor: default; border: 1px solid transparent;
-}
-.minimap .mm .sw { width: 7px; height: 7px; border-radius: 2px; background: var(--audio); }
-.minimap .mm.control .sw { background: var(--control); border-radius: 50%; }
-.minimap .mm.on { color: var(--ink); border-color: var(--line); }
-.minimap .conn { flex: 0 0 18px; height: 1px; background: var(--line); }
-.minimap .conn.control { background: var(--control-dim); }
-
+/* ---------------- stage ---------------- */
 .stage {
   position: relative; flex: 1; overflow: hidden; padding: 10px 24px 18px; min-height: 0;
   /* `touch-action: none` lets pointer events drive pan/drag instead of native
@@ -272,8 +257,15 @@ header {
   background: rgba(255, 180, 84, 0.06);
 }
 
-.rack { display: flex; align-items: flex-start; gap: 0; min-width: max-content; padding-left: 6px; }
-.col { display: flex; flex-direction: column; align-items: center; }
+/* Rack canvas: absolute-positioned children. Min size keeps the canvas tall +
+   wide enough for the default canonical layout (~1130 × 890) so a fresh session
+   has a sensible footprint. */
+.rack-canvas {
+  position: relative;
+  min-height: 1000px;
+  min-width: 1200px;
+  padding: 14px;
+}
 
 /* ---------------- module faceplate ---------------- */
 .module {
@@ -450,18 +442,7 @@ header {
 }
 .stepper-btn:hover { border-color: var(--muted); }
 
-/* small destination label under a control module (LFO routes to filter cutoff) */
-.patch-out {
-  margin-top: 10px; font-size: 9px; letter-spacing: .16em; text-transform: uppercase;
-  color: var(--control); border: 1px solid var(--control-dim); border-radius: 4px;
-  padding: 6px 8px; text-align: center; opacity: .85;
-}
-
 /* ---------------- Gate module ---------------- */
-/* Gate module sits in the Output column with no VCable above it (its signal
-   flows OUT across columns to the Envelope, drawn by GateWire). A simple
-   margin gives it visual breathing room below the Output module. */
-.module[data-id="gate"] { margin-top: 44px; }
 .gate-mod-body {
   flex: 1; display: flex; align-items: center; justify-content: center;
   padding: 10px 0 14px;
@@ -506,19 +487,6 @@ header {
   opacity: .8;
 }
 
-/* ---------------- gate wire (third signal kind) ----------------
-   A real cable — same idiom as HCable / VCable — routed from the bottom of
-   the Keyboard module to the bottom of the Envelope module via a bend below
-   the rack. Rendered by <GateWire/> as a sibling of <Rack/> inside <Stage/>.
-   The `.on` class follows the store's `held` state, so any source (Transport
-   Gate button, computer keys, on-screen piano) that opens the gate lights
-   the wire. */
-.flowg { stroke-dasharray: 4 9; animation: flowg 1.0s linear infinite; opacity: 0; }
-/* Each wire's flow lights only when its own <g> has the `on` class — the
-   GateWire component sets it from per-source flags in the store. */
-.gate-wire g.on .flowg { opacity: 1; }
-@keyframes flowg { to { stroke-dashoffset: -26; } }
-
 /* ---------------- placard (hover tooltip rendered via React portal) ----------
    The placard is mounted to <body> on hover so it escapes the stage's
    overflow container. Inline `left`, `top`, `width` are computed in Module.jsx
@@ -544,44 +512,6 @@ header {
 .placard.above { transform: translateY(-100%); }   /* anchor top -> module top - 10 → shift up by own height */
 .placard b { color: var(--ink); font-weight: 600; }
 
-/* ---------------- cables ---------------- */
-.cable-h { align-self: start; width: 42px; height: var(--mod-h); }
-.cable-h svg { width: 100%; height: 100%; overflow: visible; }
-.flow { stroke-dasharray: 4 9; animation: flowx 1.05s linear infinite; opacity: 0; }
-.playing .flow { opacity: 1; }
-@keyframes flowx { to { stroke-dashoffset: -26; } }
-.cable-v { position: relative; height: 44px; display: flex; justify-content: center; width: var(--mod-w); }
-.cable-v svg { height: 100%; width: 44px; overflow: visible; }
-.flowy { stroke-dasharray: 4 9; animation: flowy 1s linear infinite; opacity: 0; }
-.playing .flowy { opacity: 1; }
-@keyframes flowy { to { stroke-dashoffset: 26; } }
-.cv-label {
-  position: absolute; left: calc(50% + 13px); top: 50%; transform: translateY(-50%); font-size: 8px;
-  letter-spacing: .14em; text-transform: uppercase; color: var(--control); white-space: nowrap; opacity: .85;
-}
-
-/* ---------------- empty rack bay ---------------- */
-.bay {
-  position: relative; width: 206px; height: var(--mod-h); align-self: start;
-  border-radius: 9px; border: 1px dashed var(--line);
-  background: repeating-linear-gradient(180deg, transparent 0 26px, var(--silk-soft) 26px 27px);
-  cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px;
-  color: var(--muted); transition: .16s var(--ease);
-}
-.bay .rail-screw {
-  position: absolute; width: 7px; height: 7px; border-radius: 50%; background: #0c0d10;
-  box-shadow: 0 0 0 1px #000 inset, 0 0 0 1px var(--line);
-}
-.bay .rail-screw.t1 { top: 9px; left: 9px; } .bay .rail-screw.t2 { top: 9px; right: 9px; }
-.bay .rail-screw.b1 { bottom: 9px; left: 9px; } .bay .rail-screw.b2 { bottom: 9px; right: 9px; }
-.bay .plus { width: 34px; height: 34px; border-radius: 50%; border: 1px solid currentColor; display: grid; place-items: center; font-size: 20px; font-weight: 300; line-height: 1; }
-.bay .bt { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
-.bay small {
-  display: block; max-width: 150px; text-align: center; font-family: "Spectral", serif; font-style: italic;
-  font-size: 12px; letter-spacing: 0; color: var(--muted-dim); text-transform: none; line-height: 1.4;
-}
-.bay:hover { color: var(--audio); border-color: var(--audio-dim); }
-.bay.control:hover { color: var(--control); border-color: var(--control-dim); }
 
 /* speaker output decoration */
 .spk { display: flex; align-items: center; gap: 10px; color: var(--audio); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; margin-top: 4px; }
@@ -826,29 +756,7 @@ header {
   .landing h1 { font-size: 26px; }
 }
 
-/* ---- Free Build mode (palette + free rack) ---- */
-.legend .icon-btn.on {
-  color: var(--ink);
-  border-color: var(--audio);
-  box-shadow: 0 0 0 1px var(--audio) inset, 0 0 10px rgba(255, 180, 84, 0.18);
-}
-.stage.free-mode { padding-bottom: 28px; }
-
-.free-rack {
-  margin: 0;
-  padding: 14px;
-  position: relative;
-  min-width: max-content;
-}
-/* Free-mode canvas: absolute-positioned children. Each .module inside this
-   container reads its store-provided position via inline left/top. Min size
-   keeps the canvas tall + wide enough for the default canonical layout
-   (~1130 × 890) so a fresh free-mode session has a sensible footprint. */
-.free-rack-canvas {
-  position: relative;
-  min-height: 1000px;
-  min-width: 1200px;
-}
+/* ---- Module interaction ---- */
 .module.draggable .m-head { cursor: grab; }
 .module.draggable .m-head:active { cursor: grabbing; }
 body.module-dragging,
@@ -1148,18 +1056,7 @@ body.module-dragging * { cursor: grabbing !important; }
   50%      { box-shadow: 0 0 0 4px transparent; }
 }
 
-/* ---- Free-mode spacing ----
-   Legacy decorative HCable / VCable elements provided the gap between
-   columns (and between a column's audio module + its control module). In
-   free mode those are hidden, so we need explicit gap that's also wide
-   enough for port markers to render outside the module bodies without
-   colliding with neighbours. */
-.stage.free-mode .rack { gap: 60px; padding-left: 14px; padding-right: 14px; padding-bottom: 18px; }
-.stage.free-mode .col  { gap: 48px; }
-.stage.free-mode .free-rack-row { gap: 60px; }
-
-/* ---- Unified wires (free mode) ---- */
-.stage.free-mode { cursor: default; }
+/* ---- Wires overlay ---- */
 .wires { overflow: visible; }
 .wires .wire { transition: opacity .14s var(--ease); }
 .wires .wire:hover path:not([stroke="transparent"]) { opacity: 1; filter: drop-shadow(0 0 4px currentColor); }

@@ -1,7 +1,7 @@
 import { useSynthStore } from "../store/useSynthStore.js";
 import { byId as journeyById } from "../content/journeys/index.js";
 import { NARRATOR_UI } from "../content/ui.js";
-import { byType, byBlocksFlag, isCanonicalPresent } from "../modules/_registry.js";
+import { byType } from "../modules/_registry.js";
 
 const KIND_LABEL = {
   audio:   "Audio · Module",
@@ -10,18 +10,15 @@ const KIND_LABEL = {
 
 export function Narrator() {
   const chapter      = useSynthStore((s) => s.chapter);
-  const modules      = useSynthStore((s) => s.modules);
   const journeyId    = useSynthStore((s) => s.journeyId);
-  const freeMode     = useSynthStore((s) => s.ui.freeMode);
-  const addCanonical = useSynthStore((s) => s.addCanonicalModule);
+  const applyChapterDelta = useSynthStore((s) => s.applyChapterDelta);
   const nextChapter  = useSynthStore((s) => s.nextChapter);
   const goChapter    = useSynthStore((s) => s.goChapter);
   const focusedType  = useSynthStore((s) => s.ui.focusedModuleSlot);
   const clearFocus   = useSynthStore((s) => s.clearFocus);
   const setMobileView = useSynthStore((s) => s.setMobileView);
 
-  // In free mode (or with no journey selected) there is no narrative to render.
-  if (freeMode || !journeyId) return null;
+  if (!journeyId) return null;
   const journey  = journeyById(journeyId);
   const chapters = journey?.chapters ?? [];
   if (!chapters.length) return null;
@@ -51,21 +48,16 @@ export function Narrator() {
   function handleNext() {
     if (!upcoming) return;
     if (upcoming.adds) {
-      const manifest = byBlocksFlag(upcoming.adds);
-      if (manifest && !isCanonicalPresent(manifest.canonical.id, modules)) {
-        addCanonical(manifest.canonical.id);
-      }
-      // On mobile, jump the user over to the synth view so they can see the
-      // module they just added. No-op on desktop (both panes are visible).
+      applyChapterDelta(upcoming.adds);
+      // On mobile, jump to the synth view so the visitor sees the new module.
       setMobileView("synth");
     }
     nextChapter();
   }
 
-  const upcomingManifest = upcoming?.adds ? byBlocksFlag(upcoming.adds) : null;
-  const label = upcomingManifest
-    ? `Add ${upcomingManifest.meta.title} ▸`
-    : NARRATOR_UI.next;
+  // Label: explicit `addLabel` on the chapter wins, otherwise fall back to
+  // a generic "Next chapter" — the delta itself decides what's added.
+  const label = upcoming?.addLabel || NARRATOR_UI.next;
 
   function handlePrev() {
     if (safeIdx > 0) goChapter(safeIdx - 1);

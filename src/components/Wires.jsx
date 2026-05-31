@@ -14,13 +14,7 @@ function lookupPortType(modules, fromId, fromPort) {
 
 // Unified wire overlay. Reads every connection in the store, looks up each
 // endpoint's screen position via [data-port-id="<moduleId>:<portName>"]
-// querySelector (same pattern as the legacy GateWire), and draws an SVG path.
-//
-// Active when:
-//   - Free mode is on (always renders all connections)
-//   - In chapter mode, only renders user-added connections (id NOT starting
-//     with "_c_") so the legacy decorative HCable/VCable/GateWire still owns
-//     the chapter visual story.
+// querySelector, and draws an SVG bezier between them.
 
 const TYPE_COLOR = {
   [PORT_TYPE.AUDIO]: "var(--audio)",
@@ -43,7 +37,6 @@ function pathBetween(from, to) {
 export function Wires({ containerRef }) {
   const connections = useSynthStore((s) => s.connections);
   const modules     = useSynthStore((s) => s.modules);
-  const freeMode    = useSynthStore((s) => s.ui.freeMode);
   const selectedId  = useSynthStore((s) => s.ui.selectedConnectionId);
   const selectConnection    = useSynthStore((s) => s.selectConnection);
   const disconnectModules   = useSynthStore((s) => s.disconnectModules);
@@ -53,11 +46,7 @@ export function Wires({ containerRef }) {
   const rafRef = useRef(0);
   const containerRectRef = useRef(null);
 
-  // Only render the user-added connections in chapter mode; render everything
-  // (chapter + free) in free mode so the user sees the full patch.
-  const visible = freeMode
-    ? connections
-    : connections.filter((c) => !c.id.startsWith("_c_"));
+  const visible = connections;
 
   // Recompute path screen coords. Cheap enough to do on every animation frame
   // while the page is interactive, but we throttle via rAF to avoid stacking.
@@ -97,7 +86,7 @@ export function Wires({ containerRef }) {
     // hover effects, scale transforms. The cost is small (only a few querySelectors).
     rafRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [visible.length, freeMode, containerRef]);
+  }, [visible.length, containerRef]);
 
   // Escape clears the armed source (handled in Stage), Delete removes the
   // selected connection.
