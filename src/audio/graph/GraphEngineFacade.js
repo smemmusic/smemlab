@@ -69,6 +69,10 @@ export class GraphEngineFacade {
   getInstanceEnvPhase(instanceId) { return this.graph.getModule(instanceId)?.getPhase?.() ?? "idle"; }
   getInstanceEnvStart(instanceId) { return this.graph.getModule(instanceId)?.getStart?.() ?? 0; }
 
+  // Forward the global visuals toggle to every module. The bridge calls this
+  // when the store's visualsEnabled changes.
+  setVisualsEnabled(enabled) { this.graph.setVisualsEnabled(enabled); }
+
   // AudioContext snapshot for the settings readout. Null until start() runs.
   getAudioInfo() {
     const ctx = this.graph.ctx;

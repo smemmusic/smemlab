@@ -42,10 +42,15 @@ export class OscillatorModule extends AudioModule {
     this.type = type;
     this.freq = freq;
     this.octave = octave;
+    // `passthrough` is the registered audio out; `tap` is a side-branch the
+    // engine can disconnect when visuals are off without silencing the chain.
+    this.passthrough = ctx.createGain();
+    this.passthrough.gain.value = 1;
     this.tap = ctx.createAnalyser();
     this.tap.fftSize = 2048;
+    this.passthrough.connect(this.tap);
     this.node = this._buildSource(type);
-    this.node.connect(this.tap);
+    this.node.connect(this.passthrough);
     this._started = false;
 
     // Octave transpose. A ConstantSourceNode emits (octave × 1200) cents and
@@ -56,7 +61,8 @@ export class OscillatorModule extends AudioModule {
     this.octaveOffset.offset.value = octave * 1200;
     this.octaveOffset.start();
 
-    this._registerAudioOut("main", this.tap);
+    this._registerAudioOut("main", this.passthrough);
+    this._registerDisplayTap(this.passthrough, this.tap);
     this._bindPitchTarget();
     this._bindModCvTarget();
     this._bindOctaveTarget();
@@ -84,7 +90,7 @@ export class OscillatorModule extends AudioModule {
     try { this.node.stop(); } catch {}
     try { this.node.disconnect(); } catch {}
     this.node = this._buildSource(type);
-    this.node.connect(this.tap);
+    this.node.connect(this.passthrough);
     if (this._started) this.node.start();
     this._bindPitchTarget();
     this._bindModCvTarget();
@@ -103,6 +109,7 @@ export class OscillatorModule extends AudioModule {
     try { this.octaveOffset.disconnect(); } catch {}
     try { this.node.stop(); } catch {}
     try { this.node.disconnect(); } catch {}
+    try { this.passthrough.disconnect(); } catch {}
     try { this.tap.disconnect(); } catch {}
   }
 

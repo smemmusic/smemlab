@@ -18,6 +18,10 @@ export class OutputModule extends AudioModule {
 
   constructor(ctx, { vol }) {
     super(ctx);
+    // `inputNode` is the registered audio in; `outTap` is a side-branch the
+    // engine disconnects when visuals are off without silencing the chain.
+    this.inputNode = ctx.createGain();
+    this.inputNode.gain.value = 1;
     this.outTap = ctx.createAnalyser();
     this.outTap.fftSize = 2048;
     this.master = ctx.createGain();
@@ -32,11 +36,13 @@ export class OutputModule extends AudioModule {
     this.shaper.curve = curve;
     this.shaper.oversample = "4x";
 
-    this.outTap.connect(this.master);
+    this.inputNode.connect(this.master);
+    this.inputNode.connect(this.outTap);
     this.master.connect(this.shaper);
     this.shaper.connect(ctx.destination);
 
-    this._registerAudioIn("input", this.outTap);
+    this._registerAudioIn("input", this.inputNode);
+    this._registerDisplayTap(this.inputNode, this.outTap);
     // CV in "vol" — additive modulation on master gain.
     this._makeCvInput("vol", 1, this.master.gain);
   }
@@ -62,6 +68,7 @@ export class OutputModule extends AudioModule {
   getAnalyser() { return this.outTap; }
 
   dispose() {
+    try { this.inputNode.disconnect(); } catch {}
     try { this.outTap.disconnect(); } catch {}
     try { this.master.disconnect(); } catch {}
     try { this.shaper.disconnect(); } catch {}

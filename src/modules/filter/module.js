@@ -34,8 +34,8 @@ export class FilterModule extends AudioModule {
     this._registerAudioOut("output", this.node);
     // Tapped CV inputs so the panel can read post-mix cutoff/resonance for the
     // live response curve. Multiple sources sum at each scaler.
-    this._makeCvInput("cutoff",    CUTOFF_MOD_RANGE_HZ, this.node.frequency, { tap: true });
-    this._makeCvInput("resonance", 12, this.node.Q, { tap: true });
+    this._makeCvInput("cutoff",    CUTOFF_MOD_RANGE_HZ, this.node.frequency, { tap: true, vizOnly: true });
+    this._makeCvInput("resonance", 12, this.node.Q, { tap: true, vizOnly: true });
     this._makeSwitchInput("mode", ["lowpass", "highpass", "bandpass", "notch"], 1);
   }
 

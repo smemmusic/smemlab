@@ -86,7 +86,11 @@ export class AudioModule {
   //
   // Pass `{ tap: true }` to also fan the scaler output into a dedicated
   // AnalyserNode, exposing the live post-mix CV contribution via getCvLevel().
-  _makeCvInput(name, cvRange, target, { tap = false } = {}) {
+  // Pass `{ tap: true, vizOnly: true }` for taps that exist *only* for panel
+  // visuals — the engine disconnects these from the audio graph when the
+  // global visuals toggle is off. Switch-CV taps and the amp's level tap are
+  // load-bearing for audio behaviour and must omit `vizOnly`.
+  _makeCvInput(name, cvRange, target, { tap = false, vizOnly = false } = {}) {
     const scaler = this.ctx.createGain();
     scaler.gain.value = cvRange;
     if (target) scaler.connect(target);
@@ -96,7 +100,7 @@ export class AudioModule {
       analyser.fftSize = 256;
       scaler.connect(analyser);
     }
-    this._cvPorts.in[name] = { scaler, range: cvRange, target, analyser };
+    this._cvPorts.in[name] = { scaler, range: cvRange, target, analyser, vizOnly };
     return scaler;
   }
 
@@ -138,6 +142,42 @@ export class AudioModule {
       if (idx !== spec.lastIdx) {
         spec.lastIdx = idx;
         onChange(this.id, name, spec.values[idx]);
+      }
+    }
+  }
+
+  // ---- Visuals enable/disable ----
+
+  // Subclasses with a signal-path analyser used purely for panel visuals
+  // (oscilloscope on the oscillator, master tap on the output) call this in
+  // their constructor with `(passthrough, analyser)`: a side-branch from the
+  // passthrough node into the analyser. The base walker connects / disconnects
+  // that branch when global visuals are toggled.
+  _registerDisplayTap(source, analyser) {
+    if (!this._displayTaps) this._displayTaps = [];
+    this._displayTaps.push({ source, analyser });
+  }
+
+  // Connect (enabled=true) or disconnect (enabled=false) every viz-only
+  // analyser side-branch on this module. Idempotent — safe to call repeatedly
+  // with the same value. Skips load-bearing CV taps (vizOnly=false), so switch
+  // quantisation and the amp's CV-driven gain keep working.
+  setVisualsEnabled(enabled) {
+    for (const entry of Object.values(this._cvPorts.in)) {
+      if (!entry.analyser || !entry.vizOnly) continue;
+      if (enabled) {
+        try { entry.scaler.connect(entry.analyser); } catch {}
+      } else {
+        try { entry.scaler.disconnect(entry.analyser); } catch {}
+      }
+    }
+    if (this._displayTaps) {
+      for (const { source, analyser } of this._displayTaps) {
+        if (enabled) {
+          try { source.connect(analyser); } catch {}
+        } else {
+          try { source.disconnect(analyser); } catch {}
+        }
       }
     }
   }

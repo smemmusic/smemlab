@@ -120,6 +120,10 @@ export function useAudioEngineBridge() {
     }
 
     reconcile();
+    // Apply the persisted visuals state on first wire-up. Re-applied on every
+    // play (below) since new modules might have been constructed before the
+    // engine knew the current value.
+    engine.setVisualsEnabled(get().visualsEnabled);
 
     // Subscribe to module / connection / playing state changes.
     const unsubs = [
@@ -139,7 +143,13 @@ export function useAudioEngineBridge() {
       } }),
       // When the engine flips from stopped → running, reconcile pushes
       // everything to the freshly-created context.
-      sub((s) => s.playing, (playing) => { if (playing) reconcile(); }),
+      sub((s) => s.playing, (playing) => {
+        if (playing) {
+          reconcile();
+          engine.setVisualsEnabled(get().visualsEnabled);
+        }
+      }),
+      sub((s) => s.visualsEnabled, (enabled) => engine.setVisualsEnabled(enabled)),
     ];
 
     return () => {

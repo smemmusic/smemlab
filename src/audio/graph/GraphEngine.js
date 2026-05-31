@@ -68,6 +68,14 @@ export class GraphEngine {
 
   isRunning() { return !!this.ctx && this.ctx.state === "running"; }
 
+  // Global visuals toggle. Walks every live module and asks it to connect or
+  // disconnect its viz-only analyser side-branches. Newly-added modules also
+  // pick up the current state in addModule().
+  setVisualsEnabled(enabled) {
+    this._visualsEnabled = !!enabled;
+    for (const m of this.modules.values()) m.setVisualsEnabled?.(this._visualsEnabled);
+  }
+
   dispose() {
     if (!this.ctx) return;
     if (this._pollRaf) { cancelAnimationFrame(this._pollRaf); this._pollRaf = 0; }
@@ -91,6 +99,9 @@ export class GraphEngine {
     instance.id = moduleId;
     instance.type = type;
     if (this.isRunning()) instance.start?.();
+    // Newly-added modules inherit the current global visuals state so taps
+    // stay consistent if a module is added while visuals are off.
+    if (this._visualsEnabled === false) instance.setVisualsEnabled?.(false);
     this.modules.set(moduleId, instance);
     return moduleId;
   }
