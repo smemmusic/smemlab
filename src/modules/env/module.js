@@ -1,5 +1,5 @@
 import { AudioModule } from "../../audio/AudioModule.js";
-import { dbToLin, ENV_PEAK_BOOST_DB } from "../../audio/constants.js";
+import { DB_FLOOR, dbToLin, ENV_PEAK_BOOST_DB } from "../../audio/constants.js";
 import {
   MODULE_KIND, PORT_TYPE, PORT_DIR, CV_POLARITY,
   CONTROL_KIND, CONTROL_CURVE,
@@ -62,11 +62,17 @@ export class EnvelopeModule extends AudioModule {
     g.exponentialRampToValueAtTime(dbToLin(ENV_PEAK_BOOST_DB), t + e.a);
     g.exponentialRampToValueAtTime(dbToLin(ENV_PEAK_BOOST_DB + e.sustainDb), t + e.a + e.d);
     const cv = this.cvOut.offset;
-    const sustainLin01 = dbToLin(e.sustainDb);
+    // sustainDb lives in [DB_FLOOR, 0] dB; map to a normalised [0, 1] position
+    // in dB space so a downstream dB-CV input (e.g. amp's `cv × CV_MAX_DB`,
+    // where CV_MAX_DB matches |DB_FLOOR|) lands at the envelope's intended
+    // sustain dB at the destination. Using dbToLin here was the old bug:
+    // it produced a linear-amplitude value that the amp then re-scaled as if
+    // it were dB, giving e.g. sustain −3 dB → −14 dB at the amp.
+    const sustainNorm = (e.sustainDb - DB_FLOOR) / -DB_FLOOR;
     cv.cancelScheduledValues(t);
     cv.setValueAtTime(cv.value, t);
     cv.linearRampToValueAtTime(1.0, t + e.a);
-    cv.linearRampToValueAtTime(sustainLin01, t + e.a + e.d);
+    cv.linearRampToValueAtTime(sustainNorm, t + e.a + e.d);
     this.envStart = performance.now();
     this.envPhase = "ad";
   }
