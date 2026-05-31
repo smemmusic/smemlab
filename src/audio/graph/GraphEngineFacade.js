@@ -69,6 +69,17 @@ export class GraphEngineFacade {
   getInstanceEnvPhase(instanceId) { return this.graph.getModule(instanceId)?.getPhase?.() ?? "idle"; }
   getInstanceEnvStart(instanceId) { return this.graph.getModule(instanceId)?.getStart?.() ?? 0; }
 
+  // AudioContext snapshot for the settings readout. Null until start() runs.
+  getAudioInfo() {
+    const ctx = this.graph.ctx;
+    if (!ctx) return null;
+    return {
+      sampleRate:    ctx.sampleRate,
+      baseLatency:   ctx.baseLatency,
+      outputLatency: ctx.outputLatency
+    };
+  }
+
   // Direct access to the GraphEngine. The bridge uses this; the smoke-test
   // helper in engineSingleton uses this.
   getGraph() { return this.graph; }

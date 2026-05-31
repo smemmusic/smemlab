@@ -1,8 +1,19 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSynthStore } from "../store/useSynthStore.js";
 import { SETTINGS, SCOPE_TRIGGER } from "../content/ui.js";
 import { Toggle } from "./controls/Toggle.jsx";
 import { Knob } from "./controls/Knob.jsx";
+import { getEngine } from "../audio/engineSingleton.js";
+
+function formatMs(seconds) {
+  if (typeof seconds !== "number" || !isFinite(seconds)) return SETTINGS.audio.inactive;
+  return `${(seconds * 1000).toFixed(1)} ms`;
+}
+
+function formatHz(hz) {
+  if (typeof hz !== "number" || !isFinite(hz)) return SETTINGS.audio.inactive;
+  return `${(hz / 1000).toFixed(1)} kHz`;
+}
 
 // Lever-up = rising edge. options[0] = "up" state per the Toggle convention.
 const TRIGGER_OPTIONS = [
@@ -18,6 +29,17 @@ export function SettingsModal() {
   const threshold = useSynthStore((s) => s.scope.threshold);
   const setEdge      = useSynthStore((s) => s.setScopeEdge);
   const setThreshold = useSynthStore((s) => s.setScopeThreshold);
+
+  // AudioContext readout — re-sampled each time the modal opens (and via a
+  // short interval while open, since outputLatency drifts with the OS buffer).
+  const [audioInfo, setAudioInfo] = useState(null);
+  useEffect(() => {
+    if (!open) return;
+    const refresh = () => setAudioInfo(getEngine().getAudioInfo());
+    refresh();
+    const id = setInterval(refresh, 1000);
+    return () => clearInterval(id);
+  }, [open]);
 
   // Esc closes.
   useEffect(() => {
@@ -39,6 +61,25 @@ export function SettingsModal() {
           <h2>{SETTINGS.title}</h2>
           <button className="modal-close" onClick={() => setOpen(false)} aria-label={SETTINGS.close}>✕</button>
         </header>
+
+        <section className="setting-group">
+          <div className="setting-title">{SETTINGS.audio.sectionTitle}</div>
+          <p className="setting-desc">{SETTINGS.audio.description}</p>
+          <div className="ctrl-grid">
+            <div className="setting-cell">
+              <div className="setting-readout">{formatHz(audioInfo?.sampleRate)}</div>
+              <div className="setting-label">{SETTINGS.audio.sampleRateLabel}</div>
+            </div>
+            <div className="setting-cell">
+              <div className="setting-readout">{formatMs(audioInfo?.baseLatency)}</div>
+              <div className="setting-label">{SETTINGS.audio.baseLatencyLabel}</div>
+            </div>
+            <div className="setting-cell">
+              <div className="setting-readout">{formatMs(audioInfo?.outputLatency)}</div>
+              <div className="setting-label">{SETTINGS.audio.outputLatencyLabel}</div>
+            </div>
+          </div>
+        </section>
 
         <section className="setting-group">
           <div className="setting-title">{SETTINGS.scope.sectionTitle}</div>

@@ -58,6 +58,14 @@ export const SETTINGS = {
     description:  "Stabilises the trace on the X-axis. The trace starts drawing when the signal crosses the threshold in the selected direction.",
     edgeLabel:    "Trigger edge",
     thresholdLabel: "Threshold"
+  },
+  audio: {
+    sectionTitle:    "Audio",
+    description:     "Live values from the Web Audio context. Available once the rack is powered on.",
+    sampleRateLabel: "Sample rate",
+    baseLatencyLabel:   "Base latency",
+    outputLatencyLabel: "Output latency",
+    inactive: "—"
   }
 };
 

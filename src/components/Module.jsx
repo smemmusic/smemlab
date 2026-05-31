@@ -104,7 +104,9 @@ export function Module({ type, instanceId, children }) {
             <div className="m-title">{manifest.meta.title}</div>
           </div>
           {manifest.glyph}
-          <button className="m-remove" title="Patch out" onClick={handleRemove}>✕</button>
+          {type !== "output" && (
+            <button className="m-remove" title="Patch out" onClick={handleRemove}>✕</button>
+          )}
         </div>
         {children}
         {instanceId && <ModulePorts moduleId={instanceId} type={type} />}

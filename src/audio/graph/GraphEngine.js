@@ -58,7 +58,8 @@ export class GraphEngine {
 
   start() {
     if (!this.ctx) {
-      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const Ctor = window.AudioContext || window.webkitAudioContext;
+      this.ctx = new Ctor({ latencyHint: 0.005 });
     } else if (this.ctx.state === "suspended") {
       this.ctx.resume();
     }

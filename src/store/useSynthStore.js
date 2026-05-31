@@ -36,6 +36,38 @@ function cloneDeep(x) {
 // Empty graph used as a safe fallback. Free-build mode opens here.
 const EMPTY_GRAPH = { modules: [], connections: [] };
 
+// Default position for an auto-inserted Output in Free build — sits on the
+// right of the 1200px-min-width rack so it's the rightmost module on screen
+// once auto-fit kicks in.
+const DEFAULT_OUTPUT_POSITION = { x: 900, y: 60 };
+
+function makeDefaultOutput() {
+  return {
+    id: `output-${Math.random().toString(36).slice(2, 8)}`,
+    type: "output",
+    params: { vol: 80 },
+    position: { ...DEFAULT_OUTPUT_POSITION },
+  };
+}
+
+// Enforce the "exactly one Output per patch" invariant. If none is present,
+// add a fresh one at the default position. If somehow more than one slipped
+// in (e.g. legacy persisted state), keep the first and drop the rest along
+// with any connections that pointed at them.
+function ensureSingleOutput(modules, connections) {
+  const outputs = modules.filter((m) => m.type === "output");
+  if (outputs.length === 1) return { modules, connections };
+  if (outputs.length === 0) {
+    return { modules: [...modules, makeDefaultOutput()], connections };
+  }
+  const dropIds = new Set(outputs.slice(1).map((m) => m.id));
+  const nextModules = modules.filter((m) => !dropIds.has(m.id));
+  const nextConnections = connections.filter(
+    (c) => !dropIds.has(c.fromId) && !dropIds.has(c.toId)
+  );
+  return { modules: nextModules, connections: nextConnections };
+}
+
 // Pull the master vol from the first output module in `modules`. Falls back
 // to a sane default when no output is present (e.g. user deleted it).
 function deriveVolFromModules(modules, fallback = 80) {
@@ -84,11 +116,14 @@ export function validatePatchObject(obj) {
 // Replace the live graph with a saved patch. Drops journey context so a
 // loaded patch doesn't get fought by the chapter delta system.
 function applyPatchObject(set, patch) {
-  const modules     = cloneDeep(patch.modules);
-  const connections = cloneDeep(patch.connections);
+  const fixed = ensureSingleOutput(
+    cloneDeep(patch.modules),
+    cloneDeep(patch.connections),
+  );
   set({
-    modules, connections,
-    vol: deriveVolFromModules(modules, 80),
+    modules: fixed.modules,
+    connections: fixed.connections,
+    vol: deriveVolFromModules(fixed.modules, 80),
     ui: { armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1, mobileView: "synth" },
     chapter: 0,
     journeyId: null,
@@ -357,11 +392,14 @@ export const useSynthStore = create(
         startJourney: (id) => {
           const journey = journeyById(id);
           const patch = journey?.initialPatch || EMPTY_GRAPH;
-          const modules     = cloneDeep(patch.modules || []);
-          const connections = cloneDeep(patch.connections || []);
+          const fixed = ensureSingleOutput(
+            cloneDeep(patch.modules || []),
+            cloneDeep(patch.connections || []),
+          );
           set({
-            modules, connections,
-            vol: deriveVolFromModules(modules, 80),
+            modules: fixed.modules,
+            connections: fixed.connections,
+            vol: deriveVolFromModules(fixed.modules, 80),
             ui: { armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1, mobileView: "instructions" },
             chapter: 0,
             journeyId: id,
@@ -369,10 +407,12 @@ export const useSynthStore = create(
           });
         },
 
-        // Open free build — empty rack, palette visible. No journey, so no
+        // Open free build — empty rack with the mandatory Output seeded on
+        // the right of the canvas; palette visible. No journey, so no
         // narrator sidebar; the user patches from scratch.
         enterFreeBuild: () => set({
-          modules: [], connections: [],
+          modules: [makeDefaultOutput()],
+          connections: [],
           vol: 80,
           ui: { armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1, mobileView: "synth" },
           chapter: 0,
@@ -392,22 +432,26 @@ export const useSynthStore = create(
         }),
 
         // "Start again" — re-runs the current journey's initialPatch from
-        // chapter 0. In free build, just clears the rack.
+        // chapter 0. In free build, clears the rack back to a fresh Output.
         resetSession: () => set((s) => {
           if (s.journeyId) {
             const journey = journeyById(s.journeyId);
             const patch = journey?.initialPatch || EMPTY_GRAPH;
-            const modules     = cloneDeep(patch.modules || []);
-            const connections = cloneDeep(patch.connections || []);
+            const fixed = ensureSingleOutput(
+              cloneDeep(patch.modules || []),
+              cloneDeep(patch.connections || []),
+            );
             return {
-              modules, connections,
-              vol: deriveVolFromModules(modules, 80),
+              modules: fixed.modules,
+              connections: fixed.connections,
+              vol: deriveVolFromModules(fixed.modules, 80),
               ui: { ...s.ui, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null },
               chapter: 0,
             };
           }
           return {
-            modules: [], connections: [],
+            modules: [makeDefaultOutput()],
+            connections: [],
             vol: 80,
             ui: { ...s.ui, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null },
             chapter: 0,
@@ -448,14 +492,23 @@ export const useSynthStore = create(
           }
           return persisted;
         },
-        merge: (persisted, current) => ({
-          ...current,
-          ...persisted,
-          scope:       { ...current.scope, ...(persisted?.scope || {}) },
-          ui:          { ...current.ui,    ...(persisted?.ui    || {}) },
-          modules:     persisted?.modules     || current.modules,
-          connections: persisted?.connections || current.connections,
-        }),
+        merge: (persisted, current) => {
+          const baseModules     = persisted?.modules     || current.modules;
+          const baseConnections = persisted?.connections || current.connections;
+          // Only seed an Output once the user has actually entered the synth
+          // view — pre-landing the rack should stay empty.
+          const fixed = persisted?.started
+            ? ensureSingleOutput(baseModules, baseConnections)
+            : { modules: baseModules, connections: baseConnections };
+          return {
+            ...current,
+            ...persisted,
+            scope:       { ...current.scope, ...(persisted?.scope || {}) },
+            ui:          { ...current.ui,    ...(persisted?.ui    || {}) },
+            modules:     fixed.modules,
+            connections: fixed.connections,
+          };
+        },
       }
     )
   )

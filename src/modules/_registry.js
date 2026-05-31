@@ -27,11 +27,12 @@ export const MODULES = [
 ];
 
 // Palette order. Membership = inclusion; index = display order. Modules absent
-// from this array don't appear in the palette. `output` is included so the
-// user can re-add it after deletion (every patch needs an Output to be heard).
+// from this array don't appear in the palette. `output` is intentionally
+// excluded — every patch has exactly one Output module which the store
+// guarantees, so it isn't user-addable.
 const PALETTE_ORDER = [
   "oscillator", "filter", "audiomixer", "amp", "env", "arenv", "adenv", "lfo",
-  "keyboard", "trigger", "output",
+  "keyboard", "trigger",
   "inverter", "attenuator", "attenuverter", "cvmixer", "offset",
 ];
 
