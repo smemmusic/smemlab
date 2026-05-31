@@ -517,6 +517,58 @@ header {
   50%      { box-shadow: 0 0 0 3px rgba(111,220,140,.18); }
 }
 
+/* ---------------- Clock module ---------------- */
+.clock-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 14px;
+  padding: 10px 6px 14px;
+}
+.clock-lamp-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 4px 0;
+}
+.clock-lamp {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--gate-dim);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.4) inset;
+  transition: background .06s linear, box-shadow .06s linear;
+}
+.clock-lamp.on {
+  background: var(--gate);
+  box-shadow: 0 0 14px var(--gate-glow), 0 0 0 1px rgba(0,0,0,.3) inset;
+}
+.clock-lamp-label {
+  font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--muted);
+  min-width: 64px;
+}
+.clock-run-btn {
+  width: 28px; height: 22px;
+  padding: 0;
+  background: transparent;
+  border: 1.5px solid var(--muted-dim);
+  border-radius: 5px;
+  color: var(--muted);
+  font-family: inherit; font-size: 11px; line-height: 1;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: border-color .14s var(--ease), color .14s var(--ease), background .14s var(--ease);
+}
+.clock-run-btn:hover { border-color: var(--muted); color: var(--ink); }
+.clock-run-btn.on {
+  border-color: var(--gate);
+  color: var(--gate);
+  background: rgba(111,220,140,.08);
+}
+.clock-run-btn.on:hover { background: rgba(111,220,140,.18); }
+
 /* ---------------- placard (hover tooltip rendered via React portal) ----------
    The placard is mounted to <body> on hover so it escapes the stage's
    overflow container. Inline `left`, `top`, `width` are computed in Module.jsx

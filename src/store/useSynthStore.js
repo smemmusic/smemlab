@@ -155,6 +155,10 @@ export const useSynthStore = create(
 
         // ===== Top-level params + persisted UI prefs =====
         vol:     80,
+        // Global tempo. Sync-mode clocks derive their rate from this; any future
+        // module that needs musical time (sequencer, arpeggiator) reads it from
+        // the store directly.
+        bpm:     120,
         scope:   { edge: "rising", threshold: 0 },
         chapter: 0,
         started: false,
@@ -340,6 +344,7 @@ export const useSynthStore = create(
             m.type === "output" ? { ...m, params: { ...m.params, vol } } : m
           ),
         })),
+        setBpm:            (bpm) => set({ bpm: Math.max(20, Math.min(300, Math.round(bpm))) }),
         setScopeEdge:      (edge) => set((s) => ({ scope: { ...s.scope, edge } })),
         setScopeThreshold: (threshold) => set((s) => ({ scope: { ...s.scope, threshold } })),
         setSettingsOpen:   (settingsOpen) => set({ settingsOpen }),
@@ -466,6 +471,7 @@ export const useSynthStore = create(
           connections: s.connections,
           ui: { ...s.ui, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1 },
           vol: s.vol,
+          bpm: s.bpm,
           scope: s.scope,
           chapter: s.chapter,
           started: s.started,
