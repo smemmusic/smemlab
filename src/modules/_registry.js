@@ -13,6 +13,7 @@ import { Lfo }        from "./lfo/index.js";
 import { Keyboard }   from "./keyboard/index.js";
 import { Trigger }    from "./trigger/index.js";
 import { Clock }      from "./clock/index.js";
+import { DrumSeq }    from "./drumseq/index.js";
 import { Output }     from "./output/index.js";
 import { Inverter }    from "./inverter/index.js";
 import { CvMixer }     from "./cvmixer/index.js";
@@ -23,7 +24,7 @@ import { AudioMixer }  from "./audiomixer/index.js";
 
 export const MODULES = [
   Oscillator, Filter, Amp, Env, ArEnv, AdEnv, Lfo,
-  Keyboard, Trigger, Clock, Output,
+  Keyboard, Trigger, Clock, DrumSeq, Output,
   Inverter, CvMixer, Attenuator, Attenuverter, Offset, AudioMixer,
 ];
 
@@ -33,7 +34,7 @@ export const MODULES = [
 // guarantees, so it isn't user-addable.
 const PALETTE_ORDER = [
   "oscillator", "filter", "audiomixer", "amp", "env", "arenv", "adenv", "lfo",
-  "keyboard", "trigger", "clock",
+  "keyboard", "trigger", "clock", "drumseq",
   "inverter", "attenuator", "attenuverter", "cvmixer", "offset",
 ];
 
