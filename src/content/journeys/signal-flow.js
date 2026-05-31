@@ -98,10 +98,14 @@ export default {
           { id: "c-env-amp",   fromId: "env",  fromPort: "env",  toId: "amp", toPort: "level"   },
           { id: "c-gate-trig", fromId: "gate", fromPort: "gate", toId: "env", toPort: "trigger" },
         ],
+        // Drop the amp's intrinsic gain to −∞ dB so the envelope's CV is the
+        // only thing producing audible output — makes the gate/release effect
+        // obvious instead of being masked by the static 0 dB pass-through.
+        setParams: { amp: { level: -48 } },
       },
       title: "A silent signal that reshapes the sound.",
       prose: "The <span class='cy'>envelope</span> makes no sound on its own. It is a control signal, meant to modify a parameter of another module. Here we connected it to the gain. When the <b>gate</b> signal is held high: the envelope goes through → attack, decay, sustain; release phases.",
-      tryit: "Set the gain on the amplifier to minimum. Hold the Gate and watch the envelope shape the signal's amplitude.",
+      tryit: "Hold the Gate and watch the envelope shape the signal's amplitude.",
     },
 
     {
