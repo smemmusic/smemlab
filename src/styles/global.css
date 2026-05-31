@@ -995,8 +995,14 @@ body.module-dragging * { cursor: grabbing !important; }
 .ports .port { pointer-events: auto; }
 
 .ports-left   { left: -14px; top: 50%; transform: translateY(-50%); flex-direction: column; }
-.ports-right  { right: -14px; top: 50%; transform: translateY(-50%); flex-direction: column; }
+.ports-right  { right: -14px; top: 50%; transform: translateY(-50%); flex-direction: column; align-items: flex-end; }
+.ports-top    { left: 8px; right: 8px; top: -14px;    flex-wrap: wrap; justify-content: center; }
 .ports-bottom { left: 8px; right: 8px; bottom: -14px; flex-wrap: wrap; justify-content: center; }
+
+/* Output ports show the dot on the right edge of the pill (label on the left).
+   Inputs keep the default dot-on-left layout so wires consistently emanate
+   from the side closest to their direction of travel. */
+.port-out { flex-direction: row-reverse; padding: 2px 5px 2px 7px; }
 
 .port {
   background: var(--bg);

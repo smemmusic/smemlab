@@ -70,12 +70,13 @@ export function PortMarker({ moduleId, port }) {
     <button
       type="button"
       className={cls}
-      data-port-id={`${moduleId}:${port.name}`}
       style={{ "--port-color": color }}
       onClick={handleClick}
       title={`${port.name} · ${port.type} ${port.dir}`}
     >
-      <span className="port-dot" aria-hidden="true" />
+      {/* data-port-id lives on the dot so <Wires> measures the dot's centre
+          (not the whole button + label) when drawing endpoints. */}
+      <span className="port-dot" data-port-id={`${moduleId}:${port.name}`} aria-hidden="true" />
       <span className="port-label">{port.name}</span>
     </button>
   );
