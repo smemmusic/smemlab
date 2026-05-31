@@ -62,7 +62,12 @@ function buildPath(points, fromEdge, toEdge) {
     const p0 = points[i];
     const p1 = points[i + 1];
     const segLen = Math.hypot(p1.x - p0.x, p1.y - p0.y);
-    const h = Math.max(30, segLen * 0.4);
+    // Handle length caps at 45% of the segment so c1 and c2 can never cross
+    // when both tangents are parallel to the segment — without the cap, a
+    // short endpoint-to-endpoint wire (e.g. two ports facing each other
+    // through a small gutter) loops back on itself and visually re-crosses
+    // the labels we just moved out of its way.
+    const h = Math.min(Math.max(segLen * 0.35, 12), segLen * 0.45, 140);
     const c1x = p0.x + tangents[i].x * h;
     const c1y = p0.y + tangents[i].y * h;
     const c2x = p1.x - tangents[i + 1].x * h;

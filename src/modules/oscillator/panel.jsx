@@ -50,7 +50,7 @@ export function OscillatorPanel() {
   let pitchControl;
   if (isNoise)      pitchControl = <PitchPlaceholder caption="no pitch" />;
   else if (kbOn)    pitchControl = <PitchPlaceholder caption="from keyboard" />;
-  else              pitchControl = <Knob label="Pitch" value={params.freq} min={55} max={880} unit="Hz" log onChange={(v) => setModuleParam(id, "freq", v)} />;
+  else              pitchControl = <Knob label="Pitch" value={params.freq} min={20} max={12000} unit="Hz" log onChange={(v) => setModuleParam(id, "freq", v)} />;
 
   return (
     <>

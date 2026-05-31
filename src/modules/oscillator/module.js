@@ -14,16 +14,27 @@ export class OscillatorModule extends AudioModule {
   static PORTS = [
     { name: "main",  dir: PORT_DIR.OUT, type: PORT_TYPE.AUDIO },
     // V/oct pitch tracking (keyboard, sequencer). Drives `detune` so multiple
-    // pitch sources sum naturally. When wired, the `freq` knob (still mappable
-    // via its auto-generated `freq:cv` input) acts as transpose.
-    { name: "pitch", dir: PORT_DIR.IN,  type: PORT_TYPE.PITCH },
+    // pitch sources sum naturally. When wired, the `freq` knob acts as transpose.
+    { name: "pitch", dir: PORT_DIR.IN,  type: PORT_TYPE.PITCH,
+      description: "V/oct pitch tracking (1V = +1 octave)" },
+    // Free-modulation CV input: bipolar source sweeps the pitch ±4 octaves
+    // around the freq knob. For vibrato, FM, sweeps. (For per-note pitch use
+    // the `pitch` port instead — its V/oct calibration tracks keyboards.)
+    { name: "mod",   dir: PORT_DIR.IN,  type: PORT_TYPE.CV, polarity: CV_POLARITY.BIPOLAR,
+      description: "free pitch modulation (±1 CV → ±4 octaves)" },
   ];
   static CONTROLS = [
+    // The freq knob owns the baseline pitch. CV modulation arrives via the
+    // explicit `mod` port above (renamed from the old auto-generated `freq`
+    // CV input — `freq` vs `pitch` was confusing).
     { name: "freq", kind: CONTROL_KIND.KNOB,   range: [20, 20000], curve: CONTROL_CURVE.EXP,
-      cvRange: 4800, cvPolarity: CV_POLARITY.BIPOLAR },
+      cvInput: false },
     { name: "type", kind: CONTROL_KIND.SWITCH, values: ["sine", "sawtooth", "square", "triangle", "noise"],
-      cvRange: 1,   cvPolarity: CV_POLARITY.UNIPOLAR },
-    { name: "octave", kind: CONTROL_KIND.SWITCH, values: [-2, -1, 0, 1, 2], cvInput: false },
+      cvRange: 1,   cvPolarity: CV_POLARITY.UNIPOLAR,
+      description: "wave shape (0V → sine, 1V → noise)" },
+    { name: "octave", kind: CONTROL_KIND.SWITCH, values: [-2, -1, 0, 1, 2],
+      cvRange: 1,   cvPolarity: CV_POLARITY.UNIPOLAR,
+      description: "octave offset (0V → -2, 1V → +2)" },
   ];
 
   constructor(ctx, { type, freq, octave = 0 }) {
@@ -47,8 +58,11 @@ export class OscillatorModule extends AudioModule {
 
     this._registerAudioOut("main", this.tap);
     this._bindPitchTarget();
-    this._bindFreqCvTarget();
+    this._bindModCvTarget();
     this._bindOctaveTarget();
+    // Octave switch CV — register once at construction (independent of source
+    // type, so external wires don't break when the user switches osc/noise).
+    this._makeSwitchInput("octave", [-2, -1, 0, 1, 2], 1);
   }
 
   start() {
@@ -73,7 +87,7 @@ export class OscillatorModule extends AudioModule {
     this.node.connect(this.tap);
     if (this._started) this.node.start();
     this._bindPitchTarget();
-    this._bindFreqCvTarget();
+    this._bindModCvTarget();
     this._bindOctaveTarget();
   }
 
@@ -121,15 +135,15 @@ export class OscillatorModule extends AudioModule {
     this._registerPitchIn("pitch", scaler);
   }
 
-  _bindFreqCvTarget() {
-    const prev = this._cvPorts.in.freq?.scaler;
+  _bindModCvTarget() {
+    const prev = this._cvPorts.in.mod?.scaler;
     if (prev) { try { prev.disconnect(); } catch {} }
     if (this.type === "noise") {
       const stub = this.ctx.createGain();
-      this._cvPorts.in.freq = { scaler: stub, range: 4800, target: null };
+      this._cvPorts.in.mod = { scaler: stub, range: 4800, target: null };
       return;
     }
-    this._makeCvInput("freq", 4800, this.node.detune);
+    this._makeCvInput("mod", 4800, this.node.detune);
     this._makeSwitchInput("type", ["sine", "sawtooth", "square", "triangle", "noise"], 1);
   }
 

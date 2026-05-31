@@ -57,6 +57,7 @@ export class AudioModule {
         dir:  PORT_DIR.IN,
         type: PORT_TYPE.CV,
         polarity: c.cvPolarity,
+        description: c.description,
         auto: true,
       }));
     return [...(ctor.PORTS || []), ...cvInputs];

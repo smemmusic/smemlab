@@ -982,35 +982,74 @@ body.module-dragging * { cursor: grabbing !important; }
 .palette-item.audio   .plus { color: var(--audio);   background: rgba(255, 180, 84, 0.12); }
 .palette-item.control .plus { color: var(--control); background: rgba(108, 211, 230, 0.12); }
 
-/* ---- Port markers ---- */
+/* ---- Port markers ----
+   The dot sits exactly on the module border. The label extends OUTWARD into
+   the gutter (so it never overlaps the module's internal UI). A 0-sized
+   .port-anchor at the very far end of the pill carries `data-port-id` —
+   <Wires> attaches each wire endpoint there, so wires emerge past the label
+   instead of crossing it. */
 .module { position: relative; }   /* needed for absolute port positioning */
 
 .ports {
   position: absolute;
   display: flex;
-  gap: 6px;
+  gap: 8px;
   z-index: 3;
-  pointer-events: none;   /* container is transparent; individual .port re-enables */
+  pointer-events: none;
 }
 .ports .port { pointer-events: auto; }
 
-.ports-left   { left: -14px; top: 50%; transform: translateY(-50%); flex-direction: column; }
-.ports-right  { right: -14px; top: 50%; transform: translateY(-50%); flex-direction: column; align-items: flex-end; }
-.ports-top    { left: 8px; right: 8px; top: -14px;    flex-wrap: wrap; justify-content: center; }
-.ports-bottom { left: 8px; right: 8px; bottom: -14px; flex-wrap: wrap; justify-content: center; }
+/* Left/right edges: pill is a horizontal row; multiple ports stack vertically.
+   Container's outer edge sits at the module's border, then we shift by half a
+   dot so the dot's centre lands exactly on the border. */
+.ports-right {
+  left: 100%; top: 50%;
+  flex-direction: column; align-items: flex-start;
+  transform: translate(-5px, -50%);
+}
+.ports-right .port { flex-direction: row; }   /* dot at module border, label outward right */
 
-/* Output ports show the dot on the right edge of the pill (label on the left).
-   Inputs keep the default dot-on-left layout so wires consistently emanate
-   from the side closest to their direction of travel. */
-.port-out { flex-direction: row-reverse; padding: 2px 5px 2px 7px; }
+.ports-left {
+  right: 100%; top: 50%;
+  flex-direction: column; align-items: flex-end;
+  transform: translate(5px, -50%);
+}
+.ports-left .port { flex-direction: row-reverse; }  /* dot at border, label outward left */
+
+/* Top/bottom edges: container is a horizontal row; each pill is a column
+   stacking dot at the border and label out into the gutter. */
+.ports-top {
+  bottom: 100%; left: 0; right: 0;
+  flex-direction: row; justify-content: center; align-items: flex-end;
+  transform: translateY(5px);
+  flex-wrap: wrap;
+}
+.ports-top .port {
+  flex-direction: column-reverse;   /* dot at bottom (border), label above */
+  align-items: center;
+}
+
+.ports-bottom {
+  top: 100%; left: 0; right: 0;
+  flex-direction: row; justify-content: center; align-items: flex-start;
+  transform: translateY(-5px);
+  flex-wrap: wrap;
+}
+.ports-bottom .port {
+  flex-direction: column;   /* dot at top (border), label below */
+  align-items: center;
+}
 
 .port {
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 2px 7px 2px 5px;
+  background: transparent;
+  border: none;
+  padding: 0;
   display: inline-flex;
+  /* center on the cross-axis so dot, label, and the 1px anchor all line up
+     — without this the anchor (smallest item) sticks to the top of a row
+     pill, and the wire endpoint lands above the label instead of beside it. */
   align-items: center;
+  justify-content: center;
   gap: 5px;
   font-family: inherit;
   font-size: 9px;
@@ -1018,17 +1057,18 @@ body.module-dragging * { cursor: grabbing !important; }
   text-transform: uppercase;
   color: var(--muted-dim);
   cursor: pointer;
-  transition: .14s var(--ease);
+  transition: color .14s var(--ease);
 }
-.port:hover { color: var(--ink); border-color: var(--port-color); }
+.port:hover { color: var(--ink); }
 .port-dot {
-  width: 9px;
-  height: 9px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  flex: 0 0 9px;
+  flex: 0 0 10px;
+  transition: box-shadow .14s var(--ease);
 }
 /* Outputs: filled, glowing — "emitting" affordance.
-   Inputs: hollow ring — "receiving" affordance. */
+   Inputs: hollow ring on a dark fill — "receiving" affordance. */
 .port-out .port-dot {
   background: var(--port-color);
   box-shadow: 0 0 6px var(--port-color);
@@ -1038,28 +1078,31 @@ body.module-dragging * { cursor: grabbing !important; }
   border: 2px solid var(--port-color);
   box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.5);
 }
-.port-out .port-label {
-  font-weight: 700;
-  color: var(--ink);
-}
-.port-in .port-label {
-  font-weight: 400;
-  font-style: italic;
-}
+.port-out .port-label { font-weight: 700; color: var(--ink); }
+.port-in  .port-label { font-weight: 400; font-style: italic; }
 .port-label { line-height: 1; }
-.port.armed {
-  border-color: var(--port-color);
-  box-shadow: 0 0 0 1px var(--port-color), 0 0 10px var(--port-color);
-  color: var(--ink);
+/* 1×1 instead of 0×0 so the browser allocates a real layout box past the
+   label — a 0-sized inline-block in flex can collapse onto the previous
+   item's position, which silently snaps the wire back to the dot. */
+.port-anchor {
+  display: inline-block;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
 }
-.port.candidate {
-  border-color: var(--port-color);
-  color: var(--ink);
+
+/* Armed / candidate states — apply to the dot since there's no pill border. */
+.port.armed .port-dot {
+  box-shadow: 0 0 0 2px var(--port-color), 0 0 14px var(--port-color);
+}
+.port.armed .port-label { color: var(--ink); }
+.port.candidate .port-dot {
   animation: portPulse 1.4s ease-in-out infinite;
 }
+.port.candidate .port-label { color: var(--ink); }
 @keyframes portPulse {
-  0%, 100% { box-shadow: 0 0 0 0 var(--port-color); }
-  50%      { box-shadow: 0 0 0 4px transparent; }
+  0%, 100% { box-shadow: 0 0 0 0 var(--port-color), 0 0 6px var(--port-color); }
+  50%      { box-shadow: 0 0 0 4px transparent,    0 0 6px var(--port-color); }
 }
 
 /* ---- Wires overlay ---- */

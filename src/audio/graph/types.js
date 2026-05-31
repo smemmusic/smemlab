@@ -105,6 +105,7 @@ export function listStaticPorts(Cls) {
       dir:  PORT_DIR.IN,
       type: PORT_TYPE.CV,
       polarity: c.cvPolarity,
+      description: c.description,
       auto: true,
     }));
   return [...(Cls.PORTS || []), ...cvInputs];
