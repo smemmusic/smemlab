@@ -43,6 +43,60 @@ function deriveVolFromModules(modules, fallback = 80) {
   return out?.params?.vol ?? fallback;
 }
 
+// ---- Patch serialisation ----
+// Exported / shared with PatchesModal so it can produce + parse JSON files.
+
+export const PATCH_FILE_FORMAT  = "smemlab-patch";
+export const PATCH_FILE_VERSION = 1;
+
+// Wrap a {modules, connections} graph in the on-disk file envelope.
+export function serialisePatch(name, patch) {
+  return {
+    format:    PATCH_FILE_FORMAT,
+    version:   PATCH_FILE_VERSION,
+    name:      name || "Untitled patch",
+    createdAt: Date.now(),
+    patch: {
+      modules:     cloneDeep(patch.modules),
+      connections: cloneDeep(patch.connections),
+    },
+  };
+}
+
+// Validate a parsed JSON object and return the inner {modules, connections}
+// shape, or null if it doesn't look like a patch file.
+export function validatePatchObject(obj) {
+  if (!obj || typeof obj !== "object") return null;
+  if (obj.format && obj.format !== PATCH_FILE_FORMAT) return null;
+  const p = obj.patch || obj;
+  if (!p || !Array.isArray(p.modules) || !Array.isArray(p.connections)) return null;
+  for (const m of p.modules) {
+    if (!m || typeof m.id !== "string" || typeof m.type !== "string") return null;
+  }
+  for (const c of p.connections) {
+    if (!c || typeof c.id !== "string" ||
+        typeof c.fromId !== "string" || typeof c.fromPort !== "string" ||
+        typeof c.toId !== "string"   || typeof c.toPort !== "string") return null;
+  }
+  return { modules: cloneDeep(p.modules), connections: cloneDeep(p.connections) };
+}
+
+// Replace the live graph with a saved patch. Drops journey context so a
+// loaded patch doesn't get fought by the chapter delta system.
+function applyPatchObject(set, patch) {
+  const modules     = cloneDeep(patch.modules);
+  const connections = cloneDeep(patch.connections);
+  set({
+    modules, connections,
+    vol: deriveVolFromModules(modules, 80),
+    ui: { armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1, mobileView: "synth" },
+    chapter: 0,
+    journeyId: null,
+    started: true,
+    patchesOpen: false,
+  });
+}
+
 // ---- Store ----
 
 export const useSynthStore = create(
@@ -71,6 +125,12 @@ export const useSynthStore = create(
         started: false,
         journeyId: null,
         settingsOpen: false,
+        patchesOpen: false,
+
+        // ===== Saved patches =====
+        // Each entry: { id, name, createdAt, patch: { modules, connections } }.
+        // Persists with the rest of the store via the zustand persist middleware.
+        savedPatches: [],
 
         // ===== Transient (not persisted) =====
         playing: false,
@@ -237,7 +297,41 @@ export const useSynthStore = create(
         setScopeEdge:      (edge) => set((s) => ({ scope: { ...s.scope, edge } })),
         setScopeThreshold: (threshold) => set((s) => ({ scope: { ...s.scope, threshold } })),
         setSettingsOpen:   (settingsOpen) => set({ settingsOpen }),
+        setPatchesOpen:    (patchesOpen) => set({ patchesOpen }),
         setPlaying:        (playing) => set({ playing }),
+
+        // ---- Patches ----
+        // Snapshot the current graph as a named patch. Returns the new patch id.
+        savePatch: (name) => {
+          const id = newId();
+          const patch = {
+            modules:     cloneDeep(get().modules),
+            connections: cloneDeep(get().connections),
+          };
+          const entry = { id, name: name || "Untitled patch", createdAt: Date.now(), patch };
+          set((s) => ({ savedPatches: [entry, ...s.savedPatches] }));
+          return id;
+        },
+        // Replace the current graph with a saved patch's contents. Drops any
+        // journey context (loading a patch puts the visitor in free-build).
+        loadPatch: (id) => {
+          const entry = get().savedPatches.find((p) => p.id === id);
+          if (!entry) return;
+          applyPatchObject(set, entry.patch);
+        },
+        deletePatch: (id) => set((s) => ({
+          savedPatches: s.savedPatches.filter((p) => p.id !== id),
+        })),
+        renamePatch: (id, name) => set((s) => ({
+          savedPatches: s.savedPatches.map((p) => p.id === id ? { ...p, name } : p),
+        })),
+        // Load a patch from an imported JSON object (file upload). The shape
+        // must match the export format produced by serialisePatch.
+        loadPatchFromObject: (obj) => {
+          const patch = validatePatchObject(obj);
+          if (!patch) throw new Error("Not a valid patch file");
+          applyPatchObject(set, patch);
+        },
 
         // ---- Chapters ----
         goChapter:   (i) => set({ chapter: i }),
@@ -321,6 +415,7 @@ export const useSynthStore = create(
           chapter: s.chapter,
           started: s.started,
           journeyId: s.journeyId,
+          savedPatches: s.savedPatches,
         }),
         // v14: removed canonical/free-mode split. Anything from before this
         // point may have canonical "_"-prefixed ids that no longer match

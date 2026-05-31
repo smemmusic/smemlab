@@ -8,6 +8,7 @@ export function Header() {
   const resetSession    = useSynthStore((s) => s.resetSession);
   const backToJourneys  = useSynthStore((s) => s.backToJourneys);
   const setSettingsOpen = useSynthStore((s) => s.setSettingsOpen);
+  const setPatchesOpen  = useSynthStore((s) => s.setPatchesOpen);
   const journeyId       = useSynthStore((s) => s.journeyId);
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -47,6 +48,9 @@ export function Header() {
   // burger dropdown (mobile). CSS controls which group is visible.
   const actions = (
     <>
+      <button className="icon-btn" onClick={run(() => setPatchesOpen(true))} title="Save / load patches">
+        <span aria-hidden="true">⎙</span> Patches
+      </button>
       <button className="icon-btn" onClick={run(() => setSettingsOpen(true))} title={SETTINGS.open}>
         <span aria-hidden="true">⚙</span> {SETTINGS.open}
       </button>

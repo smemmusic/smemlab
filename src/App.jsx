@@ -5,6 +5,7 @@ import { Stage } from "./components/Stage.jsx";
 import { Transport } from "./components/Transport.jsx";
 import { Landing } from "./components/Landing.jsx";
 import { SettingsModal } from "./components/SettingsModal.jsx";
+import { PatchesModal } from "./components/PatchesModal.jsx";
 import { useSynthStore } from "./store/useSynthStore.js";
 import { useAudioEngineBridge } from "./hooks/useAudioEngine.js";
 
@@ -51,6 +52,7 @@ export function App() {
         <Transport />
       </div>
       <SettingsModal />
+      <PatchesModal />
       <Landing />
     </>
   );

@@ -595,6 +595,85 @@ header {
 .setting-cell { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .setting-label { font-size: 9px; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); }
 
+/* ---------------- patches modal ---------------- */
+.patches-modal { width: min(620px, 100%); }
+.patch-save-row {
+  display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap;
+}
+.patch-input {
+  flex: 1 1 200px; min-width: 0;
+  background: var(--panel-lo); border: 1px solid var(--line); border-radius: 6px;
+  color: var(--ink); font-family: inherit; font-size: 13px;
+  padding: 8px 12px;
+}
+.patch-input:focus { outline: none; border-color: var(--muted); }
+.patch-btn {
+  font-family: inherit; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; font-weight: 600;
+  color: #0b0c0f; background: var(--audio); border: none; border-radius: 6px;
+  padding: 8px 16px; cursor: pointer; transition: .14s var(--ease);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.patch-btn:hover { filter: brightness(1.08); }
+.patch-btn.ghost {
+  background: transparent; color: var(--ink); border: 1px solid var(--line); font-weight: 500;
+}
+.patch-btn.ghost:hover { border-color: var(--muted); background: rgba(255,255,255,.03); filter: none; }
+.patch-btn.small { padding: 6px 10px; font-size: 10px; }
+.patch-btn.danger {
+  background: transparent; color: var(--muted-dim); border: 1px solid var(--line); font-weight: 500;
+}
+.patch-btn.danger:hover { color: #ff6b6b; border-color: #ff6b6b; background: rgba(255,107,107,.06); filter: none; }
+
+.patch-list {
+  list-style: none; margin: 0 0 14px; padding: 0;
+  display: flex; flex-direction: column; gap: 6px;
+  max-height: 320px; overflow-y: auto;
+}
+.patch-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: "name actions" "date actions";
+  align-items: center;
+  gap: 2px 12px;
+  padding: 10px 12px;
+  background: rgba(20,22,28,.5);
+  border: 1px solid var(--line-soft);
+  border-radius: 7px;
+  transition: border-color .14s var(--ease);
+}
+.patch-item:hover { border-color: var(--line); }
+.patch-name {
+  grid-area: name;
+  background: transparent; border: none; padding: 0; cursor: text;
+  font-family: inherit; font-size: 13px; font-weight: 600; color: var(--ink);
+  text-align: left;
+}
+.patch-name:hover { color: var(--audio); }
+.patch-rename {
+  grid-area: name;
+  padding: 4px 8px; font-size: 13px;
+}
+.patch-date {
+  grid-area: date;
+  font-family: "Spectral", serif; font-size: 11px; color: var(--muted-dim);
+}
+.patch-actions {
+  grid-area: actions;
+  display: flex; gap: 6px; align-items: center;
+}
+
+.patch-upload {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin-top: 4px;
+}
+.patch-upload-hint { margin: 0; flex: 1 1 200px; }
+
+.patch-error {
+  font-family: inherit; font-size: 12px; color: #ff8a8a;
+  background: rgba(255,107,107,.08); border: 1px solid rgba(255,107,107,.3);
+  border-radius: 5px; padding: 8px 10px; margin: 0 0 10px;
+}
+
 /* ---------------- landing screen ---------------- */
 .landing {
   position: fixed; inset: 0; z-index: 80;
