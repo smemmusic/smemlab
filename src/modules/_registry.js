@@ -7,6 +7,8 @@ import { Oscillator } from "./oscillator/index.js";
 import { Filter }     from "./filter/index.js";
 import { Amp }        from "./amp/index.js";
 import { Env }        from "./env/index.js";
+import { ArEnv }      from "./arenv/index.js";
+import { AdEnv }      from "./adenv/index.js";
 import { Lfo }        from "./lfo/index.js";
 import { Keyboard }   from "./keyboard/index.js";
 import { Gate }       from "./gate/index.js";
@@ -19,7 +21,7 @@ import { Offset }      from "./offset/index.js";
 import { AudioMixer }  from "./audiomixer/index.js";
 
 export const MODULES = [
-  Oscillator, Filter, Amp, Env, Lfo,
+  Oscillator, Filter, Amp, Env, ArEnv, AdEnv, Lfo,
   Keyboard, Gate, Output,
   Inverter, CvMixer, Attenuator, Attenuverter, Offset, AudioMixer,
 ];
@@ -28,7 +30,7 @@ export const MODULES = [
 // from this array don't appear in the palette. `output` is included so the
 // user can re-add it after deletion (every patch needs an Output to be heard).
 const PALETTE_ORDER = [
-  "oscillator", "filter", "audiomixer", "amp", "env", "lfo",
+  "oscillator", "filter", "audiomixer", "amp", "env", "arenv", "adenv", "lfo",
   "keyboard", "gate", "output",
   "inverter", "attenuator", "attenuverter", "cvmixer", "offset",
 ];

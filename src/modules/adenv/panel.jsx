@@ -2,12 +2,12 @@ import { useSynthStore } from "../../store/useSynthStore.js";
 import { getEngine } from "../../audio/engineSingleton.js";
 import { Knob } from "../../components/controls/Knob.jsx";
 import { Canvas } from "../../components/viz/Canvas.jsx";
-import { drawEnv } from "../../components/viz/drawEnv.js";
+import { drawAdEnv } from "../../components/viz/drawAdEnv.js";
 import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
 
-const DEFAULT_PARAMS = { a: 0.05, d: 0.2, sustainDb: -8, r: 0.4 };
+const DEFAULT_PARAMS = { a: 0.005, d: 0.4 };
 
-export function EnvelopePanel() {
+export function AdEnvelopePanel() {
   const { instanceId: id } = useModuleInstance();
 
   const params  = useSynthStore((s) => s.modules.find((m) => m.id === id)?.params) || DEFAULT_PARAMS;
@@ -19,21 +19,19 @@ export function EnvelopePanel() {
   }
 
   const engine = getEngine();
-  // Phase + start read from the engine module directly (updated by onGate).
   const data = {
-    env: params, playing,
+    env: params,
+    playing,
     get phase() { return engine.getInstanceEnvPhase(id); },
     get start() { return engine.getInstanceEnvStart(id); },
   };
 
   return (
     <>
-      <Canvas tag="Envelope · ADSR (dB)" draw={drawEnv} data={data} />
+      <Canvas tag="Envelope · AD (dB)" draw={drawAdEnv} data={data} />
       <div className="ctrl-grid">
-        <Knob label="Attack"  value={params.a}         min={0} max={2} step={0.005} unit="s"  onChange={(v) => applyPartial({ a: v })} />
-        <Knob label="Decay"   value={params.d}         min={0} max={2} step={0.005} unit="s"  onChange={(v) => applyPartial({ d: v })} />
-        <Knob label="Sustain" value={params.sustainDb} min={-48}   max={0} step={0.5}   unit="dB" onChange={(v) => applyPartial({ sustainDb: v })} />
-        <Knob label="Release" value={params.r}         min={0} max={5} step={0.005} unit="s"  onChange={(v) => applyPartial({ r: v })} />
+        <Knob label="Attack" value={params.a} min={0} max={2} step={0.005} unit="s" onChange={(v) => applyPartial({ a: v })} />
+        <Knob label="Decay"  value={params.d} min={0} max={4} step={0.005} unit="s" onChange={(v) => applyPartial({ d: v })} />
       </div>
     </>
   );
