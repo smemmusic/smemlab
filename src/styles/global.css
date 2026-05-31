@@ -17,7 +17,7 @@
   --ease: cubic-bezier(.2,.7,.2,1);
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; }
+html, body { margin: 0; height: 100%; height: 100dvh; }
 /* The synth UI has no user-selectable text; suppressing selection prevents
    accidental highlights while dragging modules / knobs / cables. Form fields
    re-enable selection so settings inputs + preset names stay usable. */
@@ -50,7 +50,7 @@ html, body { overflow: hidden; }
     "transport transport";
   grid-template-rows: auto 1fr auto;
   grid-template-columns: 340px 1fr;
-  width: 100vw; height: 100vh;
+  width: 100vw; height: 100vh; height: 100dvh;
   max-width: none; margin: 0; padding: 0;
 }
 /* When the sidebar is hidden (free mode or pre-pick), main takes the full row. */
@@ -554,7 +554,13 @@ header {
 /* ---------------- transport ---------------- */
 .transport {
   grid-area: transport;
-  display: flex; align-items: center; gap: 16px; padding: 14px 24px;
+  display: flex; align-items: center; gap: 16px;
+  /* Extra bottom padding accounts for the iOS home-indicator and any
+     overscroll-bar inset; the `env()` adds 0 where there is none. */
+  padding: 14px 24px;
+  padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  padding-left:   calc(24px + env(safe-area-inset-left, 0px));
+  padding-right:  calc(24px + env(safe-area-inset-right, 0px));
   border-top: 1px solid var(--line);
   background: linear-gradient(180deg, rgba(26,28,34,.86), rgba(13,14,18,.96)); backdrop-filter: blur(10px); flex-wrap: wrap;
 }

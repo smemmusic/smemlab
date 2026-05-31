@@ -154,51 +154,178 @@ export function Stage() {
     setPan({ x: 0, y: 0 });
   }
 
-  // Pan: pointerdown on a background element starts a drag. Modules, wires,
-  // palette, and the zoom controls are all skipped (handled by their own
-  // listeners or simply not pannable). If the pointer comes up without
-  // moving past the click threshold, treat it as a click on empty stage and
-  // clear focus/selection — preserving the pre-pan behavior.
-  function onStagePointerDown(e) {
-    if (e.button !== 0) return;
+  // Wheel-to-zoom (mouse wheel + trackpad pinch). Trackpad pinch on macOS/
+  // Windows is delivered as a `wheel` event with `ctrlKey: true` and small
+  // deltaY, so the same handler covers both naturally. Anchored to the cursor
+  // so the point under the pointer stays in place across the zoom step.
+  // Registered imperatively with `{ passive: false }` because React's `onWheel`
+  // is passive and can't call preventDefault to suppress browser page zoom.
+  useEffect(() => {
     const stage = stageRef.current;
+    if (!stage) return;
+
+    function onWheel(ev) {
+      if (ev.target.closest && ev.target.closest("input, select, textarea, .zoom-ctrls, .palette, .modal")) {
+        return;
+      }
+      ev.preventDefault();
+
+      const factor = Math.exp(-ev.deltaY * 0.002);
+      const curScale = zoomModeRef.current === "auto"
+        ? autoScaleRef.current
+        : userScaleRef.current;
+      const nextScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, curScale * factor));
+      if (nextScale === curScale) return;
+
+      const rect = stage.getBoundingClientRect();
+      const cx = ev.clientX - rect.left;
+      const cy = ev.clientY - rect.top;
+      const curPan = zoomModeRef.current === "auto"
+        ? { x: 0, y: 0 }
+        : panRef.current;
+
+      // Keep the model point under the cursor fixed:
+      //   modelX = (cursorX - panX) / scale
+      //   newPanX = cursorX - modelX * newScale
+      const modelX = (cx - curPan.x) / curScale;
+      const modelY = (cy - curPan.y) / curScale;
+      const nextPan = {
+        x: cx - modelX * nextScale,
+        y: cy - modelY * nextScale,
+      };
+
+      if (zoomModeRef.current === "auto") setZoomMode("manual");
+      setUserScale(nextScale);
+      setPan(nextPan);
+    }
+
+    stage.addEventListener("wheel", onWheel, { passive: false });
+    return () => stage.removeEventListener("wheel", onWheel);
+  }, []);
+
+  // Active touches/pointers on the stage. Used to detect a one-finger pan
+  // (size === 1) vs a two-finger pinch (size >= 2). A ref Map keeps state
+  // across renders without re-binding listeners.
+  const pointersRef     = useRef(new Map());
+  const panGestureRef   = useRef(null);  // { pointerId, startX, startY, startPan, didMove }
+  const pinchGestureRef = useRef(null);  // { startDist, startScale, startPan, startMidStageX, startMidStageY, startMidScreenX, startMidScreenY }
+
+  function beginManualFromAuto() {
+    if (zoomModeRef.current !== "auto") return;
+    setUserScale(autoScaleRef.current);
+    setZoomMode("manual");
+  }
+
+  function onStagePointerDown(e) {
+    const stage = stageRef.current;
+    if (!stage) return;
+    // Right-click / middle-click on mouse: ignore (let context menu work).
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    // Two-finger pinch supersedes a one-finger pan.
+    if (pointersRef.current.size >= 2) {
+      if (panGestureRef.current) {
+        stage.classList.remove("panning");
+        panGestureRef.current = null;
+      }
+      const [p1, p2] = [...pointersRef.current.values()];
+      const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+      if (dist < 1) return;
+      const rect = stage.getBoundingClientRect();
+      const midScreenX = (p1.x + p2.x) / 2;
+      const midScreenY = (p1.y + p2.y) / 2;
+      const curScale = zoomModeRef.current === "auto" ? autoScaleRef.current : userScaleRef.current;
+      const curPan   = zoomModeRef.current === "auto" ? { x: 0, y: 0 } : { ...panRef.current };
+      beginManualFromAuto();
+      pinchGestureRef.current = {
+        startDist:      dist,
+        startScale:     curScale,
+        startPan:       curPan,
+        startMidStageX: midScreenX - rect.left,
+        startMidStageY: midScreenY - rect.top,
+        startMidScreenX: midScreenX,
+        startMidScreenY: midScreenY,
+      };
+      return;
+    }
+
+    // Single-pointer: may become a pan (only on a background target).
     if (!isPanBackground(e.target, stage)) return;
+    panGestureRef.current = {
+      pointerId: e.pointerId,
+      startX:    e.clientX,
+      startY:    e.clientY,
+      startPan:  zoomModeRef.current === "auto" ? { x: 0, y: 0 } : { ...panRef.current },
+      didMove:   false,
+    };
+    try { stage.setPointerCapture(e.pointerId); } catch {}
+  }
 
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const startPan = zoomModeRef.current === "auto"
-      ? { x: 0, y: 0 }
-      : { x: panRef.current.x, y: panRef.current.y };
-    let didMove = false;
+  function onStagePointerMove(e) {
+    if (!pointersRef.current.has(e.pointerId)) return;
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
-    function onMove(ev) {
-      const dx = ev.clientX - startX;
-      const dy = ev.clientY - startY;
-      if (!didMove && Math.abs(dx) + Math.abs(dy) > 3) {
-        didMove = true;
-        if (zoomModeRef.current === "auto") {
-          // Snap pan-start to auto scale so there's no jump on first drag.
-          setUserScale(autoScaleRef.current);
-          setZoomMode("manual");
-        }
+    const stage = stageRef.current;
+    if (pinchGestureRef.current && pointersRef.current.size >= 2) {
+      const p = pinchGestureRef.current;
+      const [p1, p2] = [...pointersRef.current.values()];
+      const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+      if (dist < 1) return;
+      const nextScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, p.startScale * (dist / p.startDist)));
+      // Keep the model point under the original midpoint fixed (cursor anchor),
+      // plus translate by the midpoint drift so two-finger pan-while-pinching works.
+      const modelX = (p.startMidStageX - p.startPan.x) / p.startScale;
+      const modelY = (p.startMidStageY - p.startPan.y) / p.startScale;
+      const curMidX = (p1.x + p2.x) / 2;
+      const curMidY = (p1.y + p2.y) / 2;
+      const driftX = curMidX - p.startMidScreenX;
+      const driftY = curMidY - p.startMidScreenY;
+      setUserScale(nextScale);
+      setPan({
+        x: p.startMidStageX - modelX * nextScale + driftX,
+        y: p.startMidStageY - modelY * nextScale + driftY,
+      });
+      return;
+    }
+
+    const g = panGestureRef.current;
+    if (g && e.pointerId === g.pointerId) {
+      const dx = e.clientX - g.startX;
+      const dy = e.clientY - g.startY;
+      if (!g.didMove && Math.abs(dx) + Math.abs(dy) > 3) {
+        g.didMove = true;
+        beginManualFromAuto();
         stage?.classList.add("panning");
       }
-      if (didMove) {
-        setPan({ x: startPan.x + dx, y: startPan.y + dy });
+      if (g.didMove) {
+        setPan({ x: g.startPan.x + dx, y: g.startPan.y + dy });
       }
     }
-    function onUp() {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      stage?.classList.remove("panning");
+  }
+
+  function onStagePointerEnd(e) {
+    pointersRef.current.delete(e.pointerId);
+
+    // When one finger of a pinch lifts, end the pinch (don't try to fall back
+    // to pan — that gets jumpy).
+    if (pinchGestureRef.current && pointersRef.current.size < 2) {
+      pinchGestureRef.current = null;
+    }
+
+    const g = panGestureRef.current;
+    if (g && e.pointerId === g.pointerId) {
+      const didMove = g.didMove;
+      panGestureRef.current = null;
+      stageRef.current?.classList.remove("panning");
+      try { stageRef.current?.releasePointerCapture(e.pointerId); } catch {}
       if (!didMove) {
         if (armedSource) clearArmedSource();
         clearSelection();
         clearFocus();
       }
     }
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
   }
 
   const displayScale = zoomMode === "auto" ? autoScale : userScale;
@@ -209,6 +336,9 @@ export function Stage() {
       ref={stageRef}
       className={"stage" + (freeMode ? " free-mode" : "")}
       onPointerDown={onStagePointerDown}
+      onPointerMove={onStagePointerMove}
+      onPointerUp={onStagePointerEnd}
+      onPointerCancel={onStagePointerEnd}
     >
       {/* Chapter mode: fixed Rack with the legacy decorative gate wire.
           Free mode: unified canvas where every module is positioned + draggable. */}
