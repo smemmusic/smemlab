@@ -33,7 +33,11 @@ export class LfoModule extends AudioModule {
 
     this._registerCvOut("cv", this.depth);
     this._makeCvInput("rate",  20, this.osc.frequency);
-    this._makeCvInput("depth", 1,  null);
+    // Sum CV directly into the depth GainNode's AudioParam so depth wiggles
+    // sample-accurately. The knob's value is the baseline; CV adds on top.
+    // Over-range (knob + CV > 1) is allowed — downstream destinations scale
+    // by their own cvRange so a slightly louder LFO is harmless.
+    this._makeCvInput("depth", 1,  this.depth.gain);
     this._makeSwitchInput("shape", ["sine", "triangle", "square", "sawtooth"], 1);
   }
 
