@@ -18,11 +18,12 @@ import { CvMixer }     from "./cvmixer/index.js";
 import { Attenuverter } from "./attenuverter/index.js";
 import { Attenuator }   from "./attenuator/index.js";
 import { Offset }      from "./offset/index.js";
+import { AudioMixer }  from "./audiomixer/index.js";
 
 export const MODULES = [
   Oscillator, Filter, Amp, Env, Lfo,
   Keyboard, Gate, Output,
-  Inverter, CvMixer, Attenuator, Attenuverter, Offset,
+  Inverter, CvMixer, Attenuator, Attenuverter, Offset, AudioMixer,
 ];
 
 // Free-mode palette order. Membership = inclusion; index = display order.
@@ -30,7 +31,7 @@ export const MODULES = [
 // which is always-present and not addable). Edit this list to reorder or
 // add/remove palette entries — duplicates are caught at import time.
 const PALETTE_ORDER = [
-  "oscillator", "filter", "amp", "env", "lfo",
+  "oscillator", "filter", "audiomixer", "amp", "env", "lfo",
   "keyboard", "gate",
   "inverter", "attenuator", "attenuverter", "cvmixer", "offset",
 ];

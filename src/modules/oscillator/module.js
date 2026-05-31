@@ -23,21 +23,32 @@ export class OscillatorModule extends AudioModule {
       cvRange: 4800, cvPolarity: CV_POLARITY.BIPOLAR },
     { name: "type", kind: CONTROL_KIND.SWITCH, values: ["sine", "sawtooth", "square", "triangle", "noise"],
       cvRange: 1,   cvPolarity: CV_POLARITY.UNIPOLAR },
+    { name: "octave", kind: CONTROL_KIND.SWITCH, values: [-2, -1, 0, 1, 2], cvInput: false },
   ];
 
-  constructor(ctx, { type, freq }) {
+  constructor(ctx, { type, freq, octave = 0 }) {
     super(ctx);
     this.type = type;
     this.freq = freq;
+    this.octave = octave;
     this.tap = ctx.createAnalyser();
     this.tap.fftSize = 2048;
     this.node = this._buildSource(type);
     this.node.connect(this.tap);
     this._started = false;
 
+    // Octave transpose. A ConstantSourceNode emits (octave × 1200) cents and
+    // sums into the oscillator's `detune` alongside the pitch and freq-CV
+    // scalers — addition on the same AudioParam is the "applied after the
+    // sum" semantics. Disconnected (no-op) when source is noise.
+    this.octaveOffset = ctx.createConstantSource();
+    this.octaveOffset.offset.value = octave * 1200;
+    this.octaveOffset.start();
+
     this._registerAudioOut("main", this.tap);
     this._bindPitchTarget();
     this._bindFreqCvTarget();
+    this._bindOctaveTarget();
   }
 
   start() {
@@ -63,6 +74,7 @@ export class OscillatorModule extends AudioModule {
     if (this._started) this.node.start();
     this._bindPitchTarget();
     this._bindFreqCvTarget();
+    this._bindOctaveTarget();
   }
 
   setFreq(f) {
@@ -73,6 +85,8 @@ export class OscillatorModule extends AudioModule {
   }
 
   dispose() {
+    try { this.octaveOffset.stop(); } catch {}
+    try { this.octaveOffset.disconnect(); } catch {}
     try { this.node.stop(); } catch {}
     try { this.node.disconnect(); } catch {}
     try { this.tap.disconnect(); } catch {}
@@ -81,6 +95,16 @@ export class OscillatorModule extends AudioModule {
   setParam(name, value) {
     if (name === "type") this.setType(value);
     else if (name === "freq") this.setFreq(value);
+    else if (name === "octave") {
+      this.octave = value;
+      this.octaveOffset.offset.setTargetAtTime(value * 1200, this.ctx.currentTime, 0.005);
+    }
+  }
+
+  _bindOctaveTarget() {
+    try { this.octaveOffset.disconnect(); } catch {}
+    if (this.type === "noise") return;
+    this.octaveOffset.connect(this.node.detune);
   }
 
   _bindPitchTarget() {

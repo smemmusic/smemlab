@@ -1,6 +1,7 @@
 import { useSynthStore } from "../../store/useSynthStore.js";
 import { Knob } from "../../components/controls/Knob.jsx";
 import { Selector } from "../../components/controls/Selector.jsx";
+import { Stepper } from "../../components/controls/Stepper.jsx";
 import { Oscilloscope } from "../../components/viz/Oscilloscope.jsx";
 import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
 import { CANONICAL_IDS } from "../../store/graphBuilder.js";
@@ -14,7 +15,10 @@ const SHAPES = [
   { value: "noise",    label: "Noise", wf: "noise" }
 ];
 
-const DEFAULT_PARAMS = { type: "sawtooth", freq: 110 };
+const DEFAULT_PARAMS = { type: "sawtooth", freq: 110, octave: 0 };
+const OCTAVE_MIN = -2;
+const OCTAVE_MAX = 2;
+const fmtOctave = (v) => (v > 0 ? `+${v}` : `${v}`);
 
 function PitchPlaceholder({ caption }) {
   return (
@@ -39,6 +43,8 @@ export function OscillatorPanel() {
   // never driven by the global keyboard.
   const kbOn = useSynthStore((s) => isCanonicalPresent(CANONICAL_IDS.keyboard, s.modules)) && isCanonical;
   const setModuleParam = useSynthStore((s) => s.setModuleParam);
+  const octave = params.octave ?? 0;
+  const setOctave = (v) => setModuleParam(id, "octave", v);
 
   const isNoise = params.type === "noise";
 
@@ -52,6 +58,14 @@ export function OscillatorPanel() {
       <Oscilloscope tag="Oscilloscope · raw output" instanceId={id} />
       <Selector options={SHAPES} value={params.type} onChange={(v) => setModuleParam(id, "type", v)} />
       <div className="ctrl-grid one">{pitchControl}</div>
+      <Stepper
+        label="Octave"
+        value={octave}
+        min={OCTAVE_MIN}
+        max={OCTAVE_MAX}
+        format={fmtOctave}
+        onChange={setOctave}
+      />
     </>
   );
 }

@@ -339,18 +339,18 @@ header {
 .kb-key.black.on { background: linear-gradient(180deg, var(--control), #1b6c8a); color: #04222d; }
 .kb-label { font-size: 9px; font-weight: 700; letter-spacing: .1em; }
 
-.kb-octave {
+.stepper {
   display: flex; align-items: center; justify-content: center; gap: 12px;
   font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
 }
-.kb-octave-label b { color: var(--ink); font-weight: 600; letter-spacing: .04em; font-size: 12px; margin-left: 4px; }
-.kb-octave-btn {
+.stepper-label b { color: var(--ink); font-weight: 600; letter-spacing: .04em; font-size: 12px; margin-left: 4px; }
+.stepper-btn {
   width: 28px; height: 26px; border-radius: 5px;
   background: var(--panel-lo); border: 1px solid var(--line); color: var(--ink);
   font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer;
   transition: border-color .14s var(--ease);
 }
-.kb-octave-btn:hover { border-color: var(--muted); }
+.stepper-btn:hover { border-color: var(--muted); }
 
 /* small destination label under a control module (LFO routes to filter cutoff) */
 .patch-out {

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSynthStore } from "../../store/useSynthStore.js";
 import { getEngine } from "../../audio/engineSingleton.js";
+import { Stepper } from "../../components/controls/Stepper.jsx";
 import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
 import { CANONICAL_IDS } from "../../store/graphBuilder.js";
 
@@ -114,7 +115,6 @@ export function KeyboardPanel() {
   function mLeave(midi) { return (e) => { if (e.buttons === 1) releaseMidi(midi); }; }
 
   const baseMidi = 12 * (octave + 1);
-  const octaveLabel = `C${octave}`;
 
   return (
     <>
@@ -155,19 +155,16 @@ export function KeyboardPanel() {
           })}
         </div>
       </div>
-      <div className="kb-octave">
-        <button
-          className="kb-octave-btn"
-          onClick={() => setOctave(clamp(octave - 1, OCTAVE_MIN, OCTAVE_MAX))}
-          aria-label="Octave down (Z)"
-        >−</button>
-        <span className="kb-octave-label">Octave <b>{octaveLabel}</b></span>
-        <button
-          className="kb-octave-btn"
-          onClick={() => setOctave(clamp(octave + 1, OCTAVE_MIN, OCTAVE_MAX))}
-          aria-label="Octave up (X)"
-        >+</button>
-      </div>
+      <Stepper
+        label="Octave"
+        value={octave}
+        min={OCTAVE_MIN}
+        max={OCTAVE_MAX}
+        format={(v) => `C${v}`}
+        onChange={setOctave}
+        downAriaLabel="Octave down (Z)"
+        upAriaLabel="Octave up (X)"
+      />
     </>
   );
 }
