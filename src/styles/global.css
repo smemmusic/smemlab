@@ -180,7 +180,62 @@ header {
 .minimap .conn { flex: 0 0 18px; height: 1px; background: var(--line); }
 .minimap .conn.control { background: var(--control-dim); }
 
-.stage { position: relative; flex: 1; overflow: hidden; padding: 10px 24px 18px; min-height: 0; }
+.stage {
+  position: relative; flex: 1; overflow: hidden; padding: 10px 24px 18px; min-height: 0;
+  /* `touch-action: none` lets pointer events drive pan/drag instead of native
+     scroll/zoom. Interactive children (knob dials, keyboard, gate trigger)
+     already declare their own touch-action, and the range sliders below
+     re-enable touch handling via .ctrl input[type=range]. */
+  touch-action: none;
+  cursor: grab;
+}
+.stage.panning { cursor: grabbing; }
+.stage .module,
+.stage .palette,
+.stage .zoom-ctrls { cursor: auto; }
+.ctrl input[type="range"] { touch-action: auto; }
+
+/* Zoom controls overlay — bottom-right of the stage, above the wire-reserve. */
+.zoom-ctrls {
+  position: absolute;
+  right: 16px;
+  bottom: 12px;
+  z-index: 6;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: rgba(20, 22, 28, 0.86);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+}
+.zoom-ctrls .zoom-btn {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .04em;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  padding: 5px 9px;
+  min-width: 30px;
+  cursor: pointer;
+  transition: .14s var(--ease);
+}
+.zoom-ctrls .zoom-btn:hover { color: var(--ink); border-color: var(--line); }
+.zoom-ctrls .zoom-fit {
+  font-size: 10px;
+  letter-spacing: .08em;
+  min-width: 52px;
+  font-variant-numeric: tabular-nums;
+}
+.zoom-ctrls .zoom-fit.on {
+  color: var(--ink);
+  border-color: var(--audio-dim);
+  background: rgba(255, 180, 84, 0.06);
+}
 
 .rack { display: flex; align-items: flex-start; gap: 0; min-width: max-content; padding-left: 6px; }
 .col { display: flex; flex-direction: column; align-items: center; }

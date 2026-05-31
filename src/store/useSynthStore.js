@@ -64,6 +64,11 @@ export const useSynthStore = create(
           armedSource: null,
           selectedConnectionId: null,
           focusedModuleSlot: null,
+          // Current view scale used by Stage to render rack/free-rack via
+          // transform: scale(). Exposed in the store so Module drag handlers
+          // can divide pointer-delta by this value, keeping the dragged
+          // module under the cursor regardless of zoom level.
+          viewScale: 1,
         },
 
         // ===== Top-level params + persisted UI prefs =====
@@ -211,6 +216,9 @@ export const useSynthStore = create(
         clearSelection:    () => set((s) => ({ ui: { ...s.ui, selectedConnectionId: null } })),
         focusModule:       (slot) => set((s) => ({ ui: { ...s.ui, focusedModuleSlot: slot } })),
         clearFocus:        () => set((s) => ({ ui: { ...s.ui, focusedModuleSlot: null } })),
+        setViewScale:      (viewScale) => set((s) =>
+          s.ui.viewScale === viewScale ? {} : { ui: { ...s.ui, viewScale } }
+        ),
 
         // ---- Top-level setters ----
         setVol:            (vol) => set((s) => {
@@ -242,7 +250,7 @@ export const useSynthStore = create(
           set({
             modules, connections,
             vol: 42,
-            ui: { freeMode: false, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null },
+            ui: { freeMode: false, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1 },
             chapter: 0,
             journeyId: id,
             started: true,
@@ -269,7 +277,7 @@ export const useSynthStore = create(
           set({
             modules, connections,
             vol: 42,
-            ui: { freeMode: false, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null },
+            ui: { freeMode: false, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1 },
             chapter: 0,
             journeyId: null,
             started: false,
@@ -287,7 +295,7 @@ export const useSynthStore = create(
           set((s) => ({
             modules, connections,
             vol: 42,
-            ui: { ...s.ui, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null },
+            ui: { ...s.ui, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1 },
             chapter: 0,
           }));
         },
@@ -328,7 +336,7 @@ export const useSynthStore = create(
         partialize: (s) => ({
           modules: s.modules,
           connections: s.connections,
-          ui: { ...s.ui, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null },
+          ui: { ...s.ui, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1 },
           vol: s.vol,
           scope: s.scope,
           chapter: s.chapter,

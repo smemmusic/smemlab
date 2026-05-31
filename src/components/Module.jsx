@@ -24,6 +24,7 @@ export function Module({ type, instanceId, children }) {
   const setModulePosition    = useSynthStore((s) => s.setModulePosition);
   const freeMode             = useSynthStore((s) => s.ui.freeMode);
   const focusModule          = useSynthStore((s) => s.focusModule);
+  const viewScale            = useSynthStore((s) => s.ui.viewScale);
 
   const moduleRef = useRef(null);
 
@@ -66,9 +67,12 @@ export function Module({ type, instanceId, children }) {
     const startY = e.clientY;
     const origX = effectivePosition.x;
     const origY = effectivePosition.y;
+    // Divide screen-pixel deltas by the current view scale so the dragged
+    // module tracks the cursor when the stage is zoomed in or out.
+    const scale = viewScale > 0 ? viewScale : 1;
     function onMove(ev) {
-      const dx = ev.clientX - startX;
-      const dy = ev.clientY - startY;
+      const dx = (ev.clientX - startX) / scale;
+      const dy = (ev.clientY - startY) / scale;
       if (Math.abs(dx) + Math.abs(dy) > 3) dragDidMoveRef.current = true;
       if (dragDidMoveRef.current) {
         setModulePosition(resolvedInstanceId, origX + dx, origY + dy);
