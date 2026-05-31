@@ -1,16 +1,31 @@
 import { useEffect, useRef, useState, useLayoutEffect } from "react";
 import { useSynthStore } from "../store/useSynthStore.js";
-import { PORT_TYPE, listStaticPorts } from "../audio/graph/types.js";
+import { PORT_TYPE, PORT_DIR, listStaticPorts } from "../audio/graph/types.js";
 import { byType } from "../modules/_registry.js";
 
-function lookupPortType(modules, fromId, fromPort) {
-  const m = modules.find((x) => x.id === fromId);
+function lookupPort(modules, moduleId, portName) {
+  const m = modules.find((x) => x.id === moduleId);
   if (!m) return null;
   const manifest = byType(m.type);
   if (!manifest) return null;
-  const port = listStaticPorts(manifest.Cls).find((p) => p.name === fromPort);
-  return port?.type || null;
+  return listStaticPorts(manifest.Cls).find((p) => p.name === portName) || null;
 }
+
+// Mirrors the placement rule in ModulePorts.jsx — audio sits left/right,
+// CV/pitch/gate sit top/bottom — so the bezier handle leaves the port in the
+// direction the port actually emerges from the module.
+function portEdge(port) {
+  if (!port) return "right";
+  if (port.type === PORT_TYPE.AUDIO) return port.dir === PORT_DIR.IN ? "left" : "right";
+  return port.dir === PORT_DIR.OUT ? "top" : "bottom";
+}
+
+const EDGE_TANGENT = {
+  right:  [ 1,  0],
+  left:   [-1,  0],
+  top:    [ 0, -1],
+  bottom: [ 0,  1],
+};
 
 // Unified wire overlay. Reads every connection in the store, looks up each
 // endpoint's screen position via [data-port-id="<moduleId>:<portName>"]
@@ -24,14 +39,23 @@ const TYPE_COLOR = {
 };
 
 
-// Build a smooth bezier between two screen points. Inputs/outputs are roughly
-// horizontal in our layout, so a horizontal-handle cubic Bezier looks natural.
-function pathBetween(from, to) {
-  const dx = Math.abs(to.x - from.x);
-  const handle = Math.max(40, dx * 0.45);
-  const c1x = from.x + handle;
-  const c2x = to.x   - handle;
-  return `M ${from.x} ${from.y} C ${c1x} ${from.y}, ${c2x} ${to.y}, ${to.x} ${to.y}`;
+// Build a smooth cubic bezier whose end-tangents point outward from each
+// endpoint's edge — so a top-edge CV output leaves vertically up, a right-edge
+// audio out leaves horizontally right, etc. Handle length scales with the
+// distance between endpoints so the curve looks tight on short hops and
+// generous on long ones.
+function pathBetween(from, to, fromEdge, toEdge) {
+  const dist = Math.hypot(to.x - from.x, to.y - from.y);
+  const h = Math.max(40, dist * 0.4);
+  const [fdx, fdy] = EDGE_TANGENT[fromEdge] || EDGE_TANGENT.right;
+  const [tdx, tdy] = EDGE_TANGENT[toEdge]   || EDGE_TANGENT.left;
+  const c1x = from.x + h * fdx;
+  const c1y = from.y + h * fdy;
+  // toTangent points OUT of the destination port; the incoming handle is the
+  // mirror of that (the curve approaches the port from outside).
+  const c2x = to.x + h * tdx;
+  const c2y = to.y + h * tdy;
+  return `M ${from.x} ${from.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${to.x} ${to.y}`;
 }
 
 export function Wires({ containerRef }) {
@@ -66,10 +90,12 @@ export function Wires({ containerRef }) {
         const tr = toEl.getBoundingClientRect();
         const from = { x: fr.left + fr.width / 2 - cRect.left, y: fr.top + fr.height / 2 - cRect.top };
         const to   = { x: tr.left + tr.width / 2 - cRect.left, y: tr.top + tr.height / 2 - cRect.top };
+        const fromPort = lookupPort(modules, conn.fromId, conn.fromPort);
+        const toPort   = lookupPort(modules, conn.toId,   conn.toPort);
         next.push({
           id: conn.id,
-          d: pathBetween(from, to),
-          type: lookupPortType(modules, conn.fromId, conn.fromPort) || PORT_TYPE.AUDIO,
+          d: pathBetween(from, to, portEdge(fromPort), portEdge(toPort)),
+          type: fromPort?.type || PORT_TYPE.AUDIO,
           midX: (from.x + to.x) / 2,
           midY: (from.y + to.y) / 2,
         });
