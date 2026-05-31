@@ -129,6 +129,41 @@ export const useSynthStore = create(
           ui: { ...s.ui, selectedConnectionId: s.ui.selectedConnectionId === id ? null : s.ui.selectedConnectionId },
         })),
 
+        // ---- Wire waypoints ----
+        // Waypoints are stored in model coords (the same coord space as
+        // module.position — i.e. pre-transform of .rack-canvas). They persist
+        // with the connection; an undefined/missing array means "straight
+        // edge-to-edge curve".
+        addWaypoint: (connectionId, index, point) => set((s) => ({
+          connections: s.connections.map((c) => {
+            if (c.id !== connectionId) return c;
+            const wps = c.waypoints ? c.waypoints.slice() : [];
+            const i = Math.max(0, Math.min(wps.length, index));
+            wps.splice(i, 0, { x: point.x, y: point.y });
+            return { ...c, waypoints: wps };
+          }),
+        })),
+        moveWaypoint: (connectionId, index, point) => set((s) => ({
+          connections: s.connections.map((c) => {
+            if (c.id !== connectionId) return c;
+            if (!c.waypoints || index < 0 || index >= c.waypoints.length) return c;
+            const wps = c.waypoints.slice();
+            wps[index] = { x: point.x, y: point.y };
+            return { ...c, waypoints: wps };
+          }),
+        })),
+        removeWaypoint: (connectionId, index) => set((s) => ({
+          connections: s.connections.map((c) => {
+            if (c.id !== connectionId) return c;
+            if (!c.waypoints || index < 0 || index >= c.waypoints.length) return c;
+            const wps = c.waypoints.filter((_, i) => i !== index);
+            const next = { ...c };
+            if (wps.length) next.waypoints = wps;
+            else            delete next.waypoints;
+            return next;
+          }),
+        })),
+
         // ---- Chapter delta ----
         // Apply a journey chapter's `adds` delta to the graph. All operations
         // are idempotent: re-applying after a back-then-forward navigation

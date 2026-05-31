@@ -27,10 +27,6 @@ const EDGE_TANGENT = {
   bottom: [ 0,  1],
 };
 
-// Unified wire overlay. Reads every connection in the store, looks up each
-// endpoint's screen position via [data-port-id="<moduleId>:<portName>"]
-// querySelector, and draws an SVG bezier between them.
-
 const TYPE_COLOR = {
   [PORT_TYPE.AUDIO]: "var(--audio)",
   [PORT_TYPE.CV]:    "var(--control)",
@@ -38,39 +34,96 @@ const TYPE_COLOR = {
   [PORT_TYPE.GATE]:  "var(--gate)",
 };
 
-
-// Build a smooth cubic bezier whose end-tangents point outward from each
-// endpoint's edge — so a top-edge CV output leaves vertically up, a right-edge
-// audio out leaves horizontally right, etc. Handle length scales with the
-// distance between endpoints so the curve looks tight on short hops and
-// generous on long ones.
-function pathBetween(from, to, fromEdge, toEdge) {
-  const dist = Math.hypot(to.x - from.x, to.y - from.y);
-  const h = Math.max(40, dist * 0.4);
-  const [fdx, fdy] = EDGE_TANGENT[fromEdge] || EDGE_TANGENT.right;
-  const [tdx, tdy] = EDGE_TANGENT[toEdge]   || EDGE_TANGENT.left;
-  const c1x = from.x + h * fdx;
-  const c1y = from.y + h * fdy;
-  // toTangent points OUT of the destination port; the incoming handle is the
-  // mirror of that (the curve approaches the port from outside).
-  const c2x = to.x + h * tdx;
-  const c2y = to.y + h * tdy;
-  return `M ${from.x} ${from.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${to.x} ${to.y}`;
+// Build a smooth cubic-Bezier polyline through `points` (a list of {x, y}
+// screen coords). End-tangents follow each endpoint's edge so the curve leaves
+// each port in the physical direction the port emerges from the module.
+// Interior waypoint tangents are the bisector of their neighbours — this gives
+// C1 continuity (no kinks) without needing a full spline solver.
+function buildPath(points, fromEdge, toEdge) {
+  if (points.length < 2) return "";
+  const n = points.length;
+  const tangents = points.map((_, i) => {
+    if (i === 0) {
+      const [tx, ty] = EDGE_TANGENT[fromEdge] || EDGE_TANGENT.right;
+      return { x: tx, y: ty };
+    }
+    if (i === n - 1) {
+      // Flow direction AT the destination = -edge-tangent (curve comes IN).
+      const [tx, ty] = EDGE_TANGENT[toEdge] || EDGE_TANGENT.left;
+      return { x: -tx, y: -ty };
+    }
+    const dx = points[i + 1].x - points[i - 1].x;
+    const dy = points[i + 1].y - points[i - 1].y;
+    const len = Math.hypot(dx, dy) || 1;
+    return { x: dx / len, y: dy / len };
+  });
+  let d = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = points[i];
+    const p1 = points[i + 1];
+    const segLen = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+    const h = Math.max(30, segLen * 0.4);
+    const c1x = p0.x + tangents[i].x * h;
+    const c1y = p0.y + tangents[i].y * h;
+    const c2x = p1.x - tangents[i + 1].x * h;
+    const c2y = p1.y - tangents[i + 1].y * h;
+    d += ` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${p1.x} ${p1.y}`;
+  }
+  return d;
 }
 
+// Pick the insert-index when the user double-clicks the wire to add a
+// waypoint. `points = [from, ...waypoints, to]`; we find the segment whose
+// midpoint is closest to the click and insert at that segment's boundary so
+// the new waypoint slots between its neighbours in path order.
+function nearestSegmentIndex(points, x, y) {
+  let bestI = 0;
+  let bestDist = Infinity;
+  for (let i = 0; i < points.length - 1; i++) {
+    const mx = (points[i].x + points[i + 1].x) / 2;
+    const my = (points[i].y + points[i + 1].y) / 2;
+    const d = Math.hypot(mx - x, my - y);
+    if (d < bestDist) { bestDist = d; bestI = i; }
+  }
+  return bestI;
+}
+
+// Unified wire overlay. Reads every connection in the store, looks up each
+// endpoint's screen position via [data-port-id="<moduleId>:<portName>"]
+// querySelector, and draws an SVG bezier between them.
 export function Wires({ containerRef }) {
   const connections = useSynthStore((s) => s.connections);
   const modules     = useSynthStore((s) => s.modules);
   const selectedId  = useSynthStore((s) => s.ui.selectedConnectionId);
-  const selectConnection    = useSynthStore((s) => s.selectConnection);
-  const disconnectModules   = useSynthStore((s) => s.disconnectModules);
-  const clearSelection      = useSynthStore((s) => s.clearSelection);
+  const viewScale   = useSynthStore((s) => s.ui.viewScale);
+  const selectConnection   = useSynthStore((s) => s.selectConnection);
+  const disconnectModules  = useSynthStore((s) => s.disconnectModules);
+  const clearSelection     = useSynthStore((s) => s.clearSelection);
+  const addWaypoint        = useSynthStore((s) => s.addWaypoint);
+  const moveWaypoint       = useSynthStore((s) => s.moveWaypoint);
+  const removeWaypoint     = useSynthStore((s) => s.removeWaypoint);
 
   const [paths, setPaths] = useState([]);
   const rafRef = useRef(0);
-  const containerRectRef = useRef(null);
+  // Detached SVG path used only as a calculator for getTotalLength /
+  // getPointAtLength — so the disconnect-X lands on the actual curve midpoint,
+  // not the straight-line midpoint between endpoints.
+  const measurePathRef = useRef(null);
+  if (!measurePathRef.current) {
+    measurePathRef.current = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  }
 
-  const visible = connections;
+  // Refs mirror the store so the rAF measure loop always reads the latest
+  // connections / modules / scale without re-binding the effect every time
+  // the store changes. Without this, a waypoint add/move only became visible
+  // when the effect happened to re-run (e.g. on connection-count change), so
+  // edits appeared to "stick" only after a page refresh.
+  const connectionsRef = useRef(connections);
+  const modulesRef     = useRef(modules);
+  const viewScaleRef   = useRef(viewScale);
+  useEffect(() => { connectionsRef.current = connections; }, [connections]);
+  useEffect(() => { modulesRef.current     = modules;     }, [modules]);
+  useEffect(() => { viewScaleRef.current   = viewScale;   }, [viewScale]);
 
   // Recompute path screen coords. Cheap enough to do on every animation frame
   // while the page is interactive, but we throttle via rAF to avoid stacking.
@@ -79,10 +132,17 @@ export function Wires({ containerRef }) {
       const container = containerRef?.current;
       if (!container) return;
       const cRect = container.getBoundingClientRect();
-      containerRectRef.current = cRect;
+      // The rack-canvas carries the scale + pan transform. Its post-transform
+      // rect is what places model coords on screen: a model point (mx, my)
+      // renders at (rRect.left + mx*scale, rRect.top + my*scale).
+      const rackEl = container.querySelector(".rack-canvas");
+      const rRect  = rackEl ? rackEl.getBoundingClientRect() : null;
+      const scale  = viewScaleRef.current;
+      const liveConnections = connectionsRef.current;
+      const liveModules     = modulesRef.current;
 
       const next = [];
-      for (const conn of visible) {
+      for (const conn of liveConnections) {
         const fromEl = document.querySelector(`[data-port-id="${conn.fromId}:${conn.fromPort}"]`);
         const toEl   = document.querySelector(`[data-port-id="${conn.toId}:${conn.toPort}"]`);
         if (!fromEl || !toEl) continue;
@@ -90,14 +150,43 @@ export function Wires({ containerRef }) {
         const tr = toEl.getBoundingClientRect();
         const from = { x: fr.left + fr.width / 2 - cRect.left, y: fr.top + fr.height / 2 - cRect.top };
         const to   = { x: tr.left + tr.width / 2 - cRect.left, y: tr.top + tr.height / 2 - cRect.top };
-        const fromPort = lookupPort(modules, conn.fromId, conn.fromPort);
-        const toPort   = lookupPort(modules, conn.toId,   conn.toPort);
+        const fromPort = lookupPort(liveModules, conn.fromId, conn.fromPort);
+        const toPort   = lookupPort(liveModules, conn.toId,   conn.toPort);
+
+        // Waypoint screen positions (model coords → container coords).
+        const waypoints = (conn.waypoints || []).map((wp) => {
+          if (!rRect) return { x: 0, y: 0 };
+          return {
+            x: rRect.left + wp.x * scale - cRect.left,
+            y: rRect.top  + wp.y * scale - cRect.top,
+          };
+        });
+
+        const points = [from, ...waypoints, to];
+        const d = buildPath(points, portEdge(fromPort), portEdge(toPort));
+
+        // Mid-of-curve via the detached measurement path. Fall back to the
+        // straight-line midpoint if the browser refuses to measure (very rare).
+        let midX = (from.x + to.x) / 2;
+        let midY = (from.y + to.y) / 2;
+        try {
+          measurePathRef.current.setAttribute("d", d);
+          const len = measurePathRef.current.getTotalLength();
+          if (len > 0) {
+            const pt = measurePathRef.current.getPointAtLength(len / 2);
+            midX = pt.x;
+            midY = pt.y;
+          }
+        } catch {}
+
         next.push({
           id: conn.id,
-          d: pathBetween(from, to, portEdge(fromPort), portEdge(toPort)),
+          d,
+          points,
           type: fromPort?.type || PORT_TYPE.AUDIO,
-          midX: (from.x + to.x) / 2,
-          midY: (from.y + to.y) / 2,
+          midX,
+          midY,
+          waypoints,
         });
       }
       setPaths(next);
@@ -112,7 +201,7 @@ export function Wires({ containerRef }) {
     // hover effects, scale transforms. The cost is small (only a few querySelectors).
     rafRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [visible.length, containerRef]);
+  }, [containerRef]);
 
   // Escape clears the armed source (handled in Stage), Delete removes the
   // selected connection.
@@ -129,15 +218,75 @@ export function Wires({ containerRef }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [selectedId, disconnectModules, clearSelection]);
 
+  // Convert a screen-space pointer position to model coords (the rack-canvas's
+  // pre-transform space, same as module.position + connection.waypoints).
+  function screenToModel(clientX, clientY) {
+    const container = containerRef?.current;
+    if (!container) return null;
+    const rackEl = container.querySelector(".rack-canvas");
+    if (!rackEl) return null;
+    const rRect = rackEl.getBoundingClientRect();
+    return {
+      x: (clientX - rRect.left) / viewScale,
+      y: (clientY - rRect.top)  / viewScale,
+    };
+  }
+
+  function onPathDoubleClick(e, p) {
+    e.stopPropagation();
+    const container = containerRef?.current;
+    if (!container) return;
+    const cRect = container.getBoundingClientRect();
+    const clickX = e.clientX - cRect.left;
+    const clickY = e.clientY - cRect.top;
+    const segIdx = nearestSegmentIndex(p.points, clickX, clickY);
+    const model = screenToModel(e.clientX, e.clientY);
+    if (!model) return;
+    addWaypoint(p.id, segIdx, model);
+    selectConnection(p.id);
+  }
+
+  function onWaypointPointerDown(e, conn, wpIndex) {
+    if (e.button !== 0 && e.pointerType === "mouse") return;
+    e.stopPropagation();
+    e.preventDefault();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const orig = connections.find((c) => c.id === conn.id)?.waypoints?.[wpIndex];
+    if (!orig) return;
+    const scale = viewScale > 0 ? viewScale : 1;
+    let didMove = false;
+    function onMove(ev) {
+      const dx = (ev.clientX - startX) / scale;
+      const dy = (ev.clientY - startY) / scale;
+      if (Math.abs(dx) + Math.abs(dy) > 2) didMove = true;
+      if (didMove) {
+        moveWaypoint(conn.id, wpIndex, { x: orig.x + dx, y: orig.y + dy });
+      }
+    }
+    function onUp() {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    }
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }
+
+  function onWaypointDoubleClick(e, conn, wpIndex) {
+    e.stopPropagation();
+    removeWaypoint(conn.id, wpIndex);
+  }
+
   if (paths.length === 0) return null;
 
   return (
     <svg className="wires" style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 4, width: "100%", height: "100%" }}>
       {paths.map((p) => {
         const isSelected = p.id === selectedId;
+        const color = TYPE_COLOR[p.type] || "var(--audio)";
         return (
           <g key={p.id} className={"wire " + (isSelected ? "selected" : "")}>
-            {/* Wider invisible hit area for easy clicking */}
+            {/* Wider invisible hit area for easy clicking + dblclick-to-insert-waypoint */}
             <path
               d={p.d}
               stroke="transparent"
@@ -145,15 +294,32 @@ export function Wires({ containerRef }) {
               fill="none"
               style={{ pointerEvents: "stroke", cursor: "pointer" }}
               onClick={(e) => { e.stopPropagation(); selectConnection(p.id); }}
+              onDoubleClick={(e) => onPathDoubleClick(e, p)}
             />
             <path
               d={p.d}
-              stroke={TYPE_COLOR[p.type] || "var(--audio)"}
+              stroke={color}
               strokeWidth={isSelected ? 3 : 2}
               fill="none"
               opacity={isSelected ? 1 : 0.85}
               style={{ filter: isSelected ? "drop-shadow(0 0 6px currentColor)" : undefined }}
             />
+            {isSelected && p.waypoints.map((wp, i) => (
+              <circle
+                key={i}
+                cx={wp.x}
+                cy={wp.y}
+                r="5.5"
+                fill={color}
+                stroke="var(--ink)"
+                strokeWidth="1.5"
+                style={{ pointerEvents: "all", cursor: "grab", filter: "drop-shadow(0 0 4px currentColor)" }}
+                onPointerDown={(e) => onWaypointPointerDown(e, { id: p.id }, i)}
+                onDoubleClick={(e) => onWaypointDoubleClick(e, { id: p.id }, i)}
+              >
+                <title>Drag to move · Double-click to remove</title>
+              </circle>
+            ))}
             {isSelected && (
               <g
                 transform={`translate(${p.midX}, ${p.midY})`}
