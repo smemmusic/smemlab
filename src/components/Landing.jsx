@@ -60,7 +60,10 @@ export function Landing() {
   }, [started]);
 
   return (
-    <div className={"landing" + (started ? " hide" : "")} aria-hidden={started}>
+    <div
+      className={"landing" + (started ? " hide" : "")}
+      {...(started ? { inert: "" } : {})}
+    >
       <canvas className="bgscope" ref={canvasRef} />
       <div className="card">
         <img className="logo" src={import.meta.env.BASE_URL + "logo.svg"} alt={BRAND.logoAlt} />

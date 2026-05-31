@@ -10,14 +10,36 @@ import { useAudioEngineBridge } from "./hooks/useAudioEngine.js";
 
 export function App() {
   useAudioEngineBridge();
-  const freeMode  = useSynthStore((s) => s.ui.freeMode);
-  const journeyId = useSynthStore((s) => s.journeyId);
-  const showSidebar = !freeMode && !!journeyId;
+  const freeMode      = useSynthStore((s) => s.ui.freeMode);
+  const journeyId     = useSynthStore((s) => s.journeyId);
+  const mobileView    = useSynthStore((s) => s.ui.mobileView);
+  const setMobileView = useSynthStore((s) => s.setMobileView);
+  const showSidebar   = !freeMode && !!journeyId;
+
+  // Mobile-only tabs (CSS hides .mobile-tabs above the breakpoint). The
+  // `mobile-view-*` class on .wrap drives which pane is visible on mobile.
+  const wrapClass = [
+    "wrap",
+    showSidebar ? "" : "no-sidebar",
+    `mobile-view-${mobileView}`,
+  ].filter(Boolean).join(" ");
 
   return (
     <>
-      <div className={"wrap" + (showSidebar ? "" : " no-sidebar")}>
+      <div className={wrapClass}>
         <Header />
+        {showSidebar && (
+          <nav className="mobile-tabs" aria-label="View">
+            <button
+              className={"mobile-tab" + (mobileView === "instructions" ? " on" : "")}
+              onClick={() => setMobileView("instructions")}
+            >Instructions</button>
+            <button
+              className={"mobile-tab" + (mobileView === "synth" ? " on" : "")}
+              onClick={() => setMobileView("synth")}
+            >Synth</button>
+          </nav>
+        )}
         {showSidebar && (
           <aside className="sidebar">
             <ChapterRail />

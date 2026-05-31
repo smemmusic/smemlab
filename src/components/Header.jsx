@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { BRAND, LEGEND, RESTART, SETTINGS } from "../content/ui.js";
 import { useSynthStore } from "../store/useSynthStore.js";
 import { byId as journeyById } from "../content/journeys/index.js";
@@ -11,19 +12,69 @@ export function Header() {
   const setFreeMode     = useSynthStore((s) => s.setFreeMode);
   const journeyId       = useSynthStore((s) => s.journeyId);
 
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  // Click outside / Escape closes the mobile dropdown.
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onDocDown(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+    }
+    function onKey(e) { if (e.key === "Escape") setMenuOpen(false); }
+    document.addEventListener("pointerdown", onDocDown, true);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDocDown, true);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
+
+  function run(fn) {
+    return () => { setMenuOpen(false); fn(); };
+  }
   function restart() {
     try { getEngine().stop(); } catch {}
     resetSession();
   }
-
   function leaveToJourneys() {
     try { getEngine().stop(); } catch {}
     backToJourneys();
   }
 
-  // Subtitle reflects the current mode: journey title, "Free Build", or nothing.
   const journey  = journeyId ? journeyById(journeyId) : null;
   const subtitle = freeMode ? "/ Free Build" : journey ? `/ ${journey.title}` : "";
+
+  // Buttons are rendered once and reused inside the legend (desktop) and the
+  // burger dropdown (mobile). CSS controls which group is visible.
+  const actions = (
+    <>
+      <button
+        className={"icon-btn" + (freeMode ? " on" : "")}
+        onClick={run(() => setFreeMode(!freeMode))}
+        title={freeMode ? "Exit free build mode" : "Add modules and patch freely"}
+      >
+        <span aria-hidden="true">⌥</span> Free Build{freeMode ? " ✓" : ""}
+      </button>
+      <button className="icon-btn" onClick={run(() => setSettingsOpen(true))} title={SETTINGS.open}>
+        <span aria-hidden="true">⚙</span> {SETTINGS.open}
+      </button>
+      <button className="icon-btn" onClick={run(restart)} title={RESTART}>
+        <span aria-hidden="true">↺</span> {RESTART}
+      </button>
+      <button className="icon-btn" onClick={run(leaveToJourneys)} title="Back to journeys">
+        <span aria-hidden="true">←</span> Journeys
+      </button>
+    </>
+  );
+
+  const legendSwatches = (
+    <>
+      <span className="a"><i />{LEGEND.audio}</span>
+      <span className="c"><i />{LEGEND.control}</span>
+      <span className="g"><i />{LEGEND.gate}</span>
+    </>
+  );
 
   return (
     <header>
@@ -33,25 +84,24 @@ export function Header() {
         <h1><b>{BRAND.title}</b> {subtitle}</h1>
       </div>
       <div className="legend">
-        <span className="a"><i />{LEGEND.audio}</span>
-        <span className="c"><i />{LEGEND.control}</span>
-        <span className="g"><i />{LEGEND.gate}</span>
+        {legendSwatches}
+        {actions}
+      </div>
+      <div className="header-mobile" ref={menuRef}>
         <button
-          className={"icon-btn" + (freeMode ? " on" : "")}
-          onClick={() => setFreeMode(!freeMode)}
-          title={freeMode ? "Exit free build mode" : "Add modules and patch freely"}
+          className={"burger" + (menuOpen ? " open" : "")}
+          onClick={() => setMenuOpen((v) => !v)}
+          aria-label="Menu"
+          aria-expanded={menuOpen}
         >
-          <span aria-hidden="true">⌥</span> Free Build{freeMode ? " ✓" : ""}
+          <span /><span /><span />
         </button>
-        <button className="icon-btn" onClick={() => setSettingsOpen(true)} title={SETTINGS.open}>
-          <span aria-hidden="true">⚙</span> {SETTINGS.open}
-        </button>
-        <button className="icon-btn" onClick={restart} title={RESTART}>
-          <span aria-hidden="true">↺</span> {RESTART}
-        </button>
-        <button className="icon-btn" onClick={leaveToJourneys} title="Back to journeys">
-          <span aria-hidden="true">←</span> Journeys
-        </button>
+        {menuOpen && (
+          <div className="burger-menu" role="menu">
+            <div className="burger-legend">{legendSwatches}</div>
+            <div className="burger-actions">{actions}</div>
+          </div>
+        )}
       </div>
     </header>
   );

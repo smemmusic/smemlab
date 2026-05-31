@@ -705,25 +705,87 @@ header {
 }
 .landing .journey-card.free .cta { color: var(--control); }
 
+/* ---- mobile header burger menu ---- */
+.header-mobile { display: none; position: relative; }
+.burger {
+  display: inline-flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px;
+  width: 38px; height: 38px;
+  background: transparent; border: 1px solid var(--line); border-radius: 6px;
+  cursor: pointer; padding: 0;
+  transition: .14s var(--ease);
+}
+.burger:hover { border-color: var(--muted); }
+.burger span {
+  display: block; width: 18px; height: 2px; border-radius: 1px;
+  background: var(--ink); transition: transform .18s var(--ease), opacity .14s var(--ease);
+}
+.burger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.burger.open span:nth-child(2) { opacity: 0; }
+.burger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+.burger-menu {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 50;
+  min-width: 220px; padding: 12px;
+  background: linear-gradient(180deg, var(--panel-hi), var(--panel) 60%, var(--panel-lo));
+  border: 1px solid var(--line); border-radius: 9px;
+  box-shadow: 0 14px 28px -10px rgba(0,0,0,.7);
+  display: flex; flex-direction: column; gap: 12px;
+}
+.burger-legend { display: flex; flex-wrap: wrap; gap: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--silk-soft); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.burger-legend i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+.burger-legend .a i { background: var(--audio); box-shadow: 0 0 8px var(--audio); }
+.burger-legend .c i { background: var(--control); box-shadow: 0 0 8px var(--control); }
+.burger-legend .g i { background: var(--gate); box-shadow: 0 0 8px var(--gate); }
+.burger-actions { display: flex; flex-direction: column; gap: 6px; }
+.burger-actions .icon-btn { justify-content: flex-start; width: 100%; padding: 10px 12px; font-size: 11px; }
+
+/* ---- mobile instructions/synth tabs ---- */
+.mobile-tabs {
+  grid-area: mobile-tabs;
+  display: none;
+  border-bottom: 1px solid var(--line);
+  background: rgba(13,14,18,.6);
+}
+.mobile-tab {
+  flex: 1; padding: 12px 8px;
+  background: transparent; border: none; border-bottom: 2px solid transparent;
+  font-family: inherit; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; font-weight: 600;
+  color: var(--muted); cursor: pointer; transition: .14s var(--ease);
+}
+.mobile-tab:hover { color: var(--ink); }
+.mobile-tab.on { color: var(--ink); border-bottom-color: var(--audio); }
+
 @media (max-width: 960px) {
-  /* Collapse the sidebar into a horizontal strip above the main area. */
+  /* Below the breakpoint, the burger takes over: hide the inline legend +
+     action buttons and reveal the burger on the right of the header. */
+  header .legend { display: none; }
+  .header-mobile { display: block; }
+
+  /* Sidebar + main share a single grid row; the .wrap mobile-view-* class
+     toggles which one is visible so the active pane gets the full viewport. */
   .wrap {
     grid-template-areas:
-      "header header"
-      "sidebar sidebar"
-      "main main"
-      "transport transport";
+      "header"
+      "mobile-tabs"
+      "content"
+      "transport";
     grid-template-rows: auto auto 1fr auto;
     grid-template-columns: 1fr;
   }
   .wrap.no-sidebar {
     grid-template-areas:
       "header"
-      "main"
+      "content"
       "transport";
     grid-template-rows: auto 1fr auto;
   }
-  .sidebar { border-right: none; border-bottom: 1px solid var(--line); max-height: 38vh; }
+  .sidebar, .main-area { grid-area: content; }
+  .mobile-tabs { display: flex; }
+  .wrap.no-sidebar .mobile-tabs { display: none; }
+
+  .wrap.mobile-view-synth .sidebar { display: none; }
+  .wrap.mobile-view-instructions .main-area { display: none; }
+
+  .sidebar { border-right: none; max-height: none; overflow-y: auto; }
   .bus { display: flex; gap: 4px; overflow-x: auto; padding-left: 0; }
   .bus::before { display: none; }
   .chap { flex: 0 0 auto; padding: 8px 12px; border: 1px solid var(--line); border-radius: 7px; }
@@ -920,12 +982,32 @@ body.module-dragging * { cursor: grabbing !important; }
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 .palette-head {
+  font-family: inherit;
   font-size: 10px;
   letter-spacing: .24em;
   text-transform: uppercase;
   color: var(--muted-dim);
-  margin-bottom: 10px;
+  margin: 0 0 10px;
+  padding: 0;
+  width: 100%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  transition: color .14s var(--ease);
 }
+.palette-head:hover { color: var(--ink); }
+.palette-toggle {
+  font-size: 14px; font-weight: 600;
+  width: 18px; height: 18px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 4px;
+  background: var(--panel-lo); border: 1px solid var(--line);
+  color: var(--muted);
+  line-height: 1;
+}
+.palette.collapsed { padding: 8px 10px; width: auto; }
+.palette.collapsed .palette-head { margin-bottom: 0; }
 .palette-list {
   display: flex;
   flex-direction: column;

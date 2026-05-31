@@ -69,6 +69,10 @@ export const useSynthStore = create(
           // can divide pointer-delta by this value, keeping the dragged
           // module under the cursor regardless of zoom level.
           viewScale: 1,
+          // Mobile-only tab: 'synth' shows the rack, 'instructions' shows the
+          // narrator sidebar. Ignored on desktop (CSS hides the tab bar and
+          // shows both panes side-by-side).
+          mobileView: "synth",
         },
 
         // ===== Top-level params + persisted UI prefs =====
@@ -219,6 +223,9 @@ export const useSynthStore = create(
         setViewScale:      (viewScale) => set((s) =>
           s.ui.viewScale === viewScale ? {} : { ui: { ...s.ui, viewScale } }
         ),
+        setMobileView:     (mobileView) => set((s) =>
+          s.ui.mobileView === mobileView ? {} : { ui: { ...s.ui, mobileView } }
+        ),
 
         // ---- Top-level setters ----
         setVol:            (vol) => set((s) => {
@@ -250,7 +257,7 @@ export const useSynthStore = create(
           set({
             modules, connections,
             vol: 42,
-            ui: { freeMode: false, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1 },
+            ui: { freeMode: false, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1, mobileView: "synth" },
             chapter: 0,
             journeyId: id,
             started: true,
@@ -277,7 +284,7 @@ export const useSynthStore = create(
           set({
             modules, connections,
             vol: 42,
-            ui: { freeMode: false, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1 },
+            ui: { freeMode: false, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1, mobileView: "synth" },
             chapter: 0,
             journeyId: null,
             started: false,
@@ -295,7 +302,7 @@ export const useSynthStore = create(
           set((s) => ({
             modules, connections,
             vol: 42,
-            ui: { ...s.ui, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1 },
+            ui: { ...s.ui, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1, mobileView: s.ui.mobileView ?? "synth" },
             chapter: 0,
           }));
         },
@@ -336,7 +343,7 @@ export const useSynthStore = create(
         partialize: (s) => ({
           modules: s.modules,
           connections: s.connections,
-          ui: { ...s.ui, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1 },
+          ui: { ...s.ui, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1, mobileView: s.ui.mobileView ?? "synth" },
           vol: s.vol,
           scope: s.scope,
           chapter: s.chapter,
