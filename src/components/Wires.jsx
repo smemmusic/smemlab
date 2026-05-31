@@ -96,7 +96,7 @@ function nearestSegmentIndex(points, x, y) {
 // Unified wire overlay. Reads every connection in the store, looks up each
 // endpoint's screen position via [data-port-id="<moduleId>:<portName>"]
 // querySelector, and draws an SVG bezier between them.
-export function Wires({ containerRef }) {
+export function Wires({ containerRef, panX = 0, panY = 0 }) {
   const connections = useSynthStore((s) => s.connections);
   const modules     = useSynthStore((s) => s.modules);
   const selectedId  = useSynthStore((s) => s.ui.selectedConnectionId);
@@ -110,6 +110,7 @@ export function Wires({ containerRef }) {
 
   const [paths, setPaths] = useState([]);
   const rafRef = useRef(0);
+  const scheduleRef = useRef(() => {});
   // Detached SVG path used only as a calculator for getTotalLength /
   // getPointAtLength — so the disconnect-X lands on the actual curve midpoint,
   // not the straight-line midpoint between endpoints.
@@ -118,24 +119,25 @@ export function Wires({ containerRef }) {
     measurePathRef.current = document.createElementNS("http://www.w3.org/2000/svg", "path");
   }
 
-  // Refs mirror the store so the rAF measure loop always reads the latest
-  // connections / modules / scale without re-binding the effect every time
-  // the store changes. Without this, a waypoint add/move only became visible
-  // when the effect happened to re-run (e.g. on connection-count change), so
-  // edits appeared to "stick" only after a page refresh.
+  // Refs mirror the store so the measure function (created once below) always
+  // sees the latest values without needing to re-bind on every store update.
   const connectionsRef = useRef(connections);
   const modulesRef     = useRef(modules);
   const viewScaleRef   = useRef(viewScale);
-  useEffect(() => { connectionsRef.current = connections; }, [connections]);
-  useEffect(() => { modulesRef.current     = modules;     }, [modules]);
-  useEffect(() => { viewScaleRef.current   = viewScale;   }, [viewScale]);
+  connectionsRef.current = connections;
+  modulesRef.current     = modules;
+  viewScaleRef.current   = viewScale;
 
-  // Recompute path screen coords. Cheap enough to do on every animation frame
-  // while the page is interactive, but we throttle via rAF to avoid stacking.
+  // Stable measure / schedule setup. Runs once per containerRef change.
+  // External resize triggers (window, sidebar collapse, rack-canvas resize)
+  // are caught by ResizeObserver; store-driven changes call `schedule()` from
+  // the layout effect below.
   useLayoutEffect(() => {
+    const container = containerRef?.current;
+    if (!container) return;
+
     function measure() {
-      const container = containerRef?.current;
-      if (!container) return;
+      rafRef.current = 0;
       const cRect = container.getBoundingClientRect();
       // The rack-canvas carries the scale + pan transform. Its post-transform
       // rect is what places model coords on screen: a model point (mx, my)
@@ -197,16 +199,39 @@ export function Wires({ containerRef }) {
       setPaths(next);
     }
 
-    measure();
-    function loop() {
-      measure();
-      rafRef.current = requestAnimationFrame(loop);
+    function schedule() {
+      if (rafRef.current) return;
+      rafRef.current = requestAnimationFrame(measure);
     }
-    // Continuous rAF — port positions can shift due to free-rack layout, knob
-    // hover effects, scale transforms. The cost is small (only a few querySelectors).
-    rafRef.current = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(rafRef.current);
+    scheduleRef.current = schedule;
+
+    schedule();
+
+    // Resize triggers: window resize, sidebar collapse, container resize.
+    // Observing the container catches its size change; observing the rack
+    // catches transform-independent layout shifts of its content.
+    const ro = new ResizeObserver(schedule);
+    ro.observe(container);
+    const rackEl = container.querySelector(".rack-canvas");
+    if (rackEl) ro.observe(rackEl);
+    window.addEventListener("resize", schedule);
+
+    return () => {
+      if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = 0; }
+      ro.disconnect();
+      window.removeEventListener("resize", schedule);
+      scheduleRef.current = () => {};
+    };
   }, [containerRef]);
+
+  // Store-driven schedule. Every modules/connections/scale change (including
+  // mid-drag position updates, which the store fires per pointermove) coalesces
+  // into a single rAF before the next paint via scheduleRef. Pan lives in
+  // Stage's local state and is passed as a prop — without it here, the wires
+  // would not reflow when the user pans the rack.
+  useLayoutEffect(() => {
+    scheduleRef.current();
+  }, [connections, modules, viewScale, panX, panY]);
 
   // Escape clears the armed source (handled in Stage), Delete removes the
   // selected connection.

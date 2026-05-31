@@ -352,7 +352,11 @@ export function Stage() {
       onPointerCancel={onStagePointerEnd}
     >
       <Rack />
-      <Wires containerRef={stageRef} />
+      <Wires
+        containerRef={stageRef}
+        panX={zoomMode === "auto" ? 0 : pan.x}
+        panY={zoomMode === "auto" ? 0 : pan.y}
+      />
       <Palette />
 
       <div
