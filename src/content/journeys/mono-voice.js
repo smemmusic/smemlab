@@ -91,7 +91,7 @@ export default {
       addLabel: "Add Envelope",
       adds: {
         modules: [
-          { id: "env",  type: "env",  params: { a: 0.05, d: 0.2, sustainDb: -8, r: 0.4 }, position: { x: 580, y: 470 } },
+          { id: "env",  type: "env",  params: { a: 0.05, d: 0.2, s: -8, r: 0.4 }, position: { x: 580, y: 470 } },
           { id: "trigger", type: "trigger", params: {},                                       position: { x: 870, y: 470 } },
         ],
         connections: [

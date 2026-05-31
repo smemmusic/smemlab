@@ -36,8 +36,18 @@ export class AdEnvelopeModule extends AudioModule {
 
     this._registerCvOut("env", this.cvOut);
     this._registerGateInput("trigger", (sourceId, active) => this._handleGate(sourceId, active));
-    this._makeCvInput("a", 4, null);
-    this._makeCvInput("d", 4, null);
+    // Tapped so the envelope can sample the CV at trigger time and add
+    // its contribution to the scheduled ramps for that cycle.
+    this._makeCvInput("a", 4, null, { tap: true });
+    this._makeCvInput("d", 4, null, { tap: true });
+  }
+
+  _effective() {
+    const e = this.params;
+    return {
+      a: Math.max(0.001, e.a + this.getCvLevel("a")),
+      d: Math.max(0.001, e.d + this.getCvLevel("d")),
+    };
   }
 
   setParams(partial) { this.params = { ...this.params, ...partial }; }
@@ -49,7 +59,7 @@ export class AdEnvelopeModule extends AudioModule {
   // nothing — that's the whole point of "no sustain".
   trigger() {
     const t = this.ctx.currentTime;
-    const e = this.params;
+    const e = this._effective();
 
     // Internal gain (meter readout): boost to peak then back to unity.
     const g = this.node.gain;

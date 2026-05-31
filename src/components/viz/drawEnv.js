@@ -1,7 +1,7 @@
 import { persist, beginGlow, endGlow, VIZ } from "./gridHelpers.js";
 import { DB_FLOOR } from "../../audio/constants.js";
 
-// data: { env: {a,d,sustainDb,r}, phase: "idle"|"ad"|"rel", start: ms, playing: bool }
+// data: { env: {a,d,s,r}, phase: "idle"|"ad"|"rel", start: ms, playing: bool }
 export function drawEnv(ctx, w, h, data) {
   persist(ctx, w, h, "green");
   if (!data) return;
@@ -17,7 +17,7 @@ export function drawEnv(ctx, w, h, data) {
   const xS = xD + 0.45 * sx;
   const xR = xS + e.r * sx;
   const yPk = dbY(0);
-  const yS  = dbY(e.sustainDb);
+  const yS  = dbY(e.s ?? e.sustainDb ?? -8);
   const y0  = dbY(DB_FLOOR);
 
   // 0 dB ceiling marker

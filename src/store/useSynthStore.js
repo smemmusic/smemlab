@@ -472,7 +472,7 @@ export const useSynthStore = create(
       }),
       {
         name: "smem-v1",
-        version: 14,
+        version: 15,
         partialize: (s) => ({
           modules: s.modules,
           connections: s.connections,
@@ -503,6 +503,24 @@ export const useSynthStore = create(
               journeyId: null,
               ui: { armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1, mobileView: "synth" },
             };
+          }
+          if (version < 15) {
+            // env param `sustainDb` renamed to `s` for consistency with a/d/r.
+            // Walk live modules and every savedPatch so the visitor's existing
+            // patches keep their sustain value after the rename.
+            const renameInModules = (mods) => {
+              if (!Array.isArray(mods)) return;
+              for (const m of mods) {
+                if (m?.type === "env" && m.params?.sustainDb !== undefined) {
+                  if (m.params.s === undefined) m.params.s = m.params.sustainDb;
+                  delete m.params.sustainDb;
+                }
+              }
+            };
+            renameInModules(persisted.modules);
+            for (const p of persisted.savedPatches || []) {
+              renameInModules(p?.patch?.modules);
+            }
           }
           return persisted;
         },

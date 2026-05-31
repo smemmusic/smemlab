@@ -41,8 +41,18 @@ export class ArEnvelopeModule extends AudioModule {
 
     this._registerCvOut("env", this.cvOut);
     this._registerGateInput("trigger", (sourceId, active) => this._handleGate(sourceId, active));
-    this._makeCvInput("a", 4, null);
-    this._makeCvInput("r", 4, null);
+    // Tapped so the envelope can sample the CV at note-on / note-off and
+    // add its contribution to the scheduled ramps for that cycle.
+    this._makeCvInput("a", 4, null, { tap: true });
+    this._makeCvInput("r", 4, null, { tap: true });
+  }
+
+  _effective() {
+    const e = this.params;
+    return {
+      a: Math.max(0.001, e.a + this.getCvLevel("a")),
+      r: Math.max(0.001, e.r + this.getCvLevel("r")),
+    };
   }
 
   setParams(partial) { this.params = { ...this.params, ...partial }; }
@@ -52,7 +62,7 @@ export class ArEnvelopeModule extends AudioModule {
 
   noteOn() {
     const t = this.ctx.currentTime;
-    const e = this.params;
+    const e = this._effective();
     const g = this.node.gain;
     g.cancelScheduledValues(t);
     g.setValueAtTime(Math.max(1e-5, g.value), t);
@@ -64,14 +74,14 @@ export class ArEnvelopeModule extends AudioModule {
     cv.setValueAtTime(cv.value, t);
     cv.linearRampToValueAtTime(1.0, t + e.a);
     this.envStart = performance.now();
-    // Reuse drawEnv's "ad" phase tag — with d=0 + sustainDb=0 it animates
+    // Reuse drawEnv's "ad" phase tag — with d=0 + s=0 it animates
     // the dot along the attack ramp and then across the flat top, which is
     // exactly the AR shape.
     this.envPhase = "ad";
   }
   noteOff() {
     const t = this.ctx.currentTime;
-    const e = this.params;
+    const e = this._effective();
     const g = this.node.gain;
     g.cancelScheduledValues(t);
     g.setValueAtTime(Math.max(1e-5, g.value), t);

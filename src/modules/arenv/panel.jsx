@@ -7,7 +7,7 @@ import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
 
 const DEFAULT_PARAMS = { a: 0.05, r: 0.3 };
 
-// drawEnv expects an ADSR data shape; synthesising `d: 0, sustainDb: 0`
+// drawEnv expects an ADSR data shape; synthesising `d: 0, s: 0`
 // degenerates the curve into an AR triangle with a flat top, so we get the
 // same visualiser (and live phase dot) without a second draw helper.
 export function ArEnvelopePanel() {
@@ -23,7 +23,7 @@ export function ArEnvelopePanel() {
 
   const engine = getEngine();
   const data = {
-    env: { ...params, d: 0, sustainDb: 0 },
+    env: { ...params, d: 0, s: 0 },
     playing,
     get phase() { return engine.getInstanceEnvPhase(id); },
     get start() { return engine.getInstanceEnvStart(id); },
