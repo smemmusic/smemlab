@@ -72,18 +72,7 @@ export class AmplifierModule extends AudioModule {
   getCvDb() { return this._cvDb; }
 
   _applyGain() {
-    const knobDb   = this.level;
-    const knobLin  = dbToLin(knobDb);
-    const cvDb     = this._cvDb;
-    const cvLin    = dbToLin(cvDb);
-    const sumDb    = knobDb + cvDb;
     const totalLin = this._totalLin();
-    // eslint-disable-next-line no-console
-    console.log(
-      `[amp] knob ${knobDb.toFixed(1)} dB (lin ${knobLin.toFixed(3)}) | ` +
-      `cv ${cvDb.toFixed(1)} dB (lin ${cvLin.toFixed(3)}) | ` +
-      `sum ${sumDb.toFixed(1)} dB → lin ${totalLin.toFixed(3)}`
-    );
     this.gain.gain.setTargetAtTime(totalLin, this.ctx.currentTime, 0.005);
   }
 

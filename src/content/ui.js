@@ -53,6 +53,11 @@ export const SETTINGS = {
   open:        "Settings",
   title:       "Settings",
   close:       "Close",
+  displays: {
+    sectionTitle: "Displays",
+    description:  "Disable every on-module visualiser (oscilloscopes, envelope curves, LFO shapes, gain meters, filter response) to reduce CPU usage on heavy patches.",
+    enabledLabel: "Show displays"
+  },
   scope: {
     sectionTitle: "Oscilloscope",
     description:  "Stabilises the trace on the X-axis. The trace starts drawing when the signal crosses the threshold in the selected direction.",

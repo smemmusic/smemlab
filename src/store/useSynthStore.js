@@ -160,6 +160,12 @@ export const useSynthStore = create(
         // the store directly.
         bpm:     120,
         scope:   { edge: "rising", threshold: 0 },
+        // Master visualiser toggle. When false, every Canvas-backed display
+        // (oscilloscopes, envelope curves, LFO shapes, gain meters, filter
+        // response) skips its analyser reads and rAF loop and renders a
+        // static "off" placeholder. Persisted so the visitor's preference
+        // survives reload.
+        visualsEnabled: true,
         chapter: 0,
         started: false,
         journeyId: null,
@@ -345,6 +351,7 @@ export const useSynthStore = create(
           ),
         })),
         setBpm:            (bpm) => set({ bpm: Math.max(20, Math.min(300, Math.round(bpm))) }),
+        setVisualsEnabled: (visualsEnabled) => set({ visualsEnabled: !!visualsEnabled }),
         setScopeEdge:      (edge) => set((s) => ({ scope: { ...s.scope, edge } })),
         setScopeThreshold: (threshold) => set((s) => ({ scope: { ...s.scope, threshold } })),
         setSettingsOpen:   (settingsOpen) => set({ settingsOpen }),
@@ -473,6 +480,7 @@ export const useSynthStore = create(
           vol: s.vol,
           bpm: s.bpm,
           scope: s.scope,
+          visualsEnabled: s.visualsEnabled,
           chapter: s.chapter,
           started: s.started,
           journeyId: s.journeyId,
@@ -506,6 +514,13 @@ export const useSynthStore = create(
           const fixed = persisted?.started
             ? ensureSingleOutput(baseModules, baseConnections)
             : { modules: baseModules, connections: baseConnections };
+          // Backfill renamed key: older builds persisted scopesEnabled (gated
+          // only the Oscilloscope component); the unified visualsEnabled
+          // covers every Canvas now. Pick up the old preference if present.
+          const visualsEnabled =
+            persisted?.visualsEnabled
+            ?? persisted?.scopesEnabled
+            ?? current.visualsEnabled;
           return {
             ...current,
             ...persisted,
@@ -513,6 +528,7 @@ export const useSynthStore = create(
             ui:          { ...current.ui,    ...(persisted?.ui    || {}) },
             modules:     fixed.modules,
             connections: fixed.connections,
+            visualsEnabled,
           };
         },
       }

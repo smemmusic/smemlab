@@ -21,14 +21,21 @@ const TRIGGER_OPTIONS = [
   { value: "falling", ...SCOPE_TRIGGER.falling }
 ];
 
+const DISPLAYS_OPTIONS = [
+  { value: true,  label: "On",  short: "ON"  },
+  { value: false, label: "Off", short: "OFF" }
+];
+
 export function SettingsModal() {
   const open    = useSynthStore((s) => s.settingsOpen);
   const setOpen = useSynthStore((s) => s.setSettingsOpen);
 
   const edge      = useSynthStore((s) => s.scope.edge);
   const threshold = useSynthStore((s) => s.scope.threshold);
+  const visualsEnabled = useSynthStore((s) => s.visualsEnabled);
   const setEdge      = useSynthStore((s) => s.setScopeEdge);
   const setThreshold = useSynthStore((s) => s.setScopeThreshold);
+  const setVisualsEnabled = useSynthStore((s) => s.setVisualsEnabled);
 
   // AudioContext readout — re-sampled each time the modal opens (and via a
   // short interval while open, since outputLatency drifts with the OS buffer).
@@ -77,6 +84,21 @@ export function SettingsModal() {
             <div className="setting-cell">
               <div className="setting-readout">{formatMs(audioInfo?.outputLatency)}</div>
               <div className="setting-label">{SETTINGS.audio.outputLatencyLabel}</div>
+            </div>
+          </div>
+        </section>
+
+        <section className="setting-group">
+          <div className="setting-title">{SETTINGS.displays.sectionTitle}</div>
+          <p className="setting-desc">{SETTINGS.displays.description}</p>
+          <div className="ctrl-grid">
+            <div className="setting-cell">
+              <div className="setting-label">{SETTINGS.displays.enabledLabel}</div>
+              <Toggle
+                options={DISPLAYS_OPTIONS}
+                value={visualsEnabled}
+                onChange={setVisualsEnabled}
+              />
             </div>
           </div>
         </section>

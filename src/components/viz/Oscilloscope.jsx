@@ -7,6 +7,10 @@ import { VIZ } from "./gridHelpers.js";
 
 // Oscilloscope screen. `instanceId` selects which module's analyser to read
 // (oscillators expose `.tap`; outputs expose `getAnalyser()`).
+//
+// The master visualsEnabled gate lives inside <Canvas> — when off, Canvas
+// renders a static placeholder and never calls our draw function, so the
+// analyser lookup we do here is harmless extra work but not a hot path.
 export function Oscilloscope({ tag, instanceId }) {
   const playing   = useSynthStore((s) => s.playing);
   const edge      = useSynthStore((s) => s.scope.edge);

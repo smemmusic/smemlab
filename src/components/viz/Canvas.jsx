@@ -1,10 +1,17 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
+import { useSynthStore } from "../../store/useSynthStore.js";
 
 // Generic canvas with DPR fit + optional RAF loop.
 // `draw` is a pure function: (ctx, w, h, data) => void.
 // `data` is held in a ref so the RAF callback always reads the latest without re-subscribing.
 // `animate=true` runs RAF; `animate=false` redraws on `deps` change.
+//
+// Master gate: when `visualsEnabled` is false in the store we render a
+// static "off" placeholder in the same .screen frame — no canvas, no rAF,
+// no draw calls — so heavy patches stop paying per-visualiser CPU. Hooks
+// stay at the top so React's rules-of-hooks hold across the toggle.
 export function Canvas({ draw, data, animate = true, deps = [], tag, screenClass = "" }) {
+  const visualsEnabled = useSynthStore((s) => s.visualsEnabled);
   const canvasRef = useRef(null);
   const dataRef   = useRef(data);
   const rafRef    = useRef(0);
@@ -33,9 +40,13 @@ export function Canvas({ draw, data, animate = true, deps = [], tag, screenClass
     drawRef.current(fitted.ctx, fitted.w, fitted.h, dataRef.current);
   }
 
-  useLayoutEffect(() => { once(); /* initial fit + draw */ }, []);
+  useLayoutEffect(() => {
+    if (!visualsEnabled) return;
+    once();
+  }, [visualsEnabled]);
 
   useEffect(() => {
+    if (!visualsEnabled) return;
     if (!animate) {
       once();
       return;
@@ -47,20 +58,33 @@ export function Canvas({ draw, data, animate = true, deps = [], tag, screenClass
     }
     rafRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [animate]);
+  }, [animate, visualsEnabled]);
 
   useEffect(() => {
+    if (!visualsEnabled) return;
     if (animate) return;     // RAF handles redraws when animating
     once();
   }, deps);
 
   useEffect(() => {
+    if (!visualsEnabled) return;
     const c = canvasRef.current;
     if (!c) return;
     const ro = new ResizeObserver(() => once());
     ro.observe(c);
     return () => ro.disconnect();
-  }, []);
+  }, [visualsEnabled]);
+
+  if (!visualsEnabled) {
+    return (
+      <div className={"screen display-off " + screenClass}>
+        {tag && <span className="tag">{tag}</span>}
+        <span className="display-off-label">Display off</span>
+        <span className="scanlines" />
+        <span className="vignette" />
+      </div>
+    );
+  }
 
   return (
     <div className={"screen " + screenClass}>
