@@ -16,15 +16,7 @@ export const RESTART = "Start again";
 export const TRANSPORT = {
   powerOn: "On",
   powerOff: "Power",
-  gate: "Gate",
-  gateSub: "hold to sound",
   vol: "Vol"
-};
-
-export const HINTS = {
-  beforePower: "Press power to begin.",
-  noEnv: "A continuous tone — no envelope yet.",
-  withEnv: "Hold the Gate module — or the spacebar — to trigger the envelope."
 };
 
 export const CHAPTER_RAIL = {
@@ -36,7 +28,7 @@ export const NARRATOR_UI = {
   awaitPrefix: "Add the",
   awaitSuffix: "below to continue ↓",
   next: "Next chapter ▸",
-  done: "That completes the guided build."
+  done: "That completes the guided build. Click on Free Build to experiment with everything you've unlocked, or start another journey from the menu.",
 };
 
 export const PRESETS_UI = {
@@ -71,10 +63,8 @@ export const SETTINGS = {
 
 export const LANDING = {
   sub: "Swiss Museum for Electronic Music Instruments",
-  title: "A synthesiser is not one machine.<br />It is a chain of small ones.",
+  title: "Explore the world of synthesis, one patch at a time.",
   prose: "Choose a journey to build one step by step — or open Free Build to patch anything you like.",
-  legendAudio: "Audio — heard",
-  legendControl: "Control — silent",
   pickJourney: "Pick a journey",
   freeTitle: "Free Build",
   freeObjective: "Start with an empty rack and patch whatever you like. All modules unlocked.",

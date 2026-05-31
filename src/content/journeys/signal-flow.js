@@ -4,7 +4,7 @@
 
 export default {
   id: "signal-flow",
-  title: "Signal Flow",
+  title: "Simple Monophonic Voice",
   objective: "Build a simple monophonic voice and follow the signal from oscillator to speaker.",
   difficulty: "beginner",
   estimatedMinutes: 10,
@@ -16,7 +16,7 @@ export default {
       nm: "The Source",
       adds: null,
       title: "A synthesiser begins with a single, continuous tone.",
-      prose: "Press <b>Power</b>. The <b>oscillator</b> is the only part that actually makes sound. Everything you add later only reshapes what it produces. Watch its raw waveform, switch between the five shapes, and slide the pitch.",
+      prose: "The <b>oscillator</b> is the only part that actually makes sound. Everything you add later only reshapes what it produces. Watch its raw waveform, switch between the five shapes, and slide the pitch.",
       tryit: "Switch shapes — including noise — then move the pitch."
     },
     {
@@ -35,8 +35,8 @@ export default {
       ix: "03",
       nm: "Loudness",
       adds: "amp",
-      title: "Gain is measured in decibels — an offset, not a multiply.",
-      prose: "The <b>amplifier</b> applies a gain in <b>decibels</b>. Push it above <b>0 dB</b> and it amplifies, louder than the source; pull it below and it attenuates. The meter shows that level directly. Soon a control signal's dB will simply add to this.",
+      title: "Gain is measured in decibels",
+      prose: "The <b>amplifier</b> applies a gain in <b>decibels</b>. Push it above <b>0 dB</b> and it amplifies, louder than the source; pull it below and it attenuates.",
       tryit: "Push the gain above 0 dB, then well below it."
     },
     {
@@ -46,8 +46,8 @@ export default {
       nm: "Control vs Audio",
       adds: "env",
       title: "A silent signal that reshapes the sound.",
-      prose: "The <span class='cy'>envelope</span> makes no sound on its own. It is a dB <b>offset</b> that <b>adds</b> to the gain — its peak rides exactly on the gain line in the meter. It is driven by the <b>gate</b>: held → attack, decay, sustain; released → release.",
-      tryit: "Hold the Gate and watch the contour add to the gain."
+      prose: "The <span class='cy'>envelope</span> makes no sound on its own. It is a control signal, meant to modify a parameter of another module. Here we connected it to the gain. When the <b>gate</b> signal is held high: the envelope goes through → attack, decay, sustain; release phases.",
+      tryit: "Set the gain on the amplifier to minimum. Hold the Gate and watch the envelope shape the signal's amplitude."
     },
     {
       id: "mod",
@@ -56,7 +56,7 @@ export default {
       nm: "Modulation",
       adds: "lfo",
       title: "An oscillator too slow to hear becomes a controller.",
-      prose: "The <span class='cy'>LFO</span> is the same circuit as your very first module — only slow, and patched somewhere other than the speaker. Here it drives the <b>filter cutoff</b>: its ±1 output is multiplied by the <b>depth</b> (in Hz) and <b>added</b> to whatever the cutoff knob is set to. Same wire, different role.",
+      prose: "The <span class='cy'>LFO</span> is the same circuit as your very first module — only slow, and patched somewhere other than the speaker. Here it drives the <b>filter cutoff</b>: its ±1 output is multiplied by the <b>depth</b>.",
       tryit: "Raise the LFO depth and watch the filter breathe."
     },
     {
@@ -66,8 +66,8 @@ export default {
       nm: "Performance",
       adds: "keyboard",
       title: "Stop turning. Start playing.",
-      prose: "The <span class='cy'>keyboard</span> is another manual control source — patched into the oscillator's <b>pitch</b>. Each key sends a fixed frequency, so the pitch knob steps aside. Use the on-screen keys, the computer keys <b>A&nbsp;W&nbsp;S&nbsp;E&nbsp;D&nbsp;F&nbsp;T&nbsp;G&nbsp;Y&nbsp;H&nbsp;U&nbsp;J</b>, and shift octaves with <b>Z</b> / <b>X</b>.",
-      tryit: "Hold the gate, then play a melody on A S D F G H J."
+      prose: "The <span class='cy'>keyboard</span> is another manual control source — here patched into the oscillator's <b>pitch</b>. Each key sends a fixed frequency, so the pitch knob steps aside. Use the on-screen keys, the computer keys <b>A&nbsp;W&nbsp;S&nbsp;E&nbsp;D&nbsp;F&nbsp;T&nbsp;G&nbsp;Y&nbsp;H&nbsp;U&nbsp;J</b>, and shift octaves with <b>Z</b> / <b>X</b>.<br/>When pressing a key, this module also emits a gate signal to trigger the envelope.",
+      tryit: "Play a melody on A S D F G H J."
     }
   ]
 };

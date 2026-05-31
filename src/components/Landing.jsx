@@ -89,10 +89,6 @@ export function Landing() {
           </div>
         </div>
 
-        <div className="legend2">
-          <span className="a"><i />{LANDING.legendAudio}</span>
-          <span className="c"><i />{LANDING.legendControl}</span>
-        </div>
       </div>
     </div>
   );

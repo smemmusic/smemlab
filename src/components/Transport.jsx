@@ -1,13 +1,10 @@
 import { useSynthStore } from "../store/useSynthStore.js";
-import { TRANSPORT, HINTS } from "../content/ui.js";
+import { TRANSPORT } from "../content/ui.js";
 import { getEngine } from "../audio/engineSingleton.js";
-import { isCanonicalPresent } from "../modules/_registry.js";
-import { CANONICAL_IDS } from "../store/graphBuilder.js";
 
 export function Transport() {
   const playing = useSynthStore((s) => s.playing);
   const vol     = useSynthStore((s) => s.vol);
-  const hasEnv  = useSynthStore((s) => isCanonicalPresent(CANONICAL_IDS.env, s.modules));
 
   const setVol  = useSynthStore((s) => s.setVol);
   const setPlay = useSynthStore((s) => s.setPlaying);
@@ -25,8 +22,6 @@ export function Transport() {
     }
   }
 
-  const hint = hasEnv ? HINTS.withEnv : playing ? HINTS.noEnv : HINTS.beforePower;
-
   return (
     <div className="transport">
       <div className="inner">
@@ -34,7 +29,6 @@ export function Transport() {
           <span className="dot" />
           {playing ? TRANSPORT.powerOn : TRANSPORT.powerOff}
         </button>
-        <span className="hint">{hint}</span>
         <div className="vol">
           <span>{TRANSPORT.vol}</span>
           <input type="range" min="0" max="100" value={vol} onChange={(e) => setVol(+e.target.value)} />
