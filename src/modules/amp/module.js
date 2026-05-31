@@ -57,8 +57,10 @@ export class AmplifierModule extends AudioModule {
     // value is read in JS by getCvLevel and summed with the knob.
     this._makeCvInput("level", 1, null, { tap: true });
 
-    this._pollRaf = 0;
-    this._startPolling();
+    // Opt in to the engine's per-frame poll. `_onPollFrame` below skips its
+    // work whenever no CV is wired to "level", so an amp with no incoming
+    // modulation pays nothing per tick.
+    this._pollOnFrame = true;
   }
 
   _totalLin() {
@@ -85,15 +87,18 @@ export class AmplifierModule extends AudioModule {
     if (name === "level") this.setLevel(value);
   }
 
-  _startPolling() {
-    const tick = () => {
-      this._pollCv();
-      this._pollRaf = requestAnimationFrame(tick);
-    };
-    this._pollRaf = requestAnimationFrame(tick);
-  }
-
-  _pollCv() {
+  _onPollFrame(onChange, isConnected) {
+    super._onPollFrame(onChange, isConnected);
+    // No CV wired → no contribution. Snap cvDb back to 0 if it isn't already
+    // (covers the disconnect case after a CV had been applied), then skip the
+    // analyser read entirely.
+    if (!isConnected(this.id, "level")) {
+      if (this._cvDb !== 0) {
+        this._cvDb = 0;
+        this._applyGain();
+      }
+      return;
+    }
     const cv = this.getCvLevel("level");
     const cvDb = cv * CV_MAX_DB;
     if (cvDb !== this._cvDb) {
@@ -103,8 +108,6 @@ export class AmplifierModule extends AudioModule {
   }
 
   dispose() {
-    if (this._pollRaf) cancelAnimationFrame(this._pollRaf);
-    this._pollRaf = 0;
     try { this.gain.disconnect(); } catch {}
     try { this.softClip.disconnect(); } catch {}
     super.dispose();

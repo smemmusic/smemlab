@@ -17,6 +17,8 @@
 import { byType } from "../../modules/_registry.js";
 import { PORT_TYPE, PORT_DIR, newId, portsCompatible } from "./types.js";
 
+const NOOP = () => {};
+
 export class GraphEngine {
   constructor() {
     this.ctx = null;
@@ -27,6 +29,10 @@ export class GraphEngine {
     // into the store via setModuleParam.
     this._onSwitchChange = null;
     this._pollRaf = 0;
+    // Modules that opted into a per-frame poll via `_pollOnFrame = true`.
+    // The loop iterates only this set, so adding modules without per-frame
+    // work (most of them) costs nothing per tick.
+    this._pollers = new Set();
   }
 
   setSwitchChangeHandler(fn) {
@@ -37,11 +43,9 @@ export class GraphEngine {
 
   _startPollLoop() {
     const tick = () => {
-      if (this._onSwitchChange) {
-        const cb = this._onSwitchChange;
-        const isConn = (id, port) => this._hasConnectionTo(id, port);
-        for (const m of this.modules.values()) m._pollSwitches?.(cb, isConn);
-      }
+      const cb = this._onSwitchChange || NOOP;
+      const isConn = (id, port) => this._hasConnectionTo(id, port);
+      for (const m of this._pollers) m._onPollFrame?.(cb, isConn);
       this._pollRaf = requestAnimationFrame(tick);
     };
     this._pollRaf = requestAnimationFrame(tick);
@@ -103,12 +107,14 @@ export class GraphEngine {
     // stay consistent if a module is added while visuals are off.
     if (this._visualsEnabled === false) instance.setVisualsEnabled?.(false);
     this.modules.set(moduleId, instance);
+    if (instance._pollOnFrame) this._pollers.add(instance);
     return moduleId;
   }
 
   removeModule(id) {
     const m = this.modules.get(id);
     if (!m) return;
+    this._pollers.delete(m);
     for (const [cid, c] of this.connections) {
       if (c.fromId === id || c.toId === id) this.removeConnection(cid);
     }

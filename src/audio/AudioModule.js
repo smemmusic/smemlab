@@ -34,6 +34,11 @@ export class AudioModule {
     this._cvPorts    = { in: {}, out: {} };  // .in[name] = { scaler, range, target, analyser? }
     this._pitchPorts = { in: {}, out: {} };
     this._gateInputs = {};                    // name → handler(sourceId, active)
+    // Opt-in flag — when true, the engine adds this module to its per-frame
+    // poller set and calls `_onPollFrame(onChange, isConnected)` each rAF tick.
+    // Modules with switch inputs flip this on automatically; others (the amp's
+    // CV-driven gain) set it explicitly in their constructor.
+    this._pollOnFrame = false;
   }
 
   // ---- Typed-port API ----
@@ -123,9 +128,17 @@ export class AudioModule {
     this._makeCvInput(name, cvRange, null, { tap: true });
     if (!this._switchInputs) this._switchInputs = new Map();
     this._switchInputs.set(name, { values, lastIdx: -1 });
+    this._pollOnFrame = true;
   }
 
-  // Called by the engine's poll loop. For each switch input, reads the tapped
+  // Per-frame hook called by the engine's poll loop on every module that opted
+  // in via `_pollOnFrame = true`. Default: poll switch CVs. Subclasses with
+  // additional per-frame work (e.g. amp CV → gain) override and call super.
+  _onPollFrame(onChange, isConnected) {
+    this._pollSwitches(onChange, isConnected);
+  }
+
+  // Called by `_onPollFrame`. For each switch input, reads the tapped
   // CV, quantises to a values[] index, fires `onChange` when the index moves.
   // Skips switches with no incoming connection to avoid locking to values[0].
   // Quantisation uses abs() so unipolar and bipolar sources both sweep all options.
