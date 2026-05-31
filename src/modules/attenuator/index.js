@@ -11,5 +11,4 @@ export const Attenuator = {
   placard:
     "A unipolar attenuator. Sweep one knob from <b>silent</b> (left) to <b>fully passed</b> (right) to scale any CV down to a chosen amount. The CV equivalent of a volume control — use it to tame an over-strong modulation source without flipping its sign.",
   glyph: AttenuatorGlyph,
-  palette: { include: true, order: 82 },
 };

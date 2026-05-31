@@ -11,7 +11,6 @@ export const Env = {
   placard:
     "A <b>control</b> signal, not a sound. Driven by the <b>gate</b>: held → attack, decay, sustain; released → release. Its shape is a dB offset that <b>adds</b> to the amplifier's gain from below.",
   glyph: EnvGlyph,
-  palette: { include: true, order: 40 },
   canonical: {
     id: "_env",
     blocksFlag: "env",

@@ -47,12 +47,6 @@
  */
 
 /**
- * @typedef {Object} PaletteSpec
- * @property {boolean} include                           shown in the Free Build palette
- * @property {number} [order]                            display order (lower first); defaults to 99
- */
-
-/**
  * @typedef {Object} ModuleManifest
  * @property {string} type                               canonical type string ("oscillator", "filter", …)
  * @property {Function} Cls                              AudioModule subclass (carries static KIND, PORTS, CONTROLS)
@@ -61,8 +55,11 @@
  * @property {() => object} defaults                     initial params for addModule
  * @property {string} placard                            HTML body shown in the narrator on click
  * @property {*} [glyph]                                 m-head silkscreen SVG element (or null)
- * @property {PaletteSpec} [palette]                     omit = not in palette
  * @property {CanonicalSpec} [canonical]                 omit = free-mode-only (no chapter slot)
+ *
+ * Free-mode palette membership/order lives in `_registry.js` (PALETTE_ORDER),
+ * not on the manifest — it's a relational concern (ordering among modules)
+ * that's only meaningful when viewed globally.
  */
 
 const REQUIRED_FIELDS = ["type", "Cls", "Panel", "meta", "defaults", "placard"];
@@ -86,8 +83,5 @@ export function validateManifest(m) {
     if (!pos || typeof pos.x !== "number" || typeof pos.y !== "number") {
       throw new Error(`[modules] manifest "${m.type}" canonical.defaultPosition must be { x, y }`);
     }
-  }
-  if (m.palette && typeof m.palette.include !== "boolean") {
-    throw new Error(`[modules] manifest "${m.type}" palette.include must be boolean`);
   }
 }

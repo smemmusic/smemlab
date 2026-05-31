@@ -13,7 +13,6 @@ export const Oscillator = {
   placard:
     "The only true sound <b>source</b>. The <b>shape</b> sets which harmonics are present; <b>pitch</b> sets the frequency. <b>Noise</b> is the one shape with no pitch — energy at every frequency at once.",
   glyph: OscillatorGlyph,
-  palette: { include: true, order: 10 },
   canonical: {
     id: "_osc",
     defaultPosition: { x: 0, y: 0 },

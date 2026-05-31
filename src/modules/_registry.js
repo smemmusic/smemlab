@@ -25,6 +25,16 @@ export const MODULES = [
   Inverter, CvMixer, Attenuator, Attenuverter, Offset,
 ];
 
+// Free-mode palette order. Membership = inclusion; index = display order.
+// Modules absent from this array don't appear in the palette (e.g. output,
+// which is always-present and not addable). Edit this list to reorder or
+// add/remove palette entries — duplicates are caught at import time.
+const PALETTE_ORDER = [
+  "oscillator", "filter", "amp", "env", "lfo",
+  "keyboard", "gate",
+  "inverter", "attenuator", "attenuverter", "cvmixer", "offset",
+];
+
 // Validate at import time. A malformed manifest crashes startup loudly
 // instead of producing silent UI/audio bugs deep in some lookup.
 const _seenCanonicalIds = new Set();
@@ -35,6 +45,14 @@ for (const m of MODULES) {
       throw new Error(`[modules] duplicate canonical id: ${m.canonical.id}`);
     }
     _seenCanonicalIds.add(m.canonical.id);
+  }
+}
+if (new Set(PALETTE_ORDER).size !== PALETTE_ORDER.length) {
+  throw new Error(`[modules] PALETTE_ORDER contains duplicates: ${PALETTE_ORDER.join(", ")}`);
+}
+for (const type of PALETTE_ORDER) {
+  if (!MODULES.some((m) => m.type === type)) {
+    throw new Error(`[modules] PALETTE_ORDER references unknown module type: ${type}`);
   }
 }
 
@@ -50,11 +68,7 @@ export const byType        = (type)  => _byTypeMap.get(type) || null;
 export const byCanonical   = (id)    => _byCanonicalMap.get(id) || null;
 export const byBlocksFlag  = (flag)  => _byBlocksFlag.get(flag) || null;
 
-export const paletteList = () =>
-  MODULES
-    .filter((m) => m.palette?.include)
-    .slice()
-    .sort((a, b) => (a.palette.order ?? 99) - (b.palette.order ?? 99));
+export const paletteList = () => PALETTE_ORDER.map((type) => _byTypeMap.get(type));
 
 export const canonicalList = () => MODULES.filter((m) => m.canonical);
 // "Always present" in chapter mode: no blocksFlag (oscillator, output) —

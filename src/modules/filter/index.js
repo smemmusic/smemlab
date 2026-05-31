@@ -11,7 +11,6 @@ export const Filter = {
   placard:
     "Removes harmonics. <b>Low-pass</b> keeps everything below the cutoff; flip the switch to <b>high-pass</b> and it keeps everything above. <b>Resonance</b> emphasises frequencies right at the cutoff.",
   glyph: FilterGlyph,
-  palette: { include: true, order: 20 },
   canonical: {
     id: "_filter",
     blocksFlag: "filter",

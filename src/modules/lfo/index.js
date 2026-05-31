@@ -11,7 +11,6 @@ export const Lfo = {
   placard:
     "An oscillator too slow to hear — the same circuit as your first module, only its speed and its destination differ. Patched here into the <b>filter cutoff</b>, it sweeps the tone open and closed.",
   glyph: LfoGlyph,
-  palette: { include: true, order: 50 },
   canonical: {
     id: "_lfo",
     blocksFlag: "lfo",

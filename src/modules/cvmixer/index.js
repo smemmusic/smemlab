@@ -15,5 +15,4 @@ export const CvMixer = {
   placard:
     "Four CV inputs, each with a <b>gain</b> (in dB) and a <b>phase reverse</b>, summed through a <b>master</b>. Use it to blend modulations: combine two LFOs at different depths, crossfade an envelope against its inverted twin, or scale a single CV with a clean dB knob.",
   glyph: CvMixerGlyph,
-  palette: { include: true, order: 90 },
 };

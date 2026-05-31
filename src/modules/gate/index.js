@@ -11,7 +11,6 @@ export const Gate = {
   placard:
     "A manual <b>gate</b> source. Hold the button to open the gate — the envelope sees it the same as a key press, the same as the Transport's Gate. Patched to the envelope's trigger input by the green wire.",
   glyph: GateGlyph,
-  palette: { include: true, order: 70 },
   canonical: {
     id: "_gate",
     blocksFlag: "gate",

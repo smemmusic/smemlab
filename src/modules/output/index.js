@@ -12,7 +12,6 @@ export const Output = {
   placard:
     "The finished signal reaches the speaker. Compare this scope with the oscillator's — every block along the way has reshaped the wave.",
   glyph: OutputGlyph,
-  palette: { include: false },
   canonical: {
     id: "_output",
     required: true,
