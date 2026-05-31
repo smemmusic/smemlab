@@ -11,7 +11,7 @@
 // deltas can refer back to earlier additions by id.
 
 export default {
-  id: "signal-flow",
+  id: "mono-voice",
   title: "Simple Mono Voice",
   objective: "Build a simple monophonic voice and follow the signal from oscillator to speaker.",
   difficulty: "beginner",
@@ -92,11 +92,11 @@ export default {
       adds: {
         modules: [
           { id: "env",  type: "env",  params: { a: 0.05, d: 0.2, sustainDb: -8, r: 0.4 }, position: { x: 580, y: 470 } },
-          { id: "gate", type: "gate", params: {},                                          position: { x: 870, y: 470 } },
+          { id: "trigger", type: "trigger", params: {},                                       position: { x: 870, y: 470 } },
         ],
         connections: [
-          { id: "c-env-amp",   fromId: "env",  fromPort: "env",  toId: "amp", toPort: "level"   },
-          { id: "c-gate-trig", fromId: "gate", fromPort: "gate", toId: "env", toPort: "trigger" },
+          { id: "c-env-amp",   fromId: "env",     fromPort: "env",  toId: "amp", toPort: "level"   },
+          { id: "c-trig-env",  fromId: "trigger", fromPort: "gate", toId: "env", toPort: "trigger" },
         ],
         // Drop the amp's intrinsic gain to −∞ dB so the envelope's CV is the
         // only thing producing audible output — makes the gate/release effect
@@ -105,7 +105,7 @@ export default {
       },
       title: "A silent signal that reshapes the sound.",
       prose: "The <span class='cy'>envelope</span> makes no sound on its own. It is a control signal, meant to modify a parameter of another module. Here we connected it to the gain. When the <b>gate</b> signal is held high: the envelope goes through → attack, decay, sustain; release phases.",
-      tryit: "Hold the Gate and watch the envelope shape the signal's amplitude.",
+      tryit: "Hold the Trigger and watch the envelope shape the signal's amplitude.",
     },
 
     {

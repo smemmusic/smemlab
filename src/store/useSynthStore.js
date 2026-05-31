@@ -232,6 +232,7 @@ export const useSynthStore = create(
         //   delta.connections?       — array of { id, fromId, fromPort, toId, toPort } to add (skip if id exists)
         //   delta.removeConnections? — array of connection ids to remove
         //   delta.setParams?         — { [moduleId]: { ...paramsToMerge } }
+        //   delta.setPositions?      — { [moduleId]: { x, y } } — reposition existing modules
         applyChapterDelta: (delta) => set((s) => {
           if (!delta) return {};
           let { modules, connections } = s;
@@ -261,6 +262,16 @@ export const useSynthStore = create(
           if (delta.setParams && typeof delta.setParams === "object") {
             for (const [moduleId, partial] of Object.entries(delta.setParams)) {
               modules = patchModuleParams(modules, moduleId, partial);
+            }
+          }
+
+          // Repositioning is idempotent like the rest: re-applying the same
+          // delta after a Prev → Next round-trip just snaps to the same coords.
+          if (delta.setPositions && typeof delta.setPositions === "object") {
+            for (const [moduleId, pos] of Object.entries(delta.setPositions)) {
+              modules = modules.map((m) => m.id === moduleId
+                ? { ...m, position: { x: pos.x, y: pos.y } }
+                : m);
             }
           }
 

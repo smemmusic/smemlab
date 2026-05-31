@@ -11,7 +11,7 @@ import { ArEnv }      from "./arenv/index.js";
 import { AdEnv }      from "./adenv/index.js";
 import { Lfo }        from "./lfo/index.js";
 import { Keyboard }   from "./keyboard/index.js";
-import { Gate }       from "./gate/index.js";
+import { Trigger }    from "./trigger/index.js";
 import { Output }     from "./output/index.js";
 import { Inverter }    from "./inverter/index.js";
 import { CvMixer }     from "./cvmixer/index.js";
@@ -22,7 +22,7 @@ import { AudioMixer }  from "./audiomixer/index.js";
 
 export const MODULES = [
   Oscillator, Filter, Amp, Env, ArEnv, AdEnv, Lfo,
-  Keyboard, Gate, Output,
+  Keyboard, Trigger, Output,
   Inverter, CvMixer, Attenuator, Attenuverter, Offset, AudioMixer,
 ];
 
@@ -31,7 +31,7 @@ export const MODULES = [
 // user can re-add it after deletion (every patch needs an Output to be heard).
 const PALETTE_ORDER = [
   "oscillator", "filter", "audiomixer", "amp", "env", "arenv", "adenv", "lfo",
-  "keyboard", "gate", "output",
+  "keyboard", "trigger", "output",
   "inverter", "attenuator", "attenuverter", "cvmixer", "offset",
 ];
 
