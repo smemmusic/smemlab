@@ -133,11 +133,13 @@ export function Wires({ containerRef, panX = 0, panY = 0 }) {
   // are caught by ResizeObserver; store-driven changes call `schedule()` from
   // the layout effect below.
   useLayoutEffect(() => {
-    const container = containerRef?.current;
-    if (!container) return;
-
     function measure() {
       rafRef.current = 0;
+      // Read container lazily — on some browsers / commit orderings the ref
+      // may not have attached at the moment this effect first ran, so we
+      // resolve the element on each invocation instead.
+      const container = containerRef?.current;
+      if (!container) return;
       const cRect = container.getBoundingClientRect();
       // The rack-canvas carries the scale + pan transform. Its post-transform
       // rect is what places model coords on screen: a model point (mx, my)
@@ -209,16 +211,28 @@ export function Wires({ containerRef, panX = 0, panY = 0 }) {
 
     // Resize triggers: window resize, sidebar collapse, container resize.
     // Observing the container catches its size change; observing the rack
-    // catches transform-independent layout shifts of its content.
-    const ro = new ResizeObserver(schedule);
-    ro.observe(container);
-    const rackEl = container.querySelector(".rack-canvas");
-    if (rackEl) ro.observe(rackEl);
+    // catches transform-independent layout shifts of its content. We try
+    // immediately and fall back to a single deferred rAF retry — handles the
+    // case where the container ref isn't attached yet at effect mount time.
+    let ro = null;
+    function tryAttachObservers() {
+      if (ro) return;
+      const container = containerRef?.current;
+      if (!container || typeof ResizeObserver === "undefined") return;
+      ro = new ResizeObserver(schedule);
+      ro.observe(container);
+      const rackEl = container.querySelector(".rack-canvas");
+      if (rackEl) ro.observe(rackEl);
+    }
+    tryAttachObservers();
+    const retryRaf = ro ? 0 : requestAnimationFrame(tryAttachObservers);
+
     window.addEventListener("resize", schedule);
 
     return () => {
       if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = 0; }
-      ro.disconnect();
+      if (retryRaf) cancelAnimationFrame(retryRaf);
+      if (ro) ro.disconnect();
       window.removeEventListener("resize", schedule);
       scheduleRef.current = () => {};
     };
