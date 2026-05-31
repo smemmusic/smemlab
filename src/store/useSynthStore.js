@@ -257,7 +257,9 @@ export const useSynthStore = create(
           set({
             modules, connections,
             vol: 42,
-            ui: { freeMode: false, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1, mobileView: "synth" },
+            // Mobile: start on the instructions tab so the visitor reads
+            // the first chapter before tapping "Add X" jumps them to the synth.
+            ui: { freeMode: false, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1, mobileView: "instructions" },
             chapter: 0,
             journeyId: id,
             started: true,

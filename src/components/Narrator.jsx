@@ -17,6 +17,7 @@ export function Narrator() {
   const nextChapter  = useSynthStore((s) => s.nextChapter);
   const focusedType  = useSynthStore((s) => s.ui.focusedModuleSlot);
   const clearFocus   = useSynthStore((s) => s.clearFocus);
+  const setMobileView = useSynthStore((s) => s.setMobileView);
 
   // In free mode (or with no journey selected) there is no narrative to render.
   if (freeMode || !journeyId) return null;
@@ -53,6 +54,9 @@ export function Narrator() {
       if (manifest && !isCanonicalPresent(manifest.canonical.id, modules)) {
         addCanonical(manifest.canonical.id);
       }
+      // On mobile, jump the user over to the synth view so they can see the
+      // module they just added. No-op on desktop (both panes are visible).
+      setMobileView("synth");
     }
     nextChapter();
   }
