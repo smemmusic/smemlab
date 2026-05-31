@@ -2,8 +2,7 @@
 
 export const BRAND = {
   logoAlt: "SMEM",
-  title: "Synth Builder",
-  subtitle: "/ signal flow"
+  title: "Lab"
 };
 
 export const LEGEND = {
@@ -73,8 +72,12 @@ export const SETTINGS = {
 export const LANDING = {
   sub: "Swiss Museum for Electronic Music Instruments",
   title: "A synthesiser is not one machine.<br />It is a chain of small ones.",
-  prose: "Build that chain here, one block at a time. Amber wires carry sound. Cyan wires carry control — silent instructions that shape it. Follow the signal from left to right.",
+  prose: "Choose a journey to build one step by step — or open Free Build to patch anything you like.",
   legendAudio: "Audio — heard",
   legendControl: "Control — silent",
-  begin: "Power on ▸"
+  pickJourney: "Pick a journey",
+  freeTitle: "Free Build",
+  freeObjective: "Start with an empty rack and patch whatever you like. All modules unlocked.",
+  freeStart: "Open free build ▸",
+  journeyStart: "Start ▸"
 };

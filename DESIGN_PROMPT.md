@@ -1,4 +1,4 @@
-# Design brief — SMEM Synth Builder
+# Design brief — SMEM Lab
 
 Copy everything below this line into Claude (alongside `index.html` and `MODULES.md`) when asking for design help.
 

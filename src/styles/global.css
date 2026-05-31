@@ -1,5 +1,5 @@
 /* ============================================================
-   SMEM Synth Builder — design styles (ported from design/app)
+   SMEM Lab — design styles (ported from design/app)
    Audio = amber (#ffb454), Control = cyan (#4fd6ff).
    ============================================================ */
 :root {
@@ -52,6 +52,14 @@ html, body { overflow: hidden; }
   grid-template-columns: 340px 1fr;
   width: 100vw; height: 100vh;
   max-width: none; margin: 0; padding: 0;
+}
+/* When the sidebar is hidden (free mode or pre-pick), main takes the full row. */
+.wrap.no-sidebar {
+  grid-template-areas:
+    "header"
+    "main"
+    "transport";
+  grid-template-columns: 1fr;
 }
 
 /* ---------------- header ---------------- */
@@ -594,6 +602,48 @@ header {
 }
 .landing .begin .dot { width: 10px; height: 10px; border-radius: 50%; background: #0b0c0f; }
 
+/* ---- Journey picker ---- */
+.landing .card { max-width: 880px; }
+.landing .picker { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; margin-top: 6px; }
+.landing .picker-label {
+  font-size: 10px; letter-spacing: .28em; text-transform: uppercase;
+  color: var(--muted); margin: 0;
+}
+.landing .picker-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px; width: 100%;
+}
+.landing .journey-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
+  padding: 18px 20px; text-align: left;
+  background: rgba(20, 22, 28, 0.7); border: 1px solid var(--line);
+  border-radius: 10px; cursor: pointer; color: var(--ink);
+  font-family: inherit; transition: border-color .15s var(--ease), transform .15s var(--ease), box-shadow .15s var(--ease);
+}
+.landing .journey-card:hover {
+  border-color: var(--audio);
+  box-shadow: 0 6px 24px -10px var(--audio-glow);
+  transform: translateY(-1px);
+}
+.landing .journey-card h3 {
+  margin: 0; font-family: "Chakra Petch", sans-serif;
+  font-size: 16px; letter-spacing: .04em; color: var(--ink);
+}
+.landing .journey-card p {
+  margin: 0; font-family: "Spectral", serif; font-size: 14px;
+  line-height: 1.5; color: var(--muted); max-width: none;
+}
+.landing .journey-card .cta {
+  margin-top: auto; font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--audio); font-weight: 600;
+}
+.landing .journey-card.free { border-color: var(--control-dim); }
+.landing .journey-card.free:hover {
+  border-color: var(--control);
+  box-shadow: 0 6px 24px -10px var(--control-glow);
+}
+.landing .journey-card.free .cta { color: var(--control); }
+
 @media (max-width: 960px) {
   /* Collapse the sidebar into a horizontal strip above the main area. */
   .wrap {
@@ -604,6 +654,13 @@ header {
       "transport transport";
     grid-template-rows: auto auto 1fr auto;
     grid-template-columns: 1fr;
+  }
+  .wrap.no-sidebar {
+    grid-template-areas:
+      "header"
+      "main"
+      "transport";
+    grid-template-rows: auto 1fr auto;
   }
   .sidebar { border-right: none; border-bottom: 1px solid var(--line); max-height: 38vh; }
   .bus { display: flex; gap: 4px; overflow-x: auto; padding-left: 0; }

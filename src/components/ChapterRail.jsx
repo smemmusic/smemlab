@@ -1,16 +1,22 @@
 import { useSynthStore } from "../store/useSynthStore.js";
-import { CHAPTERS } from "../content/narrator.js";
+import { byId as journeyById } from "../content/journeys/index.js";
 import { CHAPTER_RAIL } from "../content/ui.js";
 
 export function ChapterRail() {
   const chapter   = useSynthStore((s) => s.chapter);
+  const journeyId = useSynthStore((s) => s.journeyId);
+  const freeMode  = useSynthStore((s) => s.ui.freeMode);
   const goChapter = useSynthStore((s) => s.goChapter);
+
+  if (freeMode || !journeyId) return null;
+  const chapters = journeyById(journeyId)?.chapters ?? [];
+  if (!chapters.length) return null;
 
   return (
     <aside className="rail">
       <p className="rail-title">{CHAPTER_RAIL.title}</p>
       <nav className="bus">
-        {CHAPTERS.map((c, i) => {
+        {chapters.map((c, i) => {
           const state = i < chapter ? "done" : i === chapter ? "active" : "locked";
           return (
             <button

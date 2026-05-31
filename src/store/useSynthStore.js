@@ -71,6 +71,7 @@ export const useSynthStore = create(
         scope:   { edge: "rising", threshold: 0 },
         chapter: 0,
         started: false,
+        journeyId: null,
         settingsOpen: false,
         presets: { activeId: "init", user: [] },
 
@@ -228,11 +229,12 @@ export const useSynthStore = create(
         goChapter:   (i) => set({ chapter: i }),
         nextChapter: () => set((s) => ({ chapter: s.chapter + 1 })),
 
-        // ---- Landing ----
+        // ---- Landing / Journey selection ----
         setStarted: (started) => set({ started }),
 
-        // ---- Session reset ----
-        resetSession: () => {
+        // Pick a journey from the landing picker. Resets the graph and chapter
+        // so the visitor always begins from the same blank slate.
+        startJourney: (id) => {
           const init = BUILTINS[0].config;
           const { modules, connections } = isLegacyConfig(init)
             ? buildCanonicalGraph(init)
@@ -242,9 +244,52 @@ export const useSynthStore = create(
             vol: 42,
             ui: { freeMode: false, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null },
             chapter: 0,
+            journeyId: id,
+            started: true,
+          });
+        },
+
+        // Enter free build mode. Does NOT reset the graph — this lets the user
+        // continue exploring from whatever patch they just built in a journey.
+        // (Landing-page free tile starts from the init graph since the graph
+        // is already in init state when the landing page is visible.)
+        enterFreeMode: () => set((s) => ({
+          ui: { ...s.ui, freeMode: true },
+          journeyId: null,
+          started: true,
+        })),
+
+        // Return to the journey picker. Full reset: empties the graph, clears
+        // the active journey, and re-shows the landing page.
+        backToJourneys: () => {
+          const init = BUILTINS[0].config;
+          const { modules, connections } = isLegacyConfig(init)
+            ? buildCanonicalGraph(init)
+            : { modules: init.modules, connections: init.connections };
+          set({
+            modules, connections,
+            vol: 42,
+            ui: { freeMode: false, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null },
+            chapter: 0,
+            journeyId: null,
             started: false,
             playing: false,
           });
+        },
+
+        // "Start again" — resets the current journey (or free patch) without
+        // returning to the picker. Keeps journeyId/started/freeMode untouched.
+        resetSession: () => {
+          const init = BUILTINS[0].config;
+          const { modules, connections } = isLegacyConfig(init)
+            ? buildCanonicalGraph(init)
+            : { modules: init.modules, connections: init.connections };
+          set((s) => ({
+            modules, connections,
+            vol: 42,
+            ui: { ...s.ui, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null },
+            chapter: 0,
+          }));
         },
 
         // ---- Presets ----
@@ -279,7 +324,7 @@ export const useSynthStore = create(
       }),
       {
         name: "smem-v1",
-        version: 12,
+        version: 13,
         partialize: (s) => ({
           modules: s.modules,
           connections: s.connections,
@@ -287,6 +332,8 @@ export const useSynthStore = create(
           vol: s.vol,
           scope: s.scope,
           chapter: s.chapter,
+          started: s.started,
+          journeyId: s.journeyId,
           presets: s.presets,
         }),
         migrate: (persisted, version) => {
@@ -376,6 +423,11 @@ export const useSynthStore = create(
             delete persisted.gateSources; delete persisted.held;
             delete persisted.envPhase; delete persisted.envStart;
             persisted.ui = { freeMode: false, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null };
+          }
+          // ---- v13: introduce the Journey abstraction. Anyone mid-flow on the
+          // pre-journey build is on what is now called "signal-flow". ----
+          if (version < 13 && persisted.journeyId === undefined) {
+            persisted.journeyId = persisted.started ? "signal-flow" : null;
           }
           return persisted;
         },

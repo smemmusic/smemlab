@@ -1,6 +1,6 @@
 # SMEM — Modules & Concepts
 
-Scope of what the synth builder needs to teach. Each entry is a module to implement, with the parameters/concepts it must expose.
+Scope of what SMEM Lab needs to teach. Each entry is a module to implement, with the parameters/concepts it must expose.
 
 ## Audio path
 

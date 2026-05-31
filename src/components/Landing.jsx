@@ -2,21 +2,26 @@ import { useEffect, useRef } from "react";
 import { useSynthStore } from "../store/useSynthStore.js";
 import { getEngine } from "../audio/engineSingleton.js";
 import { BRAND, LANDING } from "../content/ui.js";
+import { JOURNEYS } from "../content/journeys/index.js";
 
-// Welcome screen with a faint animated sine background.
-// Stays mounted (no unmount) so the fade-out transition can play.
-// Dismissed by setting `started=true` in the store (persisted, so it stays hidden).
+// Welcome screen + journey picker. Stays mounted (no unmount) so the fade-out
+// transition can play. Dismissed by any picker action (which sets started=true).
 export function Landing() {
-  const started     = useSynthStore((s) => s.started);
-  const setStarted  = useSynthStore((s) => s.setStarted);
-  const setPlaying  = useSynthStore((s) => s.setPlaying);
-  const canvasRef   = useRef(null);
-  const rafRef      = useRef(0);
+  const started      = useSynthStore((s) => s.started);
+  const startJourney = useSynthStore((s) => s.startJourney);
+  const enterFree    = useSynthStore((s) => s.enterFreeMode);
+  const setPlaying   = useSynthStore((s) => s.setPlaying);
+  const canvasRef    = useRef(null);
+  const rafRef       = useRef(0);
 
-  // The Power On button counts as the user gesture needed to create the AudioContext.
-  function begin() {
+  // A picker click counts as the user gesture needed to create the AudioContext.
+  function pickJourney(id) {
     try { getEngine().start(); setPlaying(true); } catch {}
-    setStarted(true);
+    startJourney(id);
+  }
+  function pickFree() {
+    try { getEngine().start(); setPlaying(true); } catch {}
+    enterFree();
   }
 
   useEffect(() => {
@@ -58,17 +63,33 @@ export function Landing() {
     <div className={"landing" + (started ? " hide" : "")} aria-hidden={started}>
       <canvas className="bgscope" ref={canvasRef} />
       <div className="card">
-        <img className="logo" src="/logo.svg" alt={BRAND.logoAlt} />
+        <img className="logo" src={import.meta.env.BASE_URL + "logo.svg"} alt={BRAND.logoAlt} />
         <div className="sub">{LANDING.sub}</div>
         <h1 dangerouslySetInnerHTML={{ __html: LANDING.title }} />
         <p>{LANDING.prose}</p>
+
+        <div className="picker">
+          <p className="picker-label">{LANDING.pickJourney}</p>
+          <div className="picker-grid">
+            {JOURNEYS.map((j) => (
+              <button key={j.id} className="journey-card" onClick={() => pickJourney(j.id)}>
+                <h3>{j.title}</h3>
+                <p>{j.objective}</p>
+                <span className="cta">{LANDING.journeyStart}</span>
+              </button>
+            ))}
+            <button className="journey-card free" onClick={pickFree}>
+              <h3>{LANDING.freeTitle}</h3>
+              <p>{LANDING.freeObjective}</p>
+              <span className="cta">{LANDING.freeStart}</span>
+            </button>
+          </div>
+        </div>
+
         <div className="legend2">
           <span className="a"><i />{LANDING.legendAudio}</span>
           <span className="c"><i />{LANDING.legendControl}</span>
         </div>
-        <button className="begin" onClick={begin}>
-          <span className="dot" />{LANDING.begin}
-        </button>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { useSynthStore } from "../store/useSynthStore.js";
-import { CHAPTERS } from "../content/narrator.js";
+import { byId as journeyById } from "../content/journeys/index.js";
 import { NARRATOR_UI } from "../content/ui.js";
 import { byType, byBlocksFlag, isCanonicalPresent } from "../modules/_registry.js";
 
@@ -11,10 +11,18 @@ const KIND_LABEL = {
 export function Narrator() {
   const chapter      = useSynthStore((s) => s.chapter);
   const modules      = useSynthStore((s) => s.modules);
+  const journeyId    = useSynthStore((s) => s.journeyId);
+  const freeMode     = useSynthStore((s) => s.ui.freeMode);
   const addCanonical = useSynthStore((s) => s.addCanonicalModule);
   const nextChapter  = useSynthStore((s) => s.nextChapter);
   const focusedType  = useSynthStore((s) => s.ui.focusedModuleSlot);
   const clearFocus   = useSynthStore((s) => s.clearFocus);
+
+  // In free mode (or with no journey selected) there is no narrative to render.
+  if (freeMode || !journeyId) return null;
+  const journey  = journeyById(journeyId);
+  const chapters = journey?.chapters ?? [];
+  if (!chapters.length) return null;
 
   // Clicked-module view: replaces chapter content with the module's placard.
   const focused = focusedType ? byType(focusedType) : null;
@@ -33,10 +41,10 @@ export function Narrator() {
     );
   }
 
-  const safeIdx  = Math.min(chapter, CHAPTERS.length - 1);
-  const c        = CHAPTERS[safeIdx];
-  const atEnd    = safeIdx === CHAPTERS.length - 1;
-  const upcoming = !atEnd ? CHAPTERS[safeIdx + 1] : null;
+  const safeIdx  = Math.min(chapter, chapters.length - 1);
+  const c        = chapters[safeIdx];
+  const atEnd    = safeIdx === chapters.length - 1;
+  const upcoming = !atEnd ? chapters[safeIdx + 1] : null;
 
   function handleNext() {
     if (!upcoming) return;
