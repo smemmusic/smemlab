@@ -30,8 +30,10 @@ export class EnvelopeModule extends AudioModule {
     this.envPhase = "idle";
     this.envStart = 0;
 
-    // Parallel normalised CV-out: ConstantSourceNode whose offset is scheduled
-    // alongside the gain ramps but bounded to [0, 1].
+    // Normalised CV-out: ConstantSourceNode whose offset ramps *linearly* in
+    // [0, 1] so that downstream destinations multiplying by a dB-range constant
+    // (e.g. the amp's cv × CV_MAX_DB) get a dB contribution that's linear in
+    // time — i.e. perceptually-linear envelope attack/decay/release.
     this.cvOut = ctx.createConstantSource();
     this.cvOut.offset.value = 0;
     this.cvOut.start();
@@ -62,9 +64,9 @@ export class EnvelopeModule extends AudioModule {
     const cv = this.cvOut.offset;
     const sustainLin01 = dbToLin(e.sustainDb);
     cv.cancelScheduledValues(t);
-    cv.setValueAtTime(Math.max(1e-5, cv.value), t);
-    cv.exponentialRampToValueAtTime(1.0, t + e.a);
-    cv.exponentialRampToValueAtTime(Math.max(1e-5, sustainLin01), t + e.a + e.d);
+    cv.setValueAtTime(cv.value, t);
+    cv.linearRampToValueAtTime(1.0, t + e.a);
+    cv.linearRampToValueAtTime(sustainLin01, t + e.a + e.d);
     this.envStart = performance.now();
     this.envPhase = "ad";
   }
@@ -77,8 +79,8 @@ export class EnvelopeModule extends AudioModule {
     g.exponentialRampToValueAtTime(1.0, t + e.r);
     const cv = this.cvOut.offset;
     cv.cancelScheduledValues(t);
-    cv.setValueAtTime(Math.max(1e-5, cv.value), t);
-    cv.exponentialRampToValueAtTime(1e-5, t + e.r);
+    cv.setValueAtTime(cv.value, t);
+    cv.linearRampToValueAtTime(0, t + e.r);
     this.envStart = performance.now();
     this.envPhase = "rel";
   }
