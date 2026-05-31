@@ -15,6 +15,7 @@ export function Narrator() {
   const freeMode     = useSynthStore((s) => s.ui.freeMode);
   const addCanonical = useSynthStore((s) => s.addCanonicalModule);
   const nextChapter  = useSynthStore((s) => s.nextChapter);
+  const goChapter    = useSynthStore((s) => s.goChapter);
   const focusedType  = useSynthStore((s) => s.ui.focusedModuleSlot);
   const clearFocus   = useSynthStore((s) => s.clearFocus);
   const setMobileView = useSynthStore((s) => s.setMobileView);
@@ -66,16 +67,30 @@ export function Narrator() {
     ? `Add ${upcomingManifest.meta.title} ▸`
     : NARRATOR_UI.next;
 
+  function handlePrev() {
+    if (safeIdx > 0) goChapter(safeIdx - 1);
+  }
+
   return (
     <div className={"narrator " + c.kind}>
-      <div className={"eyebrow " + c.kind}>
-        <span className="rule" />
-        {NARRATOR_UI.chapterPrefix} {c.ix} · {c.nm}
+      <div className="narrator-body">
+        <div className={"eyebrow " + c.kind}>
+          <span className="rule" />
+          {NARRATOR_UI.chapterPrefix} {c.ix} · {c.nm}
+        </div>
+        <h2>{c.title}</h2>
+        <p dangerouslySetInnerHTML={{ __html: c.prose }} />
+        <div className="try">{c.tryit}</div>
       </div>
-      <h2>{c.title}</h2>
-      <p dangerouslySetInnerHTML={{ __html: c.prose }} />
-      <div className="try">{c.tryit}</div>
       <div className="nav-row">
+        <button
+          className="prevbtn"
+          onClick={handlePrev}
+          disabled={safeIdx === 0}
+          title="Previous chapter"
+        >
+          ◂ Prev
+        </button>
         {!atEnd
           ? <button className="nextbtn" onClick={handleNext}>{label}</button>
           : <span className="await">{NARRATOR_UI.done}</span>}

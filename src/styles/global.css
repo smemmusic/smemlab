@@ -71,13 +71,17 @@ header {
   flex-wrap: wrap;
 }
 
-/* ---------------- sidebar (narrative) ---------------- */
+/* ---------------- sidebar (narrative) ----------------
+   Flex column so the narrator can claim all remaining vertical space and
+   pin its prev/next bar to the bottom. ChapterRail keeps its natural height;
+   only the narrator's body scrolls when the prose is long. */
 .sidebar {
   grid-area: sidebar;
   border-right: 1px solid var(--line);
   padding: 18px 18px 22px;
-  overflow-y: auto;
+  overflow: hidden;
   display: flex; flex-direction: column; gap: 22px;
+  min-height: 0;
 }
 
 /* ---------------- main area (synth stage) ---------------- */
@@ -131,7 +135,20 @@ header {
 .chap.control.done .tap { background: var(--control); border-color: var(--control); box-shadow: 0 0 8px var(--control-glow); }
 
 /* ---------------- narrator: museum placard ---------------- */
-.narrator { position: relative; padding: 2px 2px 22px; margin-bottom: 6px; }
+.narrator {
+  position: relative;
+  padding: 2px 2px 0;
+  margin-bottom: 0;
+  flex: 1;
+  min-height: 0;
+  display: flex; flex-direction: column;
+}
+.narrator-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 14px;
+}
 .narrator .eyebrow {
   display: flex; align-items: center; gap: 12px; font-size: 10px; letter-spacing: .26em;
   text-transform: uppercase; color: var(--muted); margin-bottom: 12px;
@@ -156,11 +173,29 @@ header {
   border: 1px solid var(--audio-dim); padding: 2px 6px; border-radius: 3px;
 }
 .narrator.control .try::before { color: var(--control); border-color: var(--control-dim); }
-.narrator .nav-row { margin-top: 20px; min-height: 30px; display: flex; align-items: center; }
-.narrator .await { font-family: "Spectral", serif; font-style: italic; font-size: 13px; color: var(--muted); }
+.narrator .nav-row {
+  flex: 0 0 auto;
+  margin-top: 0;
+  padding: 14px 0 4px;
+  border-top: 1px solid var(--silk-soft);
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.narrator .await { font-family: "Spectral", serif; font-style: italic; font-size: 13px; color: var(--muted); margin-left: auto; }
+.narrator .prevbtn {
+  font-family: inherit; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; font-weight: 500;
+  color: var(--muted); background: transparent; border: 1px solid var(--line); padding: 10px 16px; border-radius: 7px;
+  cursor: pointer; transition: .15s;
+}
+.narrator .prevbtn:hover:not(:disabled) { color: var(--ink); border-color: var(--muted); background: rgba(255,255,255,.03); }
+.narrator .prevbtn:disabled { opacity: .35; cursor: not-allowed; }
 .narrator .nextbtn {
   font-family: inherit; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; font-weight: 600;
   color: var(--ink); background: transparent; border: 1px solid var(--line); padding: 10px 18px; border-radius: 7px; cursor: pointer; transition: .15s;
+  margin-left: auto;
 }
 .narrator .nextbtn:hover { border-color: var(--muted); background: rgba(255,255,255,.03); }
 
