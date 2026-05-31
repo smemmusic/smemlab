@@ -123,14 +123,20 @@ export const useSynthStore = create(
               dirty = true;
             }
           }
+          // Drop any connection whose endpoint module is now gone.
+          const survivingConnections = s.connections.filter((c) =>
+            next.some((m) => m.id === c.fromId) && next.some((m) => m.id === c.toId)
+          );
+          // In free mode the user owns the wiring — never re-add canonical
+          // auto-wires on removal (would silently restore disconnected default
+          // chains). In chapter mode, regenerate the canonical chain so e.g.
+          // removing the filter re-routes osc → amp directly.
+          const connections = s.ui.freeMode
+            ? survivingConnections
+            : rebuildCanonicalConnections(survivingConnections, next);
           return {
             modules: next,
-            connections: rebuildCanonicalConnections(
-              s.connections.filter((c) =>
-                next.some((m) => m.id === c.fromId) && next.some((m) => m.id === c.toId)
-              ),
-              next,
-            ),
+            connections,
             ui: { ...s.ui, selectedConnectionId: null, armedSource: null },
           };
         }),
