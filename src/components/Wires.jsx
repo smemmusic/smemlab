@@ -101,6 +101,7 @@ export function Wires({ containerRef, panX = 0, panY = 0 }) {
   const modules     = useSynthStore((s) => s.modules);
   const selectedId  = useSynthStore((s) => s.ui.selectedConnectionId);
   const viewScale   = useSynthStore((s) => s.ui.viewScale);
+  const dragWire    = useSynthStore((s) => s.ui.dragWire);
   const selectConnection   = useSynthStore((s) => s.selectConnection);
   const disconnectModules  = useSynthStore((s) => s.disconnectModules);
   const clearSelection     = useSynthStore((s) => s.clearSelection);
@@ -109,6 +110,9 @@ export function Wires({ containerRef, panX = 0, panY = 0 }) {
   const removeWaypoint     = useSynthStore((s) => s.removeWaypoint);
 
   const [paths, setPaths] = useState([]);
+  // Live drag-to-patch preview: { d, type, x, y, active } or null. Recomputed
+  // by measure() so it shares the same port-position lookup as real wires.
+  const [dragPreview, setDragPreview] = useState(null);
   const rafRef = useRef(0);
   const scheduleRef = useRef(() => {});
   // Detached SVG path used only as a calculator for getTotalLength /
@@ -124,9 +128,11 @@ export function Wires({ containerRef, panX = 0, panY = 0 }) {
   const connectionsRef = useRef(connections);
   const modulesRef     = useRef(modules);
   const viewScaleRef   = useRef(viewScale);
+  const dragWireRef    = useRef(dragWire);
   connectionsRef.current = connections;
   modulesRef.current     = modules;
   viewScaleRef.current   = viewScale;
+  dragWireRef.current    = dragWire;
 
   // Stable measure / schedule setup. Runs once per containerRef change.
   // External resize triggers (window, sidebar collapse, rack-canvas resize)
@@ -199,6 +205,30 @@ export function Wires({ containerRef, panX = 0, panY = 0 }) {
         });
       }
       setPaths(next);
+
+      // In-flight drag wire: from the source port's anchor to the cursor.
+      const dw = dragWireRef.current;
+      let preview = null;
+      if (dw) {
+        const fromEl = document.querySelector(`[data-port-id="${dw.fromId}:${dw.fromPort}"]`);
+        if (fromEl) {
+          const fr = fromEl.getBoundingClientRect();
+          const from = { x: fr.left + fr.width / 2 - cRect.left, y: fr.top + fr.height / 2 - cRect.top };
+          const cursor = { x: dw.clientX - cRect.left, y: dw.clientY - cRect.top };
+          const fromPort = lookupPort(liveModules, dw.fromId, dw.fromPort);
+          // Approach the cursor horizontally from whichever side faces the source.
+          const toEdge = cursor.x >= from.x ? "left" : "right";
+          preview = {
+            d: buildPath([from, cursor], portEdge(fromPort), toEdge),
+            type: fromPort?.type || PORT_TYPE.AUDIO,
+            x: cursor.x,
+            y: cursor.y,
+            active: !!dw.hoverId,
+            invalid: !!dw.invalid,
+          };
+        }
+      }
+      setDragPreview(preview);
     }
 
     function schedule() {
@@ -245,7 +275,7 @@ export function Wires({ containerRef, panX = 0, panY = 0 }) {
   // would not reflow when the user pans the rack.
   useLayoutEffect(() => {
     scheduleRef.current();
-  }, [connections, modules, viewScale, panX, panY]);
+  }, [connections, modules, viewScale, panX, panY, dragWire]);
 
   // Escape clears the armed source (handled in Stage), Delete removes the
   // selected connection.
@@ -321,7 +351,7 @@ export function Wires({ containerRef, panX = 0, panY = 0 }) {
     removeWaypoint(conn.id, wpIndex);
   }
 
-  if (paths.length === 0) return null;
+  if (paths.length === 0 && !dragPreview) return null;
 
   return (
     <svg className="wires" style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 4, width: "100%", height: "100%" }}>
@@ -378,6 +408,33 @@ export function Wires({ containerRef, panX = 0, panY = 0 }) {
           </g>
         );
       })}
+      {dragPreview && (
+        <g
+          className={"wire wire-drag" + (dragPreview.invalid ? " wire-drag-invalid" : "")}
+          style={{
+            color: dragPreview.invalid ? "#ff5252" : (TYPE_COLOR[dragPreview.type] || "var(--audio)"),
+            pointerEvents: "none",
+          }}
+        >
+          <path
+            d={dragPreview.d}
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeDasharray="7 5"
+            fill="none"
+            opacity="0.9"
+            style={{ filter: "drop-shadow(0 0 5px currentColor)" }}
+          />
+          <circle
+            cx={dragPreview.x}
+            cy={dragPreview.y}
+            r={dragPreview.active ? 6.5 : 4}
+            fill="currentColor"
+            opacity="0.95"
+            style={{ filter: "drop-shadow(0 0 5px currentColor)" }}
+          />
+        </g>
+      )}
     </svg>
   );
 }

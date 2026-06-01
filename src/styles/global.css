@@ -1291,10 +1291,10 @@ body.module-dragging * { cursor: grabbing !important; }
 }
 .port:hover { color: var(--ink); }
 .port-dot {
-  width: 10px;
-  height: 10px;
+  width: 15px;
+  height: 15px;
   border-radius: 50%;
-  flex: 0 0 10px;
+  flex: 0 0 15px;
   transition: box-shadow .14s var(--ease);
 }
 /* Outputs: filled, glowing — "emitting" affordance.
@@ -1330,6 +1330,14 @@ body.module-dragging * { cursor: grabbing !important; }
   animation: portPulse 1.4s ease-in-out infinite;
 }
 .port.candidate .port-label { color: var(--ink); }
+/* Drop target: the compatible input under a dragged wire — fill the hollow
+   ring so it reads as "release here to connect". */
+.port.drop-target .port-dot {
+  background: var(--port-color);
+  box-shadow: 0 0 0 3px var(--port-color), 0 0 18px var(--port-color);
+  animation: none;
+}
+.port.drop-target .port-label { color: var(--ink); }
 @keyframes portPulse {
   0%, 100% { box-shadow: 0 0 0 0 var(--port-color), 0 0 6px var(--port-color); }
   50%      { box-shadow: 0 0 0 4px transparent,    0 0 6px var(--port-color); }

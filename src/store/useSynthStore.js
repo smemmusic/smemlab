@@ -145,6 +145,13 @@ export const useSynthStore = create(
         // ===== UI state =====
         ui: {
           armedSource: null,
+          // Live drag-to-patch state. Set while the user is dragging a wire out
+          // of an output port; null otherwise. Shape:
+          //   { fromId, fromPort, portType, clientX, clientY, hoverId }
+          // clientX/clientY track the cursor (viewport coords); hoverId is the
+          // "moduleId:portName" of the compatible input currently under the
+          // cursor (or null). <Wires> reads this to draw the in-flight wire.
+          dragWire: null,
           selectedConnectionId: null,
           focusedModuleSlot: null,
           // Current view scale used by Stage for Module drag scale-correction.
@@ -331,6 +338,20 @@ export const useSynthStore = create(
           ui: { ...s.ui, armedSource: { moduleId, portName, portType } }
         })),
         clearArmedSource:  () => set((s) => ({ ui: { ...s.ui, armedSource: null } })),
+
+        // ---- Drag-to-patch ----
+        // Begin dragging a wire out of an output. The armed-source machinery
+        // still runs in parallel (so compatible inputs glow as candidates), but
+        // these actions feed the live preview wire in <Wires>.
+        startDragWire: (fromId, fromPort, portType, clientX, clientY) => set((s) => ({
+          ui: { ...s.ui, dragWire: { fromId, fromPort, portType, clientX, clientY, hoverId: null, invalid: false } },
+        })),
+        updateDragWire: (clientX, clientY, hoverId = null, invalid = false) => set((s) => (
+          s.ui.dragWire
+            ? { ui: { ...s.ui, dragWire: { ...s.ui.dragWire, clientX, clientY, hoverId, invalid } } }
+            : {}
+        )),
+        endDragWire:    () => set((s) => (s.ui.dragWire ? { ui: { ...s.ui, dragWire: null } } : {})),
         selectConnection:  (id) => set((s) => ({ ui: { ...s.ui, selectedConnectionId: id } })),
         clearSelection:    () => set((s) => ({ ui: { ...s.ui, selectedConnectionId: null } })),
         focusModule:       (slot) => set((s) => ({ ui: { ...s.ui, focusedModuleSlot: slot } })),
