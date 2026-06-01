@@ -580,6 +580,13 @@ header {
    TOGGLE — bat handle on paper.
    ────────────────────────────────────────────────────────── */
 .toggle { display: flex; align-items: center; gap: 11px; padding: 7px 0; user-select: none; }
+.module[data-id="filter"] .toggle { justify-content: center; }
+.module[data-id="amp"] .ctrl-grid.one {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+}
 .toggle .sw { position: relative; width: 34px; height: 46px; cursor: pointer; flex: 0 0 auto; }
 .toggle .plate {
   position: absolute; left: 50%; top: 0; transform: translateX(-50%);
@@ -871,11 +878,11 @@ header {
 
 /* Speaker output flourish. */
 .spk {
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  flex: 1;
   color: var(--red);
   font-family: var(--f-mono);
   font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
-  margin-top: 4px;
 }
 
 /* ──────────────────────────────────────────────────────────

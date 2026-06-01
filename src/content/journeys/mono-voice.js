@@ -33,7 +33,7 @@ export default {
     anchor: "osc",
     modules: {
       osc:      { controls: ["scope", "type", "freq"],              ports: ["main", "pitch"] },
-      filter:   { controls: ["response", "mode", "cutoff"],         ports: ["input", "output", "cutoff"] },
+      filter:   { controls: ["response", "mode", "cutoff", "resonance"], ports: ["input", "output", "cutoff"] },
       amp:      { controls: ["meter", "level"],                     ports: ["input", "output", "level"] },
       env:      { controls: ["scope", "a", "d", "s", "r"],          ports: ["env", "trigger"] },
       trigger:  { controls: ["button"],                             ports: ["gate"] },
