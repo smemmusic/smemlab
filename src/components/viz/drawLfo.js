@@ -59,7 +59,7 @@ export function drawLfo(ctx, w, h, data) {
 
   // Trigger-level marker at the left edge — shows where the trace locks.
   const yMark = mid - threshold * amp;
-  ctx.fillStyle = "#fff";
+  ctx.fillStyle = VIZ.MARKER_COLOR;
   ctx.beginPath();
   ctx.arc(pad, yMark, 3.2, 0, 7);
   ctx.fill();

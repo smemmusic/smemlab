@@ -186,7 +186,7 @@ export function PatchesModal() {
                 type="file"
                 accept="application/json,.json"
                 onChange={handleFileChosen}
-                style={{ display: "none" }}
+                hidden
               />
             </label>
             <span className="setting-desc patch-upload-hint">Loads the patch immediately (current graph is replaced).</span>

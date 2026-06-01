@@ -3,6 +3,7 @@ import { useSynthStore } from "../store/useSynthStore.js";
 import { getEngine } from "../audio/engineSingleton.js";
 import { BRAND, LANDING } from "../content/ui.js";
 import { JOURNEYS } from "../content/journeys/index.js";
+import { VIZ } from "./viz/gridHelpers.js";
 
 // Welcome screen + journey picker. Stays mounted (no unmount) so the fade-out
 // transition can play. Dismissed by any picker action (which sets started=true).
@@ -43,16 +44,13 @@ export function Landing() {
 
       const t = performance.now() / 1000;
       ctx.lineWidth = 1.5;
-      ctx.strokeStyle = "#E62528";
-      ctx.shadowColor = "rgba(230,37,40,.4)";
-      ctx.shadowBlur = 0;
+      ctx.strokeStyle = VIZ.AUDIO_COLOR;
       ctx.beginPath();
       for (let x = 0; x <= w; x += 2) {
         const y = h / 2 + Math.sin(x / 90 + t * 2) * 60 * Math.sin(x / 700 + t);
         if (x) ctx.lineTo(x, y); else ctx.moveTo(x, y);
       }
       ctx.stroke();
-      ctx.shadowBlur = 0;
       rafRef.current = requestAnimationFrame(loop);
     }
     rafRef.current = requestAnimationFrame(loop);

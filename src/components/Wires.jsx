@@ -362,41 +362,31 @@ export function Wires({ containerRef, panX = 0, panY = 0 }) {
   if (paths.length === 0 && !dragPreview) return null;
 
   return (
-    <svg className="wires" style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 4, width: "100%", height: "100%" }}>
+    <svg className="wires">
       {paths.map((p) => {
         const isSelected = p.id === selectedId;
         const color = TYPE_COLOR[p.type] || "var(--audio)";
         return (
-          <g key={p.id} className={"wire " + (isSelected ? "selected" : "")}>
+          <g key={p.id} className={"wire " + (isSelected ? "selected" : "")} style={{ color }}>
             {/* Wider invisible hit area for easy clicking + dblclick-to-insert-waypoint */}
             <path
+              className="wire-hit"
               d={p.d}
-              stroke="transparent"
-              strokeWidth="14"
-              fill="none"
-              style={{ pointerEvents: "stroke", cursor: "pointer" }}
               onClick={(e) => { e.stopPropagation(); selectConnection(p.id); }}
               onDoubleClick={(e) => onPathDoubleClick(e, p)}
             />
             <path
+              className="wire-stroke"
               d={p.d}
-              stroke={color}
-              strokeWidth={isSelected ? 3 : 2}
               strokeDasharray={TYPE_DASH[p.type]}
-              fill="none"
-              opacity={isSelected ? 1 : 0.9}
-              style={{ filter: isSelected ? "drop-shadow(0 0 6px currentColor)" : undefined }}
             />
             {isSelected && p.waypoints.map((wp, i) => (
               <circle
                 key={i}
+                className="wire-waypoint"
                 cx={wp.x}
                 cy={wp.y}
                 r="5.5"
-                fill={color}
-                stroke="var(--ink)"
-                strokeWidth="1.5"
-                style={{ pointerEvents: "all", cursor: "grab", filter: "drop-shadow(0 0 4px currentColor)" }}
                 onPointerDown={(e) => onWaypointPointerDown(e, { id: p.id }, i)}
                 onDoubleClick={(e) => onWaypointDoubleClick(e, { id: p.id }, i)}
               >
@@ -405,42 +395,27 @@ export function Wires({ containerRef, panX = 0, panY = 0 }) {
             ))}
             {isSelected && (
               <g
+                className="wire-disconnect"
                 transform={`translate(${p.midX}, ${p.midY})`}
-                style={{ cursor: "pointer", pointerEvents: "all" }}
                 onClick={(e) => { e.stopPropagation(); disconnectModules(p.id); clearSelection(); }}
               >
-                <circle r="9" fill="var(--paper)" stroke="var(--ink)" strokeWidth="1.5" />
-                <line x1="-4" y1="-4" x2="4" y2="4" stroke="var(--ink)" strokeWidth="1.5" />
-                <line x1="-4" y1="4" x2="4" y2="-4" stroke="var(--ink)" strokeWidth="1.5" />
+                <circle r="9" />
+                <line x1="-4" y1="-4" x2="4" y2="4" />
+                <line x1="-4" y1="4" x2="4" y2="-4" />
               </g>
             )}
           </g>
         );
       })}
       {dragPreview && (
-        <g
-          className={"wire wire-drag" + (dragPreview.invalid ? " wire-drag-invalid" : "")}
-          style={{
-            color: dragPreview.invalid ? "#ff5252" : (TYPE_COLOR[dragPreview.type] || "var(--audio)"),
-            pointerEvents: "none",
-          }}
-        >
-          <path
-            d={dragPreview.d}
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeDasharray="7 5"
-            fill="none"
-            opacity="0.9"
-            style={{ filter: "drop-shadow(0 0 5px currentColor)" }}
-          />
+        <g className={"wire wire-drag" + (dragPreview.invalid ? " wire-drag-invalid" : "")}
+           style={dragPreview.invalid ? undefined : { color: TYPE_COLOR[dragPreview.type] || "var(--audio)" }}>
+          <path className="wire-drag-stroke" d={dragPreview.d} />
           <circle
+            className={"wire-drag-cursor" + (dragPreview.active ? " active" : "")}
             cx={dragPreview.x}
             cy={dragPreview.y}
             r={dragPreview.active ? 6.5 : 4}
-            fill="currentColor"
-            opacity="0.95"
-            style={{ filter: "drop-shadow(0 0 5px currentColor)" }}
           />
         </g>
       )}

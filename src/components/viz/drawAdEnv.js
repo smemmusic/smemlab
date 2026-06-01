@@ -22,15 +22,15 @@ export function drawAdEnv(ctx, w, h, data) {
   const y0  = dbY(DB_FLOOR);
 
   // 0 dB ceiling marker
-  ctx.strokeStyle = "rgba(79,214,255,.22)";
+  ctx.strokeStyle = VIZ.CONTROL_FILL;
   ctx.setLineDash([2, 4]);
   ctx.beginPath();
   ctx.moveTo(0, yPk);
   ctx.lineTo(w, yPk);
   ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillStyle = "rgba(79,214,255,.5)";
-  ctx.font = "9px 'Chakra Petch',sans-serif";
+  ctx.fillStyle = VIZ.CONTROL_LABEL;
+  ctx.font = VIZ.FONT_LABEL;
   ctx.textAlign = "left";
   ctx.fillText("0 dB", 4, yPk - 3);
 
@@ -52,7 +52,7 @@ export function drawAdEnv(ctx, w, h, data) {
       const yy = px < xA
         ? y0 - ((px - pad) / Math.max(xA - pad, 0.001)) * (y0 - yPk)
         : yPk + ((px - xA) / Math.max(xD - xA, 0.001)) * (y0 - yPk);
-      ctx.fillStyle = "#fff";
+      ctx.fillStyle = VIZ.MARKER_COLOR;
       ctx.beginPath();
       ctx.arc(px, yy, 3.5, 0, 7);
       ctx.fill();

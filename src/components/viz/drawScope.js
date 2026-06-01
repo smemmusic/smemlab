@@ -33,7 +33,7 @@ export function drawScope(ctx, w, h, data) {
   const an = data?.analyser;
   if (!an) {
     ctx.globalAlpha = 0.5;
-    flat(ctx, w, h, "#3a2f1c");
+    flat(ctx, w, h, VIZ.SCOPE_FLAT_TINT);
     ctx.globalAlpha = 1;
     return;
   }

@@ -25,31 +25,31 @@ export function drawMeter(ctx, w, h, data) {
   const X = (i) => (i / 179) * w;
 
   // amplification zone above 0 dB
-  ctx.fillStyle = "rgba(255,180,84,.05)";
+  ctx.fillStyle = VIZ.AUDIO_BAND;
   ctx.fillRect(0, top, w, dbY(0) - top);
 
   // 0 dB unity line
-  ctx.strokeStyle = "rgba(255,180,84,.2)";
+  ctx.strokeStyle = VIZ.AUDIO_HAIRLINE;
   ctx.setLineDash([2, 4]);
   ctx.beginPath();
   ctx.moveTo(0, dbY(0));
   ctx.lineTo(w, dbY(0));
   ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillStyle = "rgba(255,180,84,.4)";
-  ctx.font = "9px 'Chakra Petch',sans-serif";
+  ctx.fillStyle = VIZ.AUDIO_LABEL;
+  ctx.font = VIZ.FONT_LABEL;
   ctx.textAlign = "left";
   ctx.fillText("0 dB", 4, dbY(0) - 3);
 
   // gain offset line
-  ctx.strokeStyle = "rgba(79,214,255,.55)";
+  ctx.strokeStyle = VIZ.CONTROL_HAIRLINE;
   ctx.setLineDash([5, 4]);
   ctx.beginPath();
   ctx.moveTo(0, dbY(ampPart));
   ctx.lineTo(w, dbY(ampPart));
   ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillStyle = "rgba(79,214,255,.8)";
+  ctx.fillStyle = VIZ.CONTROL_LABEL;
   ctx.textAlign = "right";
   ctx.fillText("gain offset", w - 8, dbY(ampPart) - 3);
 
@@ -59,7 +59,7 @@ export function drawMeter(ctx, w, h, data) {
   for (let i = 0; i < n; i++) ctx.lineTo(X(i), dbY(hist[i]));
   ctx.lineTo(X(n - 1), bot);
   ctx.closePath();
-  ctx.fillStyle = "rgba(255,180,84,.12)";
+  ctx.fillStyle = VIZ.AUDIO_FILL;
   ctx.fill();
 
   // total level over time — line (audio signal → amber glow)
@@ -73,15 +73,15 @@ export function drawMeter(ctx, w, h, data) {
   endGlow(ctx);
 
   // readout
-  ctx.font = "600 12px 'Chakra Petch',sans-serif";
+  ctx.font = VIZ.FONT_READOUT;
   ctx.textAlign = "right";
   ctx.fillStyle = VIZ.AUDIO_COLOR;
   ctx.fillText((totalDb <= M_FLR ? "−∞" : (totalDb > 0 ? "+" : "") + totalDb.toFixed(1)) + " dB", w - 8, h - 9);
 
   if (blocks.env) {
     ctx.textAlign = "left";
-    ctx.font = "9px 'Chakra Petch',sans-serif";
-    ctx.fillStyle = "rgba(236,231,218,.6)";
+    ctx.font = VIZ.FONT_LABEL;
+    ctx.fillStyle = VIZ.TEXT_PAPER_SOFT;
     const a = (ampPart > 0 ? "+" : "") + ampPart.toFixed(0);
     const e = envDb <= M_FLR ? "−∞" : (envDb > 0 ? "+" : "") + envDb.toFixed(0);
     ctx.fillText("gain " + a + "  +  env " + e, 6, h - 9);

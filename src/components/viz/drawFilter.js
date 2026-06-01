@@ -54,10 +54,10 @@ export function drawFilter(ctx, w, h, data) {
   ctx.stroke();
   endGlow(ctx);
 
-  // Amber = the static cutoff knob position. Audio colour, lives where the
-  // user set it — even when the LFO is sweeping the actual cutoff around it.
+  // Red hairline = the static cutoff knob position. Audio colour, lives where
+  // the user set it — even when the LFO is sweeping the actual cutoff around it.
   const cxKnob = (Math.log(Math.max(20, knobCutoff) / MIN_F) / Math.log(MAX_F / MIN_F)) * w;
-  ctx.strokeStyle = "rgba(255,180,84,.4)";
+  ctx.strokeStyle = VIZ.AUDIO_HAIRLINE;
   ctx.setLineDash([3, 4]);
   ctx.beginPath();
   ctx.moveTo(cxKnob, 0);
@@ -65,11 +65,11 @@ export function drawFilter(ctx, w, h, data) {
   ctx.stroke();
   ctx.setLineDash([]);
 
-  // Cyan = the LFO-modulated effective cutoff. Control colour, moves with the
-  // modulation. Only shown when the LFO is actually patched.
+  // Rouge hairline = the LFO-modulated effective cutoff. Control colour,
+  // moves with the modulation. Only shown when the LFO is actually patched.
   if (data?.lfo && data?.playing) {
     const cxMod = (Math.log(effectiveCutoff / MIN_F) / Math.log(MAX_F / MIN_F)) * w;
-    ctx.strokeStyle = "rgba(79,214,255,.6)";
+    ctx.strokeStyle = VIZ.CONTROL_HAIRLINE;
     ctx.setLineDash([2, 4]);
     ctx.beginPath();
     ctx.moveTo(cxMod, 0);

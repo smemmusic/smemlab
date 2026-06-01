@@ -51,6 +51,10 @@
   --gate-soft:    rgba(230,37,40,.10);
   --gate-glow:    rgba(230,37,40,.45);
 
+  /* Invalid wire (refused drop target) — a desaturated salmon that reads
+     as "wrong" without confusing with the live Red signal. */
+  --invalid-wire: #ff5252;
+
   /* ── kept old aliases mapped onto the new system ──────── */
   --bg:        var(--paper);
   --panel:     var(--paper);
@@ -546,54 +550,50 @@ header {
 }
 
 /* ──────────────────────────────────────────────────────────
-   KNOB — the brand mark made functional. The dial mark is
-   Red (the "indicator notch" from the smem "e").
+   KNOB — drawn directly from the brand identity (§ 02).
+   A simple ink-stroked circle with a single thin indicator
+   line. No gradient, no shadow, no ticks — this matches the
+   "MODULE 01 / IDENTITY" plate where every knob reads as a
+   technical schematic rather than a 3D rendering.
    ────────────────────────────────────────────────────────── */
 .ctrl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
 .ctrl-grid.one { grid-template-columns: 1fr; }
 .knob {
-  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
   padding: 6px 0 2px; user-select: none;
 }
 .knob .dial {
-  position: relative; width: 54px; height: 54px; border-radius: 50%;
+  position: relative; width: 46px; height: 46px; border-radius: 50%;
   cursor: ns-resize; touch-action: none;
-  background:
-    radial-gradient(circle at 50% 32%, #fafaf5, #e4e0d4 65%, #cfcabd 100%);
-  border: 1px solid var(--ink-quiet);
-  box-shadow:
-    0 1px 0 var(--white) inset,
-    0 2px 4px rgba(0,0,0,.15),
-    0 6px 14px -8px rgba(0,0,0,.35);
-}
-/* Soft outer dial ring — replaces the harsh conic gear. */
-.knob .dial::before {
-  content: ""; position: absolute; inset: -4px; border-radius: 50%; z-index: -1;
   background: transparent;
-  border: 1px solid var(--ink-rule);
-  pointer-events: none;
+  border: 1.25px solid var(--ink);
+  box-shadow: none;
 }
-/* The indicator: red, like the smem "e" notch. */
+/* Outer ring + ticks: removed entirely. The brand keeps the dial
+   to a single hairline circle. */
+.knob .dial::before { display: none; }
+.knob .ticks { display: none; }
+
+/* The indicator: a thin ink line running from the centre to the rim.
+   Length ≈ inner radius so it lands on the stroke without crossing it. */
 .knob .dial .mark {
-  position: absolute; left: 50%; top: 4px;
-  width: 2.5px; height: 16px; border-radius: 1.5px;
-  background: var(--red);
-  transform-origin: 50% 23px;
+  position: absolute;
+  left: 50%; top: 4px;
+  width: 1.25px;
+  height: 19px;
+  border-radius: 0;
+  background: var(--ink);
+  transform-origin: 50% 19px;       /* pivot at dial centre (4px top + 19px length / 2 + adjustment) */
   transform: translateX(-50%);
-  box-shadow: 0 0 4px rgba(230,37,40,.35);
+  box-shadow: none;
 }
-/* Control-mod knobs use the deeper Rouge indicator. */
-.control-mod .knob .dial .mark {
-  background: var(--rouge);
-  box-shadow: 0 0 4px rgba(122,20,24,.4);
-}
-/* Dial ticks — hairlines on the outer ring (no glow). */
-.knob .ticks {
-  position: absolute; inset: -7px; border-radius: 50%; pointer-events: none;
-  background: conic-gradient(from 225deg, var(--ink-rule) 0deg, var(--ink-rule) 270deg, transparent 270deg);
-  -webkit-mask: radial-gradient(circle, transparent 67%, #000 68%, #000 70%, transparent 71%);
-          mask: radial-gradient(circle, transparent 67%, #000 68%, #000 70%, transparent 71%);
-}
+
+/* Audio-module knobs use the brand's Red indicator + Red ring
+   ("signal-on", the highlighted knob in the identity plate).
+   Control-module knobs stay Ink — quieter, in line with Rouge's
+   role as "what grey is to black, here". */
+.audio-mod .knob .dial { border-color: var(--red); }
+.audio-mod .knob .dial .mark { background: var(--red); }
 .knob .lab {
   font-family: var(--f-mono);
   font-size: 9px; letter-spacing: .14em; text-transform: uppercase;
@@ -1579,10 +1579,93 @@ body.module-dragging * { cursor: grabbing !important; }
   50%      { box-shadow: 0 0 0 4px transparent,        0 0 6px var(--port-color); }
 }
 
-/* Wires overlay */
-.wires { overflow: visible; }
+/* ──────────────────────────────────────────────────────────
+   WIRES — patch curves between ports.
+   The <g> for each wire carries `style="color: <signal>"` so every
+   stroke/fill inherits the right Red/Rouge via `currentColor`. Gate
+   wires add a dashed pattern (set inline because the dash is data,
+   not state). Invalid-drop preview overrides the color to a warn
+   tint via the .wire-drag-invalid class.
+   ────────────────────────────────────────────────────────── */
+.wires {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 4;
+  overflow: visible;
+}
 .wires .wire { transition: opacity .14s var(--ease); }
-.wires .wire:hover path:not([stroke="transparent"]) {
+
+/* Invisible thick stroke acts as the click/dblclick hit area. */
+.wires .wire-hit {
+  stroke: transparent;
+  stroke-width: 14;
+  fill: none;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
+/* The visible stroke inherits the signal colour. */
+.wires .wire-stroke {
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  opacity: .9;
+}
+.wires .wire.selected .wire-stroke {
+  stroke-width: 3;
+  opacity: 1;
+  filter: drop-shadow(0 0 6px currentColor);
+}
+.wires .wire:hover .wire-stroke {
   opacity: 1;
   filter: drop-shadow(0 0 4px currentColor);
+}
+
+/* Waypoint handles — draggable beads when a wire is selected. */
+.wires .wire-waypoint {
+  fill: currentColor;
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  pointer-events: all;
+  cursor: grab;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+/* Disconnect-X badge at the mid-curve point of a selected wire. */
+.wires .wire-disconnect { cursor: pointer; pointer-events: all; }
+.wires .wire-disconnect circle {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+.wires .wire-disconnect line {
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+
+/* Drag-to-patch preview. */
+.wires .wire-drag { pointer-events: none; }
+.wires .wire-drag-stroke {
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-dasharray: 7 5;
+  fill: none;
+  opacity: .9;
+  filter: drop-shadow(0 0 5px currentColor);
+}
+.wires .wire-drag-cursor {
+  fill: currentColor;
+  opacity: .95;
+  filter: drop-shadow(0 0 5px currentColor);
+}
+.wires .wire-drag-invalid { color: var(--invalid-wire); }
+
+/* Pitch placeholder dial — shown in the oscillator when an external
+   keyboard is wired into the pitch port (the knob is read-only). */
+.knob .dial.placeholder {
+  opacity: .35;
+  cursor: default;
 }

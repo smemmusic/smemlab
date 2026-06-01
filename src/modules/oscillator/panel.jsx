@@ -21,7 +21,7 @@ const fmtOctave = (v) => (v > 0 ? `+${v}` : `${v}`);
 function PitchPlaceholder({ caption }) {
   return (
     <div className="knob">
-      <div className="dial" style={{ opacity: 0.35, cursor: "default" }} aria-disabled="true">
+      <div className="dial placeholder" aria-disabled="true">
         <span className="ticks" />
       </div>
       <div className="lab">Pitch</div>
