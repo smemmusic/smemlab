@@ -9,25 +9,28 @@
 // and styles/global.css.
 
 // ---- brand-aligned canvas palette ----
-// AUDIO = smem Red (the live signal). CONTROL = Rouge brightened just enough
-// to read against the Ink CRT backdrop (pure Rouge crushes on the dark fill).
+// In the WIRE system, audio = Ink, control = Red, gate = Rouge — but the CRT
+// screens are themselves dark, so an Ink audio trace would render invisibly
+// against the backdrop. The reverse lockup ("white on Ink") applies: audio
+// traces draw in Paper, control traces in Red. Same semantic, surface-adapted.
 export const VIZ = {
-  AUDIO_COLOR:       "#E62528",
-  CONTROL_COLOR:     "#D14248",
+  AUDIO_COLOR:       "#F4F1EA",   // Paper — audio trace on the Ink CRT
+  CONTROL_COLOR:     "#E62528",   // Red — control trace on the Ink CRT
   MARKER_COLOR:      "#F4F1EA",   // Paper — for the live "phase dot" overlays
   TEXT_PAPER:        "#F4F1EA",
   TEXT_PAPER_SOFT:   "rgba(244,241,234,.60)",
 
   // Audio low-alpha derivatives — fills, hairline reference lines, labels.
-  AUDIO_FILL:        "rgba(230,37,40,.12)",
-  AUDIO_BAND:        "rgba(230,37,40,.05)",
-  AUDIO_HAIRLINE:    "rgba(230,37,40,.40)",
-  AUDIO_LABEL:       "rgba(230,37,40,.85)",
+  // Now Paper-derived so they sit cleanly on the Ink backdrop.
+  AUDIO_FILL:        "rgba(244,241,234,.10)",
+  AUDIO_BAND:        "rgba(244,241,234,.04)",
+  AUDIO_HAIRLINE:    "rgba(244,241,234,.40)",
+  AUDIO_LABEL:       "rgba(244,241,234,.85)",
 
-  // Control low-alpha derivatives — for envelope/LFO reference rules.
-  CONTROL_FILL:      "rgba(209,66,72,.12)",
-  CONTROL_HAIRLINE:  "rgba(209,66,72,.55)",
-  CONTROL_LABEL:     "rgba(209,66,72,.85)",
+  // Control low-alpha derivatives — Red, for envelope/LFO reference rules.
+  CONTROL_FILL:      "rgba(230,37,40,.12)",
+  CONTROL_HAIRLINE:  "rgba(230,37,40,.55)",
+  CONTROL_LABEL:     "rgba(230,37,40,.85)",
 
   // Inert "no signal" tint for the scope flatline.
   SCOPE_FLAT_TINT:   "rgba(244,241,234,.18)",

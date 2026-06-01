@@ -4,11 +4,6 @@ import { ModuleInstanceContext } from "./ModuleInstanceContext.js";
 import { ModulePorts } from "./ModulePorts.jsx";
 import { byType } from "../modules/_registry.js";
 
-const KIND_LABEL = {
-  audio:   "Audio · Module",
-  control: "Control · Module",
-};
-
 // Selectors that identify interactive children — clicks on these should NOT
 // trigger module focus (they have their own handlers, e.g. knob dragging,
 // port clicks, button presses).
@@ -100,7 +95,6 @@ export function Module({ type, instanceId, children }) {
         <span className="screw br" />
         <div className="m-head" onPointerDown={onHeaderPointerDown}>
           <div>
-            <div className={"m-kind " + kind}>{KIND_LABEL[kind]}</div>
             <div className="m-title">{manifest.meta.title}</div>
           </div>
           {manifest.glyph}
