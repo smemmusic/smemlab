@@ -3,23 +3,23 @@
 // from this so glow, colours, grid, and CRT persistence are uniform.
 
 // ---- single source of truth for visualiser config ----
+// Brand palette: Audio = Red (the live signal), Control = a brighter Rouge
+// readable on the Ink CRT (pure Rouge would crush against the dark backdrop).
 export const VIZ = {
-  // signal colours: audio = amber, control = cyan. Used everywhere a line is drawn.
-  AUDIO_COLOR:   "#ffb454",
-  CONTROL_COLOR: "#4fd6ff",
+  AUDIO_COLOR:   "#E62528",   // smem Red
+  CONTROL_COLOR: "#D14248",   // Rouge brightened for CRT contrast
 
   // glow defaults — applied to every signal stroke.
   LINE_WIDTH:    2,
   GLOW_BLUR:     9,
 
-  // grid tint by screen kind.
-  GRID_AMBER:    "rgba(150,130,90,.10)",
-  GRID_GREEN:    "rgba(120,150,130,.10)",
+  // grid tint — quiet Paper hairlines on the Ink CRT.
+  GRID_AMBER:    "rgba(244,241,234,.07)",
+  GRID_GREEN:    "rgba(244,241,234,.07)",
 
-  // CRT persistence base by screen kind — translucent fill drawn each frame
-  // for phosphor afterglow. Matches the .screen / .screen.amber CSS backdrops.
-  PERSIST_AMBER: "rgba(18,12,5,.30)",
-  PERSIST_GREEN: "rgba(7,17,11,.30)"
+  // CRT persistence base — translucent Ink wash for phosphor afterglow.
+  PERSIST_AMBER: "rgba(0,0,0,.30)",
+  PERSIST_GREEN: "rgba(0,0,0,.30)"
 };
 
 export function grid(ctx, w, h, tint) {

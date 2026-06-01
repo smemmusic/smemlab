@@ -75,12 +75,12 @@ export const SETTINGS = {
 };
 
 export const LANDING = {
-  sub: "Swiss Museum for Electronic Music Instruments",
-  title: "Explore the world of synthesis, one patch at a time.",
+  sub: "Swiss Museum and Centre for Electronic Music Instruments",
+  title: "<b>Patch a synthesiser,</b><br/>one step at a time.",
   prose: "Choose a journey to build one step by step — or open Free Build to patch anything you like.",
-  pickJourney: "Pick a journey",
+  pickJourney: "— Pick a journey —",
   freeTitle: "Free Build",
   freeObjective: "Start with an empty rack and patch whatever you like. All modules unlocked.",
-  freeStart: "Open free build ▸",
-  journeyStart: "Start ▸"
+  freeStart: "Open free build →",
+  journeyStart: "Start →"
 };

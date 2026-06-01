@@ -42,10 +42,10 @@ export function Landing() {
       ctx.clearRect(0, 0, w, h);
 
       const t = performance.now() / 1000;
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "#ffb454";
-      ctx.shadowColor = "#ffb454";
-      ctx.shadowBlur = 12;
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = "#E62528";
+      ctx.shadowColor = "rgba(230,37,40,.4)";
+      ctx.shadowBlur = 0;
       ctx.beginPath();
       for (let x = 0; x <= w; x += 2) {
         const y = h / 2 + Math.sin(x / 90 + t * 2) * 60 * Math.sin(x / 700 + t);

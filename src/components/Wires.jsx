@@ -34,6 +34,14 @@ const TYPE_COLOR = {
   [PORT_TYPE.GATE]:  "var(--gate)",
 };
 
+// Brand collapses the palette to Red (audio) + Rouge (control) + Red (gate).
+// To keep the audio/gate distinction without leaving the palette, gate wires
+// render dashed — mirroring the brand's patch library "cross" motif where
+// the secondary line is dashed Ink while the primary is solid Red.
+const TYPE_DASH = {
+  [PORT_TYPE.GATE]: "8 6",
+};
+
 // Build a smooth cubic-Bezier polyline through `points` (a list of {x, y}
 // screen coords). End-tangents follow each endpoint's edge so the curve leaves
 // each port in the physical direction the port emerges from the module.
@@ -374,8 +382,9 @@ export function Wires({ containerRef, panX = 0, panY = 0 }) {
               d={p.d}
               stroke={color}
               strokeWidth={isSelected ? 3 : 2}
+              strokeDasharray={TYPE_DASH[p.type]}
               fill="none"
-              opacity={isSelected ? 1 : 0.85}
+              opacity={isSelected ? 1 : 0.9}
               style={{ filter: isSelected ? "drop-shadow(0 0 6px currentColor)" : undefined }}
             />
             {isSelected && p.waypoints.map((wp, i) => (
@@ -400,7 +409,7 @@ export function Wires({ containerRef, panX = 0, panY = 0 }) {
                 style={{ cursor: "pointer", pointerEvents: "all" }}
                 onClick={(e) => { e.stopPropagation(); disconnectModules(p.id); clearSelection(); }}
               >
-                <circle r="9" fill="rgba(20,26,30,0.95)" stroke="var(--ink)" strokeWidth="1.5" />
+                <circle r="9" fill="var(--paper)" stroke="var(--ink)" strokeWidth="1.5" />
                 <line x1="-4" y1="-4" x2="4" y2="4" stroke="var(--ink)" strokeWidth="1.5" />
                 <line x1="-4" y1="4" x2="4" y2="-4" stroke="var(--ink)" strokeWidth="1.5" />
               </g>

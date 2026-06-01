@@ -1,45 +1,109 @@
 /* ============================================================
-   SMEM Lab — design styles (ported from design/app)
-   Audio = amber (#ffb454), Control = cyan (#4fd6ff).
+   smem — lab · design system applied from Visual Identity V01
+   ──────────────────────────────────────────────────────────────
+   Palette: Paper / White / Ink / Red / Rouge.
+   Type:    IBM Plex Sans (display/body) + IBM Plex Mono (labels).
+   System maps the brand to the synth UI:
+     – Chrome (header/sidebar/narrator/transport/landing/modals)
+       sits on Paper, set in Plex Sans, with Red accents and Rouge
+       quiet emphasis — the editorial layer.
+     – Rack stage is Ink — a museum vitrine.
+     – Modules are Paper-faced "instrument specimens" with Ink
+       CRT screens. The dial mark on every knob is Red — the same
+       indicator notch that lives in the smem "e".
+     – Audio = Red (the live signal).
+       Control = Rouge (the quieter accent that shapes audio).
+       Gate   = Red dashed (the discrete on/off, kept in family).
    ============================================================ */
+
 :root {
-  --bg: #0b0c0f; --panel: #1a1c22; --panel-hi: #24272f; --panel-lo: #141519;
-  --line: #2c2f3a; --line-soft: #23262f;
-  --ink: #ece7da; --muted: #8b8f9c; --muted-dim: #5d616d;
-  --audio: #ffb454; --audio-dim: #5a4226; --audio-glow: rgba(255,180,84,.55);
-  --control: #4fd6ff; --control-dim: #1f4554; --control-glow: rgba(79,214,255,.5);
-  --gate:    #6fdc8c; --gate-dim:    #2a4a32; --gate-glow:    rgba(111,220,140,.55);
-  --silk: rgba(236,231,218,.16);
-  --silk-soft: rgba(236,231,218,.09);
-  --crt: #0a1a10;
+  /* ── brand palette ─────────────────────────────────────── */
+  --paper:    #F4F1EA;
+  --paper-2:  #EDE9DF;   /* a hair darker for hairline fills */
+  --white:    #FFFFFF;
+  --ink:      #111111;
+  --ink-2:    #1A1A1A;   /* slight relief from pure ink */
+  --ink-3:    #232323;   /* for ports/CRT inner rings */
+  --red:      #E62528;
+  --rouge:    #7A1418;
+
+  /* ── ink-on-paper hierarchy ────────────────────────────── */
+  --ink-soft:      rgba(17,17,17,.62);
+  --ink-quiet:     rgba(17,17,17,.42);
+  --ink-faint:     rgba(17,17,17,.22);
+  --ink-rule:      rgba(17,17,17,.14);
+  --ink-rule-soft: rgba(17,17,17,.07);
+
+  /* ── paper-on-ink (for chrome that sits on the dark rack) ── */
+  --paper-soft:    rgba(244,241,234,.66);
+  --paper-quiet:   rgba(244,241,234,.42);
+  --paper-faint:   rgba(244,241,234,.22);
+  --paper-rule:    rgba(244,241,234,.14);
+
+  /* ── signal semantics (Red/Rouge/Red-dashed) ───────────── */
+  --audio:        var(--red);
+  --audio-soft:   rgba(230,37,40,.18);
+  --audio-glow:   rgba(230,37,40,.55);
+  --control:      var(--rouge);
+  --control-soft: rgba(122,20,24,.18);
+  --control-glow: rgba(122,20,24,.55);
+  --gate:         var(--red);
+  --gate-soft:    rgba(230,37,40,.10);
+  --gate-glow:    rgba(230,37,40,.45);
+
+  /* ── kept old aliases mapped onto the new system ──────── */
+  --bg:        var(--paper);
+  --panel:     var(--paper);
+  --panel-hi:  var(--white);
+  --panel-lo:  var(--paper-2);
+  --line:      var(--ink-rule);
+  --line-soft: var(--ink-rule-soft);
+  --muted:     var(--ink-soft);
+  --muted-dim: var(--ink-quiet);
+  --silk:      var(--ink-rule);
+  --silk-soft: var(--ink-rule-soft);
+
+  /* ── geometry / motion ────────────────────────────────── */
   --mod-w: 264px; --mod-h: 420px;
   --rail-w: 188px;
   --ease: cubic-bezier(.2,.7,.2,1);
+  --radius-card: 8px;
+  --radius-knob: 999px;
+
+  /* ── type ─────────────────────────────────────────────── */
+  --f-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "JetBrains Mono", Menlo, monospace;
+  --t-tracking-mono: .14em;   /* mono labels — slight tracking */
+  --t-tracking-eyebrow: .22em;
 }
+
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; height: 100dvh; }
+
 /* The synth UI has no user-selectable text; suppressing selection prevents
    accidental highlights while dragging modules / knobs / cables. Form fields
    re-enable selection so settings inputs + preset names stay usable. */
 body { user-select: none; -webkit-user-select: none; }
 input, textarea, [contenteditable] { user-select: text; -webkit-user-select: text; }
+
 body {
-  background:
-    radial-gradient(1200px 700px at 82% -12%, #17191f 0%, transparent 60%),
-    radial-gradient(900px 600px at -5% 112%, #131419 0%, transparent 55%),
-    var(--bg);
+  background: var(--paper);
   color: var(--ink);
-  font-family: "Chakra Petch", sans-serif;
+  font-family: var(--f-sans);
+  font-weight: 300;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  font-feature-settings: "ss01", "ss02";
 }
+
+/* Subtle paper grain — at a very low opacity so it reads as warmth, not noise. */
 body::before {
-  content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .04; z-index: 0;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .035; z-index: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  mix-blend-mode: multiply;
 }
-/* Full-viewport CSS grid. No outer scroll — the sidebar and stage scroll
-   independently. Header on top, transport on bottom, sidebar (rail + narrator)
-   on the left, synth stage on the right. */
+
 html, body { overflow: hidden; }
 .wrap {
   position: relative; z-index: 1;
@@ -53,7 +117,6 @@ html, body { overflow: hidden; }
   width: 100vw; height: 100vh; height: 100dvh;
   max-width: none; margin: 0; padding: 0;
 }
-/* When the sidebar is hidden (free mode or pre-pick), main takes the full row. */
 .wrap.no-sidebar {
   grid-template-areas:
     "header"
@@ -62,82 +125,138 @@ html, body { overflow: hidden; }
   grid-template-columns: 1fr;
 }
 
-/* ---------------- header ---------------- */
+/* ──────────────────────────────────────────────────────────
+   HEADER  — left: ● smem  /  right: mono metadata + actions
+   ────────────────────────────────────────────────────────── */
 header {
   grid-area: header;
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  padding: 14px 24px;
-  border-bottom: 1px solid var(--line);
+  padding: 14px 24px 12px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--ink-rule);
   flex-wrap: wrap;
 }
+.brand { display: flex; align-items: center; gap: 14px; }
+/* Red "signal-on" dot — the brand's eyebrow mark. */
+.brand::before {
+  content: "";
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 0 0 transparent;
+  flex: 0 0 9px;
+}
+.brand .logo { height: 18px; width: auto; display: block; filter: none; }
+.brand .divider { display: none; }
+.brand h1 {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: var(--t-tracking-mono);
+  text-transform: uppercase;
+  margin: 0;
+  font-weight: 400;
+  color: var(--ink-quiet);
+}
+.brand h1 b { color: var(--ink); font-weight: 500; }
+.legend {
+  display: flex; align-items: center; gap: 18px;
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.legend i { display: inline-block; width: 16px; height: 2px; border-radius: 1px; margin-right: 8px; vertical-align: middle; }
+.legend .a i { background: var(--audio); }
+.legend .c i { background: var(--control); }
+/* Gate swatch uses a dashed stroke instead of a solid bar — matches how
+   gate wires render in the rack (Red dashed). */
+.legend .g i {
+  background: transparent;
+  height: 0;
+  border-top: 2px dashed var(--gate);
+}
+.legend .icon-btn {
+  font-family: var(--f-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-soft); background: transparent;
+  border: 1px solid var(--ink-rule); border-radius: 5px;
+  padding: 6px 10px; cursor: pointer; transition: .14s var(--ease);
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.legend .icon-btn:hover { color: var(--ink); border-color: var(--ink-quiet); background: var(--paper-2); }
 
-/* ---------------- sidebar (narrative) ----------------
-   Flex column so the narrator can claim all remaining vertical space and
-   pin its prev/next bar to the bottom. ChapterRail keeps its natural height;
-   only the narrator's body scrolls when the prose is long. */
+/* ──────────────────────────────────────────────────────────
+   SIDEBAR — Paper. Chapter rail (signal flow) + Narrator.
+   ────────────────────────────────────────────────────────── */
 .sidebar {
   grid-area: sidebar;
-  border-right: 1px solid var(--line);
-  padding: 18px 18px 22px;
+  background: var(--paper);
+  border-right: 1px solid var(--ink-rule);
+  padding: 22px 22px 22px;
   overflow: hidden;
   display: flex; flex-direction: column; gap: 22px;
   min-height: 0;
 }
 
-/* ---------------- main area (synth stage) ---------------- */
 .main-area {
   grid-area: main;
   display: flex; flex-direction: column;
   overflow: hidden;
-  min-width: 0;                          /* allow grid child to shrink for inner scroll */
+  min-width: 0;
 }
-.brand { display: flex; align-items: center; gap: 16px; }
-.brand .logo { height: 24px; width: auto; display: block; filter: invert(1) brightness(1.6); }
-.brand .divider { width: 1px; height: 24px; background: var(--line); }
-.brand h1 { font-size: 15px; margin: 0; font-weight: 500; letter-spacing: .04em; color: var(--muted); }
-.brand h1 b { color: var(--ink); font-weight: 600; }
-.legend { display: flex; gap: 20px; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
-.legend i { display: inline-block; width: 22px; height: 3px; border-radius: 2px; margin-right: 8px; vertical-align: middle; }
-.legend .a i { background: var(--audio); box-shadow: 0 0 8px var(--audio); }
-.legend .c i { background: var(--control); box-shadow: 0 0 8px var(--control); }
-.legend .g i { background: var(--gate); box-shadow: 0 0 8px var(--gate); }
-.legend .icon-btn {
-  font-family: inherit; font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
-  color: var(--muted); background: transparent; border: 1px solid var(--line); border-radius: 5px;
-  padding: 5px 10px; cursor: pointer; transition: .14s var(--ease);
-  display: inline-flex; align-items: center; gap: 6px;
-}
-.legend .icon-btn:hover { color: var(--ink); border-color: var(--muted); }
 
-/* chapter rail = vertical signal bus */
+/* Chapter rail = a "signal flow" diagram from the brand graphic language. */
 .rail { position: relative; }
-.rail-title { font-size: 10px; letter-spacing: .24em; text-transform: uppercase; color: var(--muted-dim); margin: 0 0 16px 14px; }
-.bus { position: relative; padding-left: 14px; }
+.rail-title {
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: var(--t-tracking-eyebrow); text-transform: uppercase;
+  color: var(--ink-quiet);
+  margin: 0 0 14px 18px;
+}
+/* Brand-style "— SECTION ·" rule before the rail title is rendered via .rail-title's container. */
+.bus { position: relative; padding-left: 18px; }
 .bus::before {
-  content: ""; position: absolute; left: 5px; top: 6px; bottom: 6px; width: 2px;
-  background: linear-gradient(180deg, var(--line), var(--line-soft)); border-radius: 2px;
+  content: ""; position: absolute; left: 7px; top: 8px; bottom: 8px; width: 1px;
+  background: var(--ink-rule); border-radius: 1px;
 }
 .chap {
-  position: relative; display: block; width: 100%; text-align: left; background: none; border: none; cursor: pointer;
-  padding: 9px 0 9px 22px; color: var(--muted); font-family: inherit;
+  position: relative; display: block; width: 100%; text-align: left;
+  background: none; border: none; cursor: pointer;
+  padding: 10px 0 10px 20px; color: var(--ink-soft);
+  font-family: var(--f-sans);
 }
 .chap .tap {
-  position: absolute; left: -1px; top: 13px; width: 13px; height: 13px; border-radius: 50%;
-  background: var(--panel-lo); border: 2px solid var(--line); transition: .25s var(--ease);
+  position: absolute; left: -1px; top: 14px; width: 15px; height: 15px; border-radius: 50%;
+  background: var(--paper); border: 1.5px solid var(--ink-rule);
+  transition: .2s var(--ease);
 }
-.chap .ix { font-size: 9px; letter-spacing: .2em; color: var(--muted-dim); display: block; margin-bottom: 1px; }
-.chap .nm { font-size: 13px; letter-spacing: .04em; line-height: 1.2; }
-.chap.done .tap { background: var(--audio); border-color: var(--audio); box-shadow: 0 0 8px var(--audio-glow); }
-.chap.active .tap { background: var(--ink); border-color: var(--ink); box-shadow: 0 0 0 4px rgba(236,231,218,.08); }
+.chap .ix {
+  font-family: var(--f-mono);
+  font-size: 9px; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--ink-quiet); display: block; margin-bottom: 2px;
+}
+.chap .nm {
+  font-size: 14px; letter-spacing: .002em; line-height: 1.25;
+  font-weight: 400;
+}
+/* Completed chapter — filled red "indicator notch" — i.e. the logo's e-light, signal-on. */
+.chap.done .tap { background: var(--red); border-color: var(--red); }
+/* Active chapter — Ink fill */
+.chap.active .tap {
+  background: var(--ink); border-color: var(--ink);
+  box-shadow: 0 0 0 4px rgba(17,17,17,.06);
+}
 .chap.active { color: var(--ink); }
-.chap.active .nm { font-weight: 600; }
-.chap.locked { cursor: default; opacity: .45; }
-.chap.control.done .tap { background: var(--control); border-color: var(--control); box-shadow: 0 0 8px var(--control-glow); }
+.chap.active .nm { font-weight: 500; }
+.chap.locked { cursor: default; opacity: .42; }
+/* Control chapters use Rouge dot when done — quieter signal. */
+.chap.control.done .tap { background: var(--rouge); border-color: var(--rouge); }
 
-/* ---------------- narrator: museum placard ---------------- */
+/* ──────────────────────────────────────────────────────────
+   NARRATOR — museum placard typography.
+   The eyebrow is a mono "— CHAPTER · NN" with a Red hairline,
+   the title sits in Plex Sans (close enough to Cinetype Bold).
+   ────────────────────────────────────────────────────────── */
 .narrator {
   position: relative;
-  padding: 2px 2px 0;
+  padding: 4px 4px 0;
   margin-bottom: 0;
   flex: 1;
   min-height: 0;
@@ -150,62 +269,119 @@ header {
   padding-bottom: 14px;
 }
 .narrator .eyebrow {
-  display: flex; align-items: center; gap: 12px; font-size: 10px; letter-spacing: .26em;
-  text-transform: uppercase; color: var(--muted); margin-bottom: 12px;
+  display: flex; align-items: center; gap: 12px;
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: var(--t-tracking-eyebrow);
+  text-transform: uppercase; color: var(--rouge);
+  margin-bottom: 14px;
 }
-.narrator .eyebrow .rule { flex: 0 0 30px; height: 1px; background: var(--audio); opacity: .7; }
-.narrator .eyebrow.control .rule { background: var(--control); }
+.narrator .eyebrow .rule {
+  flex: 0 0 24px; height: 1px;
+  background: var(--rouge);
+  opacity: .85;
+}
+.narrator .eyebrow.control { color: var(--rouge); }
+.narrator .eyebrow.control .rule { background: var(--rouge); }
 .narrator h2 {
-  margin: 0 0 10px; font-family: "Spectral", serif; font-weight: 500; font-size: 22px;
-  letter-spacing: .01em; line-height: 1.25; color: var(--ink); text-wrap: balance;
+  margin: 0 0 12px;
+  font-family: var(--f-sans);
+  font-weight: 600;
+  font-size: 28px;
+  letter-spacing: -.005em; line-height: 1.15;
+  color: var(--ink); text-wrap: balance;
 }
 .narrator p {
-  margin: 0; font-family: "Spectral", serif; font-size: 15px; line-height: 1.55; color: #cfcabd; text-wrap: pretty;
+  margin: 0;
+  font-family: var(--f-sans);
+  font-weight: 300;
+  font-size: 15px; line-height: 1.6;
+  color: var(--ink-soft);
+  text-wrap: pretty;
 }
-.narrator p b { color: var(--ink); font-weight: 600; }
-.narrator p .cy { color: var(--control); font-weight: 600; }
+.narrator p b { color: var(--ink); font-weight: 500; }
+/* Highlight inline mentions: audio → red, control → rouge. */
+.narrator p .cy { color: var(--rouge); font-weight: 500; }
+.narrator p i, .narrator p em { font-style: italic; color: var(--rouge); font-weight: 300; }
+.narrator p a { color: var(--red); text-decoration: none; border-bottom: 1px solid var(--red); }
 .narrator .try {
-  margin-top: 14px; display: flex; align-items: baseline; gap: 10px; font-family: inherit;
-  font-size: 11px; letter-spacing: .06em; color: var(--muted);
+  margin-top: 16px;
+  display: flex; align-items: baseline; gap: 10px;
+  font-family: var(--f-sans);
+  font-style: italic; font-weight: 300;
+  font-size: 13px; letter-spacing: 0;
+  color: var(--ink-soft);
 }
 .narrator .try::before {
-  content: "TRY"; font-size: 9px; letter-spacing: .2em; color: var(--audio);
-  border: 1px solid var(--audio-dim); padding: 2px 6px; border-radius: 3px;
+  content: "TRY";
+  font-family: var(--f-mono);
+  font-style: normal;
+  font-size: 9px; letter-spacing: .2em;
+  color: var(--red);
+  border: 1px solid var(--audio-soft);
+  padding: 2px 6px; border-radius: 2px;
+  background: var(--audio-soft);
 }
-.narrator.control .try::before { color: var(--control); border-color: var(--control-dim); }
+.narrator.control .try::before { color: var(--rouge); border-color: var(--control-soft); background: var(--control-soft); }
+
 .narrator .nav-row {
   flex: 0 0 auto;
   margin-top: 0;
   padding: 14px 0 4px;
-  border-top: 1px solid var(--silk-soft);
+  border-top: 1px solid var(--ink-rule);
   min-height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
 }
-.narrator .await { font-family: "Spectral", serif; font-style: italic; font-size: 13px; color: var(--muted); margin-left: auto; }
-.narrator .prevbtn {
-  font-family: inherit; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; font-weight: 500;
-  color: var(--muted); background: transparent; border: 1px solid var(--line); padding: 10px 16px; border-radius: 7px;
-  cursor: pointer; transition: .15s;
-}
-.narrator .prevbtn:hover:not(:disabled) { color: var(--ink); border-color: var(--muted); background: rgba(255,255,255,.03); }
-.narrator .prevbtn:disabled { opacity: .35; cursor: not-allowed; }
-.narrator .nextbtn {
-  font-family: inherit; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; font-weight: 600;
-  color: var(--ink); background: transparent; border: 1px solid var(--line); padding: 10px 18px; border-radius: 7px; cursor: pointer; transition: .15s;
+.narrator .await {
+  font-family: var(--f-sans);
+  font-style: italic; font-weight: 300;
+  font-size: 13px; color: var(--ink-quiet);
   margin-left: auto;
 }
-.narrator .nextbtn:hover { border-color: var(--muted); background: rgba(255,255,255,.03); }
+.narrator .prevbtn, .narrator .nextbtn {
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid var(--ink-rule);
+  padding: 10px 16px; border-radius: 6px;
+  cursor: pointer; transition: .14s var(--ease);
+}
+.narrator .prevbtn { color: var(--ink-soft); }
+.narrator .prevbtn:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-quiet); background: var(--paper-2); }
+.narrator .prevbtn:disabled { opacity: .35; cursor: not-allowed; }
+.narrator .nextbtn {
+  color: var(--white); background: var(--ink); border-color: var(--ink);
+  margin-left: auto;
+}
+.narrator .nextbtn:hover { background: var(--red); border-color: var(--red); }
 
-/* ---------------- stage ---------------- */
+/* "Back to chapter" pill — top-right of the placard. */
+.narrator-back {
+  position: absolute; top: 8px; right: 8px;
+  font-family: var(--f-mono);
+  font-size: 9px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--ink-soft); background: transparent;
+  border: 1px solid var(--ink-rule); border-radius: 4px;
+  padding: 4px 8px; cursor: pointer; transition: .14s var(--ease);
+}
+.narrator-back:hover { color: var(--ink); border-color: var(--ink-quiet); background: var(--paper-2); }
+.narrator { position: relative; }
+
+/* ──────────────────────────────────────────────────────────
+   STAGE — the Ink "vitrine" the modules float inside.
+   ────────────────────────────────────────────────────────── */
 .stage {
-  position: relative; flex: 1; overflow: hidden; padding: 10px 24px 18px; min-height: 0;
-  /* `touch-action: none` lets pointer events drive pan/drag instead of native
-     scroll/zoom. Interactive children (knob dials, keyboard, gate trigger)
-     already declare their own touch-action, and the range sliders below
-     re-enable touch handling via .ctrl input[type=range]. */
+  position: relative; flex: 1; overflow: hidden;
+  padding: 10px 24px 18px; min-height: 0;
+  background: var(--paper);
+  /* A faint hairline grid suggests the brand's lab-notebook ruling without
+     competing with modules or wires. */
+  background-image:
+    linear-gradient(var(--ink-rule-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--ink-rule-soft) 1px, transparent 1px);
+  background-size: 48px 48px, 48px 48px;
+  background-position: 0 0;
+  border-top: 1px solid var(--ink-rule);
   touch-action: none;
   cursor: grab;
 }
@@ -215,51 +391,29 @@ header {
 .stage .zoom-ctrls { cursor: auto; }
 .ctrl input[type="range"] { touch-action: auto; }
 
-/* Zoom controls overlay — bottom-right of the stage, above the wire-reserve. */
+/* Zoom controls — Paper chip, bottom-right of the stage. */
 .zoom-ctrls {
   position: absolute;
-  right: 16px;
-  bottom: 12px;
-  z-index: 6;
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  background: rgba(20, 22, 28, 0.86);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
+  right: 16px; bottom: 12px; z-index: 6;
+  display: flex; gap: 4px; padding: 4px;
+  background: var(--white);
+  border: 1px solid var(--ink-rule);
+  border-radius: 6px;
+  box-shadow: 0 6px 18px -8px rgba(17,17,17,.25);
 }
 .zoom-ctrls .zoom-btn {
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: .04em;
-  color: var(--muted);
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 5px;
-  padding: 5px 9px;
-  min-width: 30px;
-  cursor: pointer;
+  font-family: var(--f-mono);
+  font-size: 11px; font-weight: 500; letter-spacing: .04em;
+  color: var(--ink-soft); background: transparent;
+  border: 1px solid transparent; border-radius: 4px;
+  padding: 5px 9px; min-width: 30px; cursor: pointer;
   transition: .14s var(--ease);
 }
-.zoom-ctrls .zoom-btn:hover { color: var(--ink); border-color: var(--line); }
-.zoom-ctrls .zoom-fit {
-  font-size: 10px;
-  letter-spacing: .08em;
-  min-width: 52px;
-  font-variant-numeric: tabular-nums;
-}
-.zoom-ctrls .zoom-fit.on {
-  color: var(--ink);
-  border-color: var(--audio-dim);
-  background: rgba(255, 180, 84, 0.06);
-}
+.zoom-ctrls .zoom-btn:hover { color: var(--ink); border-color: var(--ink-rule); background: var(--paper); }
+.zoom-ctrls .zoom-fit { font-size: 10px; letter-spacing: .08em; min-width: 52px; font-variant-numeric: tabular-nums; }
+.zoom-ctrls .zoom-fit.on { color: var(--white); border-color: var(--red); background: var(--red); }
 
-/* Rack canvas: absolute-positioned children. Min size keeps the canvas tall +
-   wide enough for the default canonical layout (~1130 × 890) so a fresh session
-   has a sensible footprint. */
+/* Rack canvas footprint */
 .rack-canvas {
   position: relative;
   min-height: 1000px;
@@ -267,191 +421,313 @@ header {
   padding: 14px;
 }
 
-/* ---------------- module faceplate ---------------- */
+/* ──────────────────────────────────────────────────────────
+   MODULE — Paper-faced "instrument specimen" on the Ink rack.
+   Faux corner notches stand in for screws (cleaner than dots).
+   ────────────────────────────────────────────────────────── */
 .module {
   position: relative; width: var(--mod-w);
-  background: linear-gradient(180deg, var(--panel-hi), var(--panel) 60%, var(--panel-lo));
-  border: 1px solid var(--line); border-radius: 9px; padding: 16px 15px 15px;
-  box-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 22px 48px -30px #000;
+  background: var(--white);
+  border: 1px solid var(--ink-rule);
+  border-radius: var(--radius-card);
+  padding: 18px 16px 16px;
+  box-shadow:
+    0 1px 0 var(--white) inset,
+    0 8px 20px -14px rgba(17,17,17,.35),
+    0 1px 2px rgba(17,17,17,.06);
   display: flex; flex-direction: column;
+  color: var(--ink);
 }
 .module.audio-mod { height: var(--mod-h); }
-.module.control-mod { border-color: #2b3a44; background: linear-gradient(180deg, #222a30, #191f24 60%, #141a1e); }
+/* Control-card variant — same white card; distinguished by the rouge top
+   hairline (vs. red for audio) and rouge dial-mark notch. */
+.module.control-mod::after {
+  content: ""; position: absolute; left: 16px; right: 16px; top: 0;
+  height: 1px; background: var(--rouge); opacity: .55;
+  pointer-events: none;
+}
+.module.audio-mod::after {
+  content: ""; position: absolute; left: 16px; right: 16px; top: 0;
+  height: 1px; background: var(--red); opacity: .85;
+  pointer-events: none;
+}
 .module::before {
-  content: ""; position: absolute; inset: 7px; border: 1px solid var(--silk-soft);
-  border-radius: 6px; pointer-events: none;
+  content: ""; position: absolute; inset: 8px;
+  border: 1px solid var(--ink-rule-soft);
+  border-radius: 5px; pointer-events: none;
 }
-.screw {
-  position: absolute; width: 7px; height: 7px; border-radius: 50%;
-  background: radial-gradient(circle at 32% 30%, #42454f, #16181c);
-  box-shadow: 0 0 0 1px #000, 0 1px 1px rgba(0,0,0,.6);
-}
-.screw::after { content: ""; position: absolute; inset: 1.5px; border-top: 1px solid rgba(0,0,0,.5); transform: rotate(35deg); }
-.screw.tl { top: 7px; left: 7px; } .screw.tr { top: 7px; right: 7px; }
-.screw.bl { bottom: 7px; left: 7px; } .screw.br { bottom: 7px; right: 7px; }
 
-.m-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 11px; }
-.m-kind { font-size: 9px; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); }
-.m-kind.audio { color: var(--audio); } .m-kind.control { color: var(--control); }
-.m-title { font-size: 17px; font-weight: 600; letter-spacing: .03em; margin: 3px 0 0; text-transform: uppercase; }
-.m-glyph { flex: 0 0 auto; width: 34px; height: 22px; opacity: .75; }
+/* Replace screws with subtle corner registration marks (brand "lab notebook"). */
+.screw {
+  position: absolute; width: 7px; height: 7px; border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.screw::before, .screw::after {
+  content: ""; position: absolute;
+  background: var(--ink-quiet);
+}
+.screw::before { left: 0; right: 0; top: 50%; height: 1px; transform: translateY(-.5px); }
+.screw::after  { top: 0; bottom: 0; left: 50%; width: 1px; transform: translateX(-.5px); }
+.screw.tl { top: 9px; left: 9px; } .screw.tr { top: 9px; right: 9px; }
+.screw.bl { bottom: 9px; left: 9px; } .screw.br { bottom: 9px; right: 9px; }
+
+.m-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 8px; margin-bottom: 14px;
+}
+.m-kind {
+  font-family: var(--f-mono);
+  font-size: 9px; letter-spacing: var(--t-tracking-eyebrow);
+  text-transform: uppercase; color: var(--ink-quiet);
+}
+.m-kind.audio { color: var(--red); }
+.m-kind.control { color: var(--rouge); }
+.m-title {
+  font-family: var(--f-sans);
+  font-size: 16px; font-weight: 600;
+  letter-spacing: -.005em;
+  margin: 4px 0 0;
+  text-transform: none;
+  color: var(--ink);
+}
+.m-glyph { flex: 0 0 auto; width: 34px; height: 22px; opacity: .85; }
 .m-glyph path, .m-glyph rect, .m-glyph line, .m-glyph polygon, .m-glyph circle {
-  fill: none; stroke: var(--silk); stroke-width: 1.4; vector-effect: non-scaling-stroke;
+  fill: none; stroke: var(--ink-soft); stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
 }
 .m-remove {
-  background: none; border: 1px solid var(--line); color: var(--muted-dim);
-  width: 22px; height: 22px; border-radius: 4px; cursor: pointer; font-size: 11px; line-height: 1; flex: 0 0 auto;
+  background: none;
+  border: 1px solid var(--ink-rule);
+  color: var(--ink-quiet);
+  width: 22px; height: 22px; border-radius: 4px;
+  cursor: pointer; font-size: 11px; line-height: 1; flex: 0 0 auto;
+  transition: .14s var(--ease);
 }
-.m-remove:hover { color: var(--ink); border-color: var(--muted); }
+.m-remove:hover { color: var(--red); border-color: var(--red); background: var(--audio-soft); }
 
-/* ---------------- CRT screen ---------------- */
+/* ──────────────────────────────────────────────────────────
+   CRT SCREEN — Ink interior with Paper-tinted grid/text.
+   ────────────────────────────────────────────────────────── */
 .screen {
-  position: relative; height: 108px; border-radius: 7px; overflow: hidden; margin-bottom: 13px;
-  background: radial-gradient(120% 120% at 50% 40%, #0c1f14 0%, #07120c 70%, #050a07 100%);
-  border: 1px solid #000; box-shadow: 0 0 0 1px rgba(255,255,255,.03) inset, 0 2px 6px rgba(0,0,0,.5) inset;
+  position: relative; height: 108px; border-radius: 5px; overflow: hidden;
+  margin-bottom: 14px;
+  background: radial-gradient(120% 120% at 50% 40%, #1a1a1a 0%, #0e0e0e 70%, #060606 100%);
+  border: 1px solid var(--ink);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.03) inset,
+    0 1px 4px rgba(0,0,0,.4) inset;
 }
-.screen.amber { background: radial-gradient(120% 120% at 50% 40%, #1c1407 0%, #120c05 70%, #080503 100%); }
+.screen.amber { /* keep alias, drawn the same way */
+  background: radial-gradient(120% 120% at 50% 40%, #1a1a1a 0%, #0e0e0e 70%, #060606 100%);
+}
 .screen canvas { display: block; width: 100%; height: 100%; position: relative; z-index: 1; }
 .screen .scanlines {
   position: absolute; inset: 0; pointer-events: none; z-index: 2;
-  background: repeating-linear-gradient(0deg, rgba(0,0,0,.28) 0 1px, transparent 1px 3px); opacity: .45;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,.32) 0 1px, transparent 1px 3px);
+  opacity: .35;
 }
 .screen .vignette {
   position: absolute; inset: 0; pointer-events: none; z-index: 3;
   background: radial-gradient(130% 120% at 50% 50%, transparent 55%, rgba(0,0,0,.55) 100%);
 }
 .screen .tag {
-  position: absolute; top: 7px; left: 9px; font-size: 8px; letter-spacing: .18em; text-transform: uppercase;
-  color: var(--muted); z-index: 4; opacity: .8;
+  position: absolute; top: 7px; left: 9px;
+  font-family: var(--f-mono);
+  font-size: 8px; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--paper-soft); z-index: 4; opacity: .85;
 }
-/* Visuals-off placeholder: same screen frame (CRT glass, scanlines,
-   vignette) but no canvas and no rAF — drawn once and then static. Used
-   by every Canvas-backed visualiser when the global Displays toggle is off. */
 .screen.display-off { display: flex; align-items: center; justify-content: center; }
 .display-off-label {
   position: relative; z-index: 4;
-  font-size: 10px; letter-spacing: .22em; text-transform: uppercase;
-  color: var(--muted-dim); opacity: .8;
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: var(--t-tracking-eyebrow); text-transform: uppercase;
+  color: var(--paper-quiet); opacity: .8;
 }
 
-/* ---------------- knob ---------------- */
+/* ──────────────────────────────────────────────────────────
+   KNOB — the brand mark made functional. The dial mark is
+   Red (the "indicator notch" from the smem "e").
+   ────────────────────────────────────────────────────────── */
 .ctrl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
 .ctrl-grid.one { grid-template-columns: 1fr; }
-.knob { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 6px 0 2px; user-select: none; }
-.knob .dial {
-  position: relative; width: 54px; height: 54px; border-radius: 50%; cursor: ns-resize; touch-action: none;
-  background: radial-gradient(circle at 50% 32%, #34373f, #1c1e24 62%, #121317 100%);
-  box-shadow: 0 2px 5px rgba(0,0,0,.6), 0 0 0 1px #000, 0 6px 14px -8px #000, 0 1px 0 rgba(255,255,255,.06) inset;
+.knob {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 6px 0 2px; user-select: none;
 }
+.knob .dial {
+  position: relative; width: 54px; height: 54px; border-radius: 50%;
+  cursor: ns-resize; touch-action: none;
+  background:
+    radial-gradient(circle at 50% 32%, #fafaf5, #e4e0d4 65%, #cfcabd 100%);
+  border: 1px solid var(--ink-quiet);
+  box-shadow:
+    0 1px 0 var(--white) inset,
+    0 2px 4px rgba(0,0,0,.15),
+    0 6px 14px -8px rgba(0,0,0,.35);
+}
+/* Soft outer dial ring — replaces the harsh conic gear. */
 .knob .dial::before {
   content: ""; position: absolute; inset: -4px; border-radius: 50%; z-index: -1;
-  background: repeating-conic-gradient(#000 0deg 4deg, #2a2c33 4deg 8deg); opacity: .5;
-  -webkit-mask: radial-gradient(circle, transparent 60%, #000 61%);
-          mask: radial-gradient(circle, transparent 60%, #000 61%);
+  background: transparent;
+  border: 1px solid var(--ink-rule);
+  pointer-events: none;
 }
+/* The indicator: red, like the smem "e" notch. */
 .knob .dial .mark {
-  position: absolute; left: 50%; top: 5px; width: 2.5px; height: 18px; border-radius: 2px;
-  background: var(--audio); transform-origin: 50% 22px; box-shadow: 0 0 6px var(--audio-glow); transform: translateX(-50%);
+  position: absolute; left: 50%; top: 4px;
+  width: 2.5px; height: 16px; border-radius: 1.5px;
+  background: var(--red);
+  transform-origin: 50% 23px;
+  transform: translateX(-50%);
+  box-shadow: 0 0 4px rgba(230,37,40,.35);
 }
-.control-mod .knob .dial .mark { background: var(--control); box-shadow: 0 0 6px var(--control-glow); }
+/* Control-mod knobs use the deeper Rouge indicator. */
+.control-mod .knob .dial .mark {
+  background: var(--rouge);
+  box-shadow: 0 0 4px rgba(122,20,24,.4);
+}
+/* Dial ticks — hairlines on the outer ring (no glow). */
 .knob .ticks {
   position: absolute; inset: -7px; border-radius: 50%; pointer-events: none;
-  background: conic-gradient(from 225deg, var(--line) 0deg, var(--line) 270deg, transparent 270deg);
+  background: conic-gradient(from 225deg, var(--ink-rule) 0deg, var(--ink-rule) 270deg, transparent 270deg);
   -webkit-mask: radial-gradient(circle, transparent 67%, #000 68%, #000 70%, transparent 71%);
           mask: radial-gradient(circle, transparent 67%, #000 68%, #000 70%, transparent 71%);
 }
-.knob .lab { font-size: 9px; letter-spacing: .13em; text-transform: uppercase; color: var(--muted); text-align: center; line-height: 1.2; }
-.knob .val { font-size: 11px; font-variant-numeric: tabular-nums; color: var(--ink); letter-spacing: .03em; }
+.knob .lab {
+  font-family: var(--f-mono);
+  font-size: 9px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-quiet); text-align: center; line-height: 1.2;
+}
+.knob .val {
+  font-family: var(--f-mono);
+  font-size: 11px; font-variant-numeric: tabular-nums;
+  color: var(--ink); letter-spacing: .03em;
+}
 
-/* ---------------- bat-handle toggle ---------------- */
+/* ──────────────────────────────────────────────────────────
+   TOGGLE — bat handle on paper.
+   ────────────────────────────────────────────────────────── */
 .toggle { display: flex; align-items: center; gap: 11px; padding: 7px 0; user-select: none; }
 .toggle .sw { position: relative; width: 34px; height: 46px; cursor: pointer; flex: 0 0 auto; }
 .toggle .plate {
-  position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 30px; height: 46px; border-radius: 4px;
-  background: linear-gradient(180deg, #15161a, #0c0d10); border: 1px solid #000;
-  box-shadow: 0 1px 0 rgba(255,255,255,.05) inset;
+  position: absolute; left: 50%; top: 0; transform: translateX(-50%);
+  width: 30px; height: 46px; border-radius: 4px;
+  background: linear-gradient(180deg, var(--ink-2), var(--ink));
+  border: 1px solid var(--ink);
+  box-shadow: 0 1px 0 rgba(255,255,255,.04) inset;
 }
 .toggle .nut {
-  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 22px; height: 14px;
-  background: linear-gradient(180deg, #5a5d66, #303239);
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 22px; height: 14px;
+  background: linear-gradient(180deg, #d2cdbd, #b0aa9c);
   clip-path: polygon(0 50%, 25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%);
-  box-shadow: 0 1px 2px rgba(0,0,0,.6);
+  box-shadow: 0 1px 1px rgba(0,0,0,.35);
 }
 .toggle .lever {
-  position: absolute; left: 50%; bottom: 8px; width: 9px; height: 24px; border-radius: 5px; transform-origin: 50% 100%;
-  background: linear-gradient(180deg, #e8eaee, #9a9ea8 55%, #6b6e77);
-  box-shadow: 0 2px 4px rgba(0,0,0,.5), 0 0 0 1px rgba(0,0,0,.4);
-  transform: translateX(-50%) rotate(-22deg); transition: transform .14s var(--ease);
+  position: absolute; left: 50%; bottom: 8px;
+  width: 9px; height: 24px; border-radius: 5px;
+  transform-origin: 50% 100%;
+  background: linear-gradient(180deg, #f4f1ea, #cfcabd 55%, #a8a394);
+  box-shadow: 0 2px 4px rgba(0,0,0,.4), 0 0 0 1px rgba(0,0,0,.3);
+  transform: translateX(-50%) rotate(-22deg);
+  transition: transform .14s var(--ease);
 }
 .toggle .sw.on .lever { transform: translateX(-50%) rotate(22deg); }
 .toggle .legend-on, .toggle .legend-off {
   position: absolute; left: 50%; transform: translateX(-50%);
-  font-size: 7px; letter-spacing: .12em; font-weight: 700;
+  font-family: var(--f-mono);
+  font-size: 7px; letter-spacing: .12em; font-weight: 600;
 }
-.toggle .legend-on { top: 3px; color: #b03b32; }
-.toggle .legend-off { bottom: 3px; color: var(--muted-dim); }
+.toggle .legend-on { top: 3px; color: var(--red); }
+.toggle .legend-off { bottom: 3px; color: var(--paper-quiet); }
 .toggle .opts { display: flex; flex-direction: column; gap: 3px; }
-.toggle .opts span { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.toggle .opts span.on { color: var(--ink); font-weight: 600; }
+.toggle .opts span {
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-quiet);
+}
+.toggle .opts span.on { color: var(--ink); font-weight: 500; }
 
-/* selector (waveform shapes) */
+/* Selector (waveform shapes) — paper chips. */
 .selector { display: flex; gap: 5px; flex-wrap: wrap; margin: 6px 0 2px; }
 .selector button {
-  flex: 1 1 0; min-width: 46px; background: var(--panel-lo); border: 1px solid var(--line); color: var(--muted);
-  padding: 8px 4px; border-radius: 5px; font-family: inherit; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; cursor: pointer;
-  display: flex; flex-direction: column; align-items: center; gap: 4px; transition: .12s;
+  flex: 1 1 0; min-width: 46px;
+  background: var(--paper);
+  border: 1px solid var(--ink-rule); color: var(--ink-soft);
+  padding: 8px 4px; border-radius: 4px;
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: .06em; text-transform: uppercase;
+  cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  transition: .12s;
 }
 .selector button .wf { width: 26px; height: 14px; }
 .selector button .wf path { fill: none; stroke: currentColor; stroke-width: 1.6; vector-effect: non-scaling-stroke; }
-.selector button:hover { color: var(--ink); border-color: var(--muted-dim); }
-.selector button.on { color: #0b0c0f; background: var(--audio); border-color: var(--audio); font-weight: 600; }
-.control-mod .selector button.on { background: var(--control); border-color: var(--control); }
+.selector button:hover { color: var(--ink); border-color: var(--ink-quiet); background: var(--paper-2); }
+.selector button.on {
+  color: var(--white); background: var(--ink); border-color: var(--ink);
+  font-weight: 500;
+}
+.control-mod .selector button.on { background: var(--rouge); border-color: var(--rouge); }
 
-/* ---------------- piano keyboard ---------------- */
+/* ──────────────────────────────────────────────────────────
+   PIANO KEYBOARD — paper keys with red "on" state.
+   ────────────────────────────────────────────────────────── */
 .kb {
   position: relative; width: 100%; height: 112px; overflow: hidden;
-  border-radius: 6px; border: 1px solid #000;
-  box-shadow: 0 0 0 1px rgba(255,255,255,.03) inset, 0 2px 6px rgba(0,0,0,.5) inset;
+  border-radius: 4px; border: 1px solid var(--ink);
+  box-shadow: 0 1px 4px rgba(0,0,0,.35) inset;
   user-select: none; touch-action: none;
   margin-bottom: 12px;
 }
 .kb-whites { display: flex; height: 100%; }
-.kb-blacks {
-  position: absolute; top: 0; left: 0; right: 0; height: 64%;
-  pointer-events: none;            /* children re-enable */
-}
+.kb-blacks { position: absolute; top: 0; left: 0; right: 0; height: 64%; pointer-events: none; }
 .kb-key { display: flex; align-items: flex-end; justify-content: center; padding-bottom: 7px; cursor: pointer; transition: background .04s linear; }
 .kb-key.white {
-  flex: 1; background: linear-gradient(180deg, #efeadd, #d2cdbd);
-  border-right: 1px solid #3a3a3a;
-  color: #45413a;
+  flex: 1; background: linear-gradient(180deg, var(--white), var(--paper));
+  border-right: 1px solid var(--ink-quiet);
+  color: var(--ink-soft);
 }
 .kb-key.white:last-child { border-right: none; }
-.kb-key.white.on { background: linear-gradient(180deg, var(--audio), #c98a3a); color: #2a1e08; }
+.kb-key.white.on {
+  background: linear-gradient(180deg, var(--red), #b8181b);
+  color: var(--white);
+}
 .kb-key.black {
   position: absolute; top: 0; width: 8%; height: 100%; pointer-events: auto;
-  background: linear-gradient(180deg, #1c1c20, #0a0a0c);
+  background: linear-gradient(180deg, var(--ink-2), var(--ink));
   border: 1px solid #000; border-radius: 0 0 3px 3px;
-  box-shadow: 0 2px 4px rgba(0,0,0,.6);
-  color: #d5d0c4;
+  box-shadow: 0 2px 4px rgba(0,0,0,.5);
+  color: var(--paper-quiet);
 }
-.kb-key.black.on { background: linear-gradient(180deg, var(--control), #1b6c8a); color: #04222d; }
-.kb-label { font-size: 9px; font-weight: 700; letter-spacing: .1em; }
+.kb-key.black.on { background: linear-gradient(180deg, var(--rouge), #5a0e11); color: var(--paper); }
+.kb-label {
+  font-family: var(--f-mono);
+  font-size: 9px; font-weight: 600; letter-spacing: .1em;
+}
 
 .stepper {
   display: flex; align-items: center; justify-content: center; gap: 12px;
-  font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-quiet);
 }
-.stepper-label b { color: var(--ink); font-weight: 600; letter-spacing: .04em; font-size: 12px; margin-left: 4px; }
+.stepper-label b {
+  color: var(--ink); font-weight: 500;
+  letter-spacing: .04em; font-size: 13px; margin-left: 4px;
+}
 .stepper-btn {
-  width: 28px; height: 26px; border-radius: 5px;
-  background: var(--panel-lo); border: 1px solid var(--line); color: var(--ink);
-  font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer;
+  width: 28px; height: 26px; border-radius: 4px;
+  background: var(--paper); border: 1px solid var(--ink-rule); color: var(--ink);
+  font-family: var(--f-mono); font-size: 14px; font-weight: 500; cursor: pointer;
   transition: border-color .14s var(--ease);
 }
-.stepper-btn:hover { border-color: var(--muted); }
+.stepper-btn:hover { border-color: var(--ink-quiet); background: var(--paper-2); }
 
-/* ---------------- Trigger module ---------------- */
+/* ──────────────────────────────────────────────────────────
+   TRIGGER — the "signal" lamp made literal. Red dot on hold.
+   ────────────────────────────────────────────────────────── */
 .trigger-mod-body {
   flex: 1; display: flex; flex-direction: column; align-items: stretch;
   justify-content: center; gap: 10px;
@@ -460,320 +736,347 @@ header {
 .trigger-button {
   position: relative;
   width: 100%; padding: 26px 14px;
-  background: rgba(111,220,140,.08);
-  border: 1.5px solid var(--gate);
-  border-radius: 10px;
-  color: var(--gate);
-  font-family: inherit; font-weight: 600;
+  background: var(--paper);
+  border: 1.5px solid var(--red);
+  border-radius: 6px;
+  color: var(--red);
+  font-family: var(--f-mono); font-weight: 600;
   display: flex; flex-direction: column; align-items: center; gap: 6px;
   cursor: pointer; user-select: none; touch-action: none;
   transition: background .08s linear, color .08s linear, box-shadow .12s var(--ease);
   box-shadow: 0 0 0 0 transparent;
 }
-.trigger-button:hover { background: rgba(111,220,140,.18); }
+.trigger-button:hover { background: var(--audio-soft); }
 .trigger-button.held, .trigger-button:active {
-  background: var(--gate); color: #04222d;
-  box-shadow: 0 0 22px -2px var(--gate-glow);
+  background: var(--red); color: var(--white);
+  box-shadow: 0 0 22px -2px var(--audio-glow);
 }
 .trigger-button:disabled {
   opacity: .35; cursor: default; pointer-events: none;
 }
 .trigger-lamp {
   width: 11px; height: 11px; border-radius: 50%;
-  background: var(--gate-dim);
-  box-shadow: 0 0 0 1px rgba(0,0,0,.4) inset;
+  background: var(--audio-soft);
+  box-shadow: 0 0 0 1px var(--ink-rule) inset;
   margin-bottom: 4px;
   transition: background .06s linear, box-shadow .06s linear;
 }
 .trigger-button.held .trigger-lamp {
-  background: #fff;
-  box-shadow: 0 0 12px var(--gate-glow), 0 0 0 1px rgba(0,0,0,.3) inset;
+  background: var(--white);
+  box-shadow: 0 0 12px var(--audio-glow), 0 0 0 1px rgba(0,0,0,.25) inset;
 }
 .trigger-label {
-  font-size: 14px; letter-spacing: .18em; text-transform: uppercase;
+  font-family: var(--f-mono);
+  font-size: 13px; letter-spacing: .18em; text-transform: uppercase;
 }
 .trigger-sub {
+  font-family: var(--f-mono);
   font-size: 9px; letter-spacing: .16em; text-transform: uppercase;
   opacity: .8;
 }
-.trigger-shortcut {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 8px;
-}
+.trigger-shortcut { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .trigger-shortcut-label {
+  font-family: var(--f-mono);
   font-size: 9px; letter-spacing: .16em; text-transform: uppercase;
-  color: var(--muted);
+  color: var(--ink-quiet);
 }
 .trigger-shortcut-btn {
   min-width: 64px; padding: 5px 10px;
   background: transparent;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  color: var(--gate);
-  font-family: inherit; font-weight: 600; font-size: 11px;
+  border: 1px solid var(--ink-rule); border-radius: 4px;
+  color: var(--red);
+  font-family: var(--f-mono); font-weight: 600; font-size: 11px;
   letter-spacing: .12em; text-transform: uppercase;
   cursor: pointer;
   transition: border-color .14s var(--ease), background .14s var(--ease);
 }
-.trigger-shortcut-btn:hover { border-color: var(--muted); }
+.trigger-shortcut-btn:hover { border-color: var(--red); background: var(--audio-soft); }
 .trigger-shortcut-btn.capturing {
-  border-color: var(--gate);
-  background: rgba(111,220,140,.1);
+  border-color: var(--red); background: var(--audio-soft);
   animation: trigger-shortcut-pulse 1s ease-in-out infinite;
 }
 @keyframes trigger-shortcut-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(111,220,140,.0); }
-  50%      { box-shadow: 0 0 0 3px rgba(111,220,140,.18); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(230,37,40,0); }
+  50%      { box-shadow: 0 0 0 3px rgba(230,37,40,.18); }
 }
 
-/* ---------------- Clock module ---------------- */
+/* ──────────────────────────────────────────────────────────
+   CLOCK
+   ────────────────────────────────────────────────────────── */
 .clock-body {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: center;
-  gap: 14px;
-  padding: 10px 6px 14px;
+  display: flex; flex-direction: column; align-items: stretch;
+  justify-content: center; gap: 14px; padding: 10px 6px 14px;
 }
-.clock-lamp-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 4px 0;
-}
+.clock-lamp-row { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 4px 0; }
 .clock-lamp {
   width: 14px; height: 14px; border-radius: 50%;
-  background: var(--gate-dim);
-  box-shadow: 0 0 0 1px rgba(0,0,0,.4) inset;
+  background: var(--audio-soft);
+  box-shadow: 0 0 0 1px var(--ink-rule) inset;
   transition: background .06s linear, box-shadow .06s linear;
 }
 .clock-lamp.on {
-  background: var(--gate);
-  box-shadow: 0 0 14px var(--gate-glow), 0 0 0 1px rgba(0,0,0,.3) inset;
+  background: var(--red);
+  box-shadow: 0 0 14px var(--audio-glow), 0 0 0 1px rgba(0,0,0,.25) inset;
 }
 .clock-lamp-label {
-  font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
-  color: var(--muted);
-  min-width: 64px;
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--ink-quiet); min-width: 64px;
 }
 .clock-run-btn {
-  width: 28px; height: 22px;
-  padding: 0;
+  width: 28px; height: 22px; padding: 0;
   background: transparent;
-  border: 1.5px solid var(--muted-dim);
-  border-radius: 5px;
-  color: var(--muted);
-  font-family: inherit; font-size: 11px; line-height: 1;
-  cursor: pointer;
-  display: inline-flex; align-items: center; justify-content: center;
+  border: 1.5px solid var(--ink-rule);
+  border-radius: 4px; color: var(--ink-soft);
+  font-family: var(--f-mono); font-size: 11px; line-height: 1;
+  cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
   transition: border-color .14s var(--ease), color .14s var(--ease), background .14s var(--ease);
 }
-.clock-run-btn:hover { border-color: var(--muted); color: var(--ink); }
+.clock-run-btn:hover { border-color: var(--ink-quiet); color: var(--ink); }
 .clock-run-btn.on {
-  border-color: var(--gate);
-  color: var(--gate);
-  background: rgba(111,220,140,.08);
+  border-color: var(--red); color: var(--red); background: var(--audio-soft);
 }
-.clock-run-btn.on:hover { background: rgba(111,220,140,.18); }
+.clock-run-btn.on:hover { background: rgba(230,37,40,.18); }
 
-/* ---------------- Drum sequencer ----------------
-   Wider than the standard module so 16 step cells fit comfortably across one
-   row. The faceplate's --mod-w gets overridden via a data-id selector; ports
-   still pin to the module edges and behave normally. */
+/* ──────────────────────────────────────────────────────────
+   DRUM SEQUENCER
+   ────────────────────────────────────────────────────────── */
 .module[data-id="drumseq"] { width: 540px; }
-.drumseq-body {
-  flex: 1;
-  display: flex; flex-direction: column;
-  gap: 6px;
-  padding: 4px 0 10px;
-}
-.drumseq-track {
-  display: flex; align-items: center; gap: 8px;
-}
+.drumseq-body { flex: 1; display: flex; flex-direction: column; gap: 6px; padding: 4px 0 10px; }
+.drumseq-track { display: flex; align-items: center; gap: 8px; }
 .drumseq-track-label {
-  flex: 0 0 28px;
-  height: 24px;
+  flex: 0 0 28px; height: 24px;
   background: transparent;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  color: var(--muted);
-  font-family: inherit; font-size: 11px; font-weight: 600;
+  border: 1px solid var(--ink-rule); border-radius: 4px;
+  color: var(--ink-soft);
+  font-family: var(--f-mono); font-size: 11px; font-weight: 600;
   letter-spacing: .12em; text-transform: uppercase;
   cursor: pointer; padding: 0;
   display: inline-flex; align-items: center; justify-content: center;
   transition: color .14s var(--ease), border-color .14s var(--ease);
 }
-.drumseq-track-label:hover { color: var(--ink); border-color: var(--muted); }
-.drumseq-cells {
-  display: flex; gap: 8px; flex: 1;
-}
-.drumseq-group {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 3px;
-  flex: 1;
-}
+.drumseq-track-label:hover { color: var(--ink); border-color: var(--ink-quiet); }
+.drumseq-cells { display: flex; gap: 8px; flex: 1; }
+.drumseq-group { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; flex: 1; }
 .drumseq-cell {
   height: 24px;
-  background: var(--panel-lo);
-  border: 1px solid var(--line);
-  border-radius: 3px;
-  cursor: pointer;
-  padding: 0;
+  background: var(--paper-2);
+  border: 1px solid var(--ink-rule); border-radius: 3px;
+  cursor: pointer; padding: 0;
   transition: background .08s linear, border-color .08s linear, box-shadow .08s linear;
 }
-.drumseq-cell:hover { border-color: var(--muted); }
+.drumseq-cell:hover { border-color: var(--ink-quiet); }
 .drumseq-cell.on {
-  background: var(--gate);
-  border-color: var(--gate);
-  box-shadow: 0 0 6px var(--gate-glow);
+  background: var(--red); border-color: var(--red);
+  box-shadow: 0 0 6px var(--audio-glow);
 }
-.drumseq-cell.playing {
-  border-color: var(--ink);
-}
+.drumseq-cell.playing { border-color: var(--ink); }
 .drumseq-cell.on.playing {
-  box-shadow: 0 0 14px var(--gate-glow), 0 0 0 1px var(--ink) inset;
+  box-shadow: 0 0 14px var(--audio-glow), 0 0 0 1px var(--ink) inset;
 }
 
-/* ---------------- placard (hover tooltip rendered via React portal) ----------
-   The placard is mounted to <body> on hover so it escapes the stage's
-   overflow container. Inline `left`, `top`, `width` are computed in Module.jsx
-   from the hovered module's bounding rect; `transform: translateY(-100%)`
-   shifts it above the module. */
+/* ──────────────────────────────────────────────────────────
+   PLACARD — tooltip set on Paper.
+   ────────────────────────────────────────────────────────── */
 .placard {
   position: fixed;
   padding: 12px 14px;
-  background: linear-gradient(180deg, var(--panel-hi), var(--panel-lo));
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  box-shadow: 0 14px 28px -8px rgba(0,0,0,.7);
-  font-family: "Spectral", serif;
-  font-size: 13px;
-  line-height: 1.55;
-  color: #cfcabd;
+  background: var(--white);
+  border: 1px solid var(--ink-rule);
+  border-radius: 6px;
+  box-shadow: 0 14px 28px -8px rgba(0,0,0,.35);
+  font-family: var(--f-sans); font-weight: 300;
+  font-size: 13px; line-height: 1.6;
+  color: var(--ink-soft);
   text-wrap: pretty;
-  z-index: 60;
-  pointer-events: none;
+  z-index: 60; pointer-events: none;
   animation: placard-in .15s var(--ease) forwards;
 }
 @keyframes placard-in { from { opacity: 0; } to { opacity: 1; } }
-.placard.above { transform: translateY(-100%); }   /* anchor top -> module top - 10 → shift up by own height */
-.placard b { color: var(--ink); font-weight: 600; }
+.placard.above { transform: translateY(-100%); }
+.placard b { color: var(--ink); font-weight: 500; }
+.placard i, .placard em { color: var(--rouge); font-style: italic; }
 
+/* Speaker output flourish. */
+.spk {
+  display: flex; align-items: center; gap: 10px;
+  color: var(--red);
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
+  margin-top: 4px;
+}
 
-/* speaker output decoration */
-.spk { display: flex; align-items: center; gap: 10px; color: var(--audio); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; margin-top: 4px; }
-
-/* ---------------- transport ---------------- */
+/* ──────────────────────────────────────────────────────────
+   TRANSPORT — Paper bar with red "live" power button.
+   ────────────────────────────────────────────────────────── */
 .transport {
   grid-area: transport;
   display: flex; align-items: center; gap: 16px;
-  /* Extra bottom padding accounts for the iOS home-indicator and any
-     overscroll-bar inset; the `env()` adds 0 where there is none. */
   padding: 14px 24px;
   padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   padding-left:   calc(24px + env(safe-area-inset-left, 0px));
   padding-right:  calc(24px + env(safe-area-inset-right, 0px));
-  border-top: 1px solid var(--line);
-  background: linear-gradient(180deg, rgba(26,28,34,.86), rgba(13,14,18,.96)); backdrop-filter: blur(10px); flex-wrap: wrap;
+  border-top: 1px solid var(--ink-rule);
+  background: var(--paper);
+  flex-wrap: wrap;
 }
-.transport .inner { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; max-width: 1500px; margin: 0 auto; width: 100%; }
+.transport .inner {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  max-width: 1500px; margin: 0 auto; width: 100%;
+}
 .power {
-  display: flex; align-items: center; gap: 11px; font-family: inherit; font-size: 13px; letter-spacing: .14em;
-  text-transform: uppercase; font-weight: 600; background: var(--audio); color: #0b0c0f; border: none;
-  padding: 13px 24px; border-radius: 9px; cursor: pointer; box-shadow: 0 6px 22px -8px var(--audio);
+  display: flex; align-items: center; gap: 11px;
+  font-family: var(--f-mono); font-size: 12px; letter-spacing: .14em;
+  text-transform: uppercase; font-weight: 600;
+  background: var(--red); color: var(--white);
+  border: 1.5px solid var(--red);
+  padding: 13px 24px; border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 6px 22px -10px var(--audio-glow);
+  transition: .14s var(--ease);
 }
-.power.off { background: #22252e; color: var(--ink); box-shadow: none; border: 1px solid var(--line); }
-.power .dot { width: 10px; height: 10px; border-radius: 50%; background: #0b0c0f; }
-.power.off .dot { background: #4a4d56; }
+.power:hover { filter: brightness(1.04); }
+.power.off {
+  background: var(--paper);
+  color: var(--ink-soft);
+  border-color: var(--ink-rule);
+  box-shadow: none;
+}
+.power .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--white); }
+.power.off .dot { background: var(--ink-quiet); }
 .gate {
-  font-family: inherit; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; font-weight: 600; color: var(--control);
-  background: rgba(79,214,255,.08); border: 1.5px solid var(--control); padding: 13px 22px; border-radius: 9px; cursor: pointer;
+  font-family: var(--f-mono); font-size: 12px; letter-spacing: .14em;
+  text-transform: uppercase; font-weight: 600;
+  color: var(--red);
+  background: var(--audio-soft);
+  border: 1.5px solid var(--red);
+  padding: 13px 22px; border-radius: 6px; cursor: pointer;
   user-select: none; touch-action: none; min-height: 48px;
 }
-.gate:active, .gate.held { background: var(--control); color: #0b0c0f; }
-.gate[disabled] { opacity: .3; pointer-events: none; border-color: var(--line); color: var(--muted); background: transparent; }
+.gate:active, .gate.held { background: var(--red); color: var(--white); }
+.gate[disabled] {
+  opacity: .35; pointer-events: none;
+  border-color: var(--ink-rule); color: var(--ink-quiet); background: transparent;
+}
 .gate .sub { display: block; font-size: 8px; letter-spacing: .16em; opacity: .75; margin-top: 2px; }
 .vol {
-  display: flex; align-items: center; gap: 12px; margin-left: auto; min-width: 210px; color: var(--muted);
+  display: flex; align-items: center; gap: 12px; margin-left: auto;
+  min-width: 210px; color: var(--ink-quiet);
+  font-family: var(--f-mono);
   font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
 }
 .vol input { flex: 1; -webkit-appearance: none; appearance: none; height: 30px; background: transparent; cursor: pointer; }
-.vol input::-webkit-slider-runnable-track { height: 4px; border-radius: 3px; background: var(--line); }
+.vol input::-webkit-slider-runnable-track { height: 3px; border-radius: 2px; background: var(--ink-rule); }
 .vol input::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; margin-top: -7px;
-  background: radial-gradient(circle at 35% 30%, #fff, #cfa15e 45%, #8a5f1f); box-shadow: 0 2px 5px #000, 0 0 0 1px #000;
+  -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+  margin-top: -6px;
+  background: var(--red); border: 2px solid var(--paper);
+  box-shadow: 0 0 0 1px var(--red);
 }
-.vol input::-moz-range-track { height: 4px; border-radius: 3px; background: var(--line); }
+.vol input::-moz-range-track { height: 3px; border-radius: 2px; background: var(--ink-rule); }
 .vol input::-moz-range-thumb {
-  width: 18px; height: 18px; border: none; border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fff, #cfa15e 45%, #8a5f1f); box-shadow: 0 2px 5px #000, 0 0 0 1px #000;
+  width: 16px; height: 16px; border: 2px solid var(--paper); border-radius: 50%;
+  background: var(--red); box-shadow: 0 0 0 1px var(--red);
 }
 
-/* ---------------- settings modal ---------------- */
+/* ──────────────────────────────────────────────────────────
+   MODAL — Paper card, Ink backdrop.
+   ────────────────────────────────────────────────────────── */
 .modal-backdrop {
   position: fixed; inset: 0; z-index: 70;
-  background: rgba(8,9,12,.72); backdrop-filter: blur(6px);
+  background: rgba(17,17,17,.6); backdrop-filter: blur(6px);
   display: flex; align-items: center; justify-content: center; padding: 24px;
   transition: opacity .22s var(--ease);
 }
 .modal-backdrop.hide { opacity: 0; pointer-events: none; }
 .modal {
-  position: relative; z-index: 1; width: min(540px, 100%); max-height: 80vh; overflow-y: auto;
-  background: linear-gradient(180deg, var(--panel-hi), var(--panel) 60%, var(--panel-lo));
-  border: 1px solid var(--line); border-radius: 12px;
-  box-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 30px 70px -20px rgba(0,0,0,.7);
-  padding: 22px 24px 24px;
+  position: relative; z-index: 1;
+  width: min(540px, 100%); max-height: 80vh; overflow-y: auto;
+  background: var(--paper);
+  border: 1px solid var(--ink-rule);
+  border-radius: var(--radius-card);
+  box-shadow: 0 30px 70px -20px rgba(0,0,0,.5);
+  padding: 24px 26px 26px;
+  color: var(--ink);
 }
-.modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--ink-rule);
+}
 .modal-head h2 {
-  font-family: "Spectral", serif; font-style: italic; font-weight: 500; font-size: 22px;
+  font-family: var(--f-sans);
+  font-weight: 600; font-size: 22px;
+  letter-spacing: -.005em;
   margin: 0; color: var(--ink);
 }
 .modal-close {
-  background: transparent; border: 1px solid var(--line); color: var(--muted);
-  width: 26px; height: 26px; border-radius: 5px; cursor: pointer; font-size: 12px; line-height: 1;
+  background: transparent;
+  border: 1px solid var(--ink-rule); color: var(--ink-soft);
+  width: 26px; height: 26px; border-radius: 4px;
+  cursor: pointer; font-size: 12px; line-height: 1;
 }
-.modal-close:hover { color: var(--ink); border-color: var(--muted); }
+.modal-close:hover { color: var(--ink); border-color: var(--ink-quiet); background: var(--paper-2); }
 
-.setting-group { padding: 16px 0 6px; border-top: 1px solid var(--silk-soft); }
+.setting-group { padding: 16px 0 6px; border-top: 1px solid var(--ink-rule); }
 .setting-group:first-of-type { padding-top: 4px; border-top: none; }
-.setting-title { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--audio); margin-bottom: 6px; }
-.setting-desc { font-family: "Spectral", serif; font-size: 13.5px; line-height: 1.55; color: #b8b4a8; margin: 0 0 14px; }
-.setting-cell { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.setting-label { font-size: 9px; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); }
-.setting-readout { font-variant-numeric: tabular-nums; font-size: 18px; color: var(--ink); letter-spacing: .02em; }
-
-/* ---------------- patches modal ---------------- */
-.patches-modal { width: min(620px, 100%); }
-.patch-save-row {
-  display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap;
+.setting-title {
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: var(--t-tracking-eyebrow); text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 8px;
 }
+.setting-desc {
+  font-family: var(--f-sans); font-weight: 300;
+  font-size: 14px; line-height: 1.55;
+  color: var(--ink-soft); margin: 0 0 14px;
+}
+.setting-cell { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.setting-label {
+  font-family: var(--f-mono);
+  font-size: 9px; letter-spacing: var(--t-tracking-eyebrow); text-transform: uppercase;
+  color: var(--ink-quiet);
+}
+.setting-readout {
+  font-family: var(--f-mono);
+  font-variant-numeric: tabular-nums; font-size: 16px;
+  color: var(--ink); letter-spacing: .02em;
+}
+
+/* ──────────────────────────────────────────────────────────
+   PATCHES MODAL
+   ────────────────────────────────────────────────────────── */
+.patches-modal { width: min(620px, 100%); }
+.patch-save-row { display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap; }
 .patch-input {
   flex: 1 1 200px; min-width: 0;
-  background: var(--panel-lo); border: 1px solid var(--line); border-radius: 6px;
-  color: var(--ink); font-family: inherit; font-size: 13px;
-  padding: 8px 12px;
+  background: var(--white);
+  border: 1px solid var(--ink-rule); border-radius: 4px;
+  color: var(--ink); font-family: var(--f-sans); font-size: 14px;
+  padding: 9px 12px;
 }
-.patch-input:focus { outline: none; border-color: var(--muted); }
+.patch-input:focus { outline: none; border-color: var(--ink); }
 .patch-btn {
-  font-family: inherit; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; font-weight: 600;
-  color: #0b0c0f; background: var(--audio); border: none; border-radius: 6px;
-  padding: 8px 16px; cursor: pointer; transition: .14s var(--ease);
+  font-family: var(--f-mono);
+  font-size: 11px; letter-spacing: .14em; text-transform: uppercase; font-weight: 600;
+  color: var(--white); background: var(--ink); border: 1px solid var(--ink); border-radius: 4px;
+  padding: 9px 16px; cursor: pointer; transition: .14s var(--ease);
   display: inline-flex; align-items: center; justify-content: center;
 }
-.patch-btn:hover { filter: brightness(1.08); }
+.patch-btn:hover { background: var(--red); border-color: var(--red); }
 .patch-btn.ghost {
-  background: transparent; color: var(--ink); border: 1px solid var(--line); font-weight: 500;
+  background: transparent; color: var(--ink-soft);
+  border: 1px solid var(--ink-rule); font-weight: 500;
 }
-.patch-btn.ghost:hover { border-color: var(--muted); background: rgba(255,255,255,.03); filter: none; }
-.patch-btn.small { padding: 6px 10px; font-size: 10px; }
+.patch-btn.ghost:hover { color: var(--ink); border-color: var(--ink-quiet); background: var(--paper-2); }
+.patch-btn.small { padding: 7px 10px; font-size: 10px; }
 .patch-btn.danger {
-  background: transparent; color: var(--muted-dim); border: 1px solid var(--line); font-weight: 500;
+  background: transparent; color: var(--ink-quiet);
+  border: 1px solid var(--ink-rule); font-weight: 500;
 }
-.patch-btn.danger:hover { color: #ff6b6b; border-color: #ff6b6b; background: rgba(255,107,107,.06); filter: none; }
+.patch-btn.danger:hover { color: var(--red); border-color: var(--red); background: var(--audio-soft); }
 
 .patch-list {
   list-style: none; margin: 0 0 14px; padding: 0;
@@ -786,125 +1089,165 @@ header {
   grid-template-areas: "name actions" "date actions";
   align-items: center;
   gap: 2px 12px;
-  padding: 10px 12px;
-  background: rgba(20,22,28,.5);
-  border: 1px solid var(--line-soft);
-  border-radius: 7px;
+  padding: 12px 14px;
+  background: var(--white);
+  border: 1px solid var(--ink-rule);
+  border-radius: 5px;
   transition: border-color .14s var(--ease);
 }
-.patch-item:hover { border-color: var(--line); }
+.patch-item:hover { border-color: var(--ink-quiet); }
 .patch-name {
   grid-area: name;
   background: transparent; border: none; padding: 0; cursor: text;
-  font-family: inherit; font-size: 13px; font-weight: 600; color: var(--ink);
+  font-family: var(--f-sans); font-size: 14px; font-weight: 500; color: var(--ink);
   text-align: left;
 }
-.patch-name:hover { color: var(--audio); }
-.patch-rename {
-  grid-area: name;
-  padding: 4px 8px; font-size: 13px;
-}
+.patch-name:hover { color: var(--red); }
+.patch-rename { grid-area: name; padding: 4px 8px; font-size: 14px; }
 .patch-date {
   grid-area: date;
-  font-family: "Spectral", serif; font-size: 11px; color: var(--muted-dim);
+  font-family: var(--f-mono);
+  font-size: 10px; color: var(--ink-quiet); letter-spacing: .04em;
 }
-.patch-actions {
-  grid-area: actions;
-  display: flex; gap: 6px; align-items: center;
-}
+.patch-actions { grid-area: actions; display: flex; gap: 6px; align-items: center; }
 
-.patch-upload {
-  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-  margin-top: 4px;
-}
+.patch-upload { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
 .patch-upload-hint { margin: 0; flex: 1 1 200px; }
-
 .patch-error {
-  font-family: inherit; font-size: 12px; color: #ff8a8a;
-  background: rgba(255,107,107,.08); border: 1px solid rgba(255,107,107,.3);
-  border-radius: 5px; padding: 8px 10px; margin: 0 0 10px;
+  font-family: var(--f-mono); font-size: 11px; letter-spacing: .04em;
+  color: var(--rouge);
+  background: var(--control-soft);
+  border: 1px solid var(--rouge);
+  border-radius: 4px; padding: 9px 11px; margin: 0 0 10px;
 }
 
-/* ---------------- landing screen ---------------- */
+/* ──────────────────────────────────────────────────────────
+   LANDING — the brand's "title page" applied verbatim.
+   Big Bold display, italic light subhead, Red accent.
+   ────────────────────────────────────────────────────────── */
 .landing {
   position: fixed; inset: 0; z-index: 80;
-  background: radial-gradient(1000px 700px at 50% 30%, #15171d 0%, #0a0b0e 70%);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 0; padding: 40px; transition: opacity .5s var(--ease);
+  background: var(--paper);
+  display: flex; flex-direction: column; align-items: stretch; justify-content: stretch;
+  gap: 0; padding: 0;
+  transition: opacity .5s var(--ease);
 }
 .landing.hide { opacity: 0; pointer-events: none; }
-.landing canvas.bgscope { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .16; z-index: 0; }
+.landing canvas.bgscope {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  opacity: .10; z-index: 0;
+  mix-blend-mode: multiply;
+}
 .landing .card {
-  position: relative; z-index: 1; max-width: 620px; text-align: center;
-  display: flex; flex-direction: column; align-items: center; gap: 22px;
+  position: relative; z-index: 1;
+  max-width: 980px;
+  margin: auto;
+  padding: 56px 48px;
+  text-align: left;
+  display: flex; flex-direction: column; align-items: flex-start;
+  gap: 22px;
+  width: 100%;
 }
-.landing .logo { height: 30px; width: auto; filter: invert(1) brightness(1.7); }
-.landing .sub { font-size: 10px; letter-spacing: .28em; text-transform: uppercase; color: var(--muted); margin-top: -10px; }
+/* Brand eyebrow: ● smem — swiss museum and centre … */
+.landing .logo { height: 28px; width: auto; filter: none; }
+.landing .sub {
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: var(--t-tracking-eyebrow); text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-top: -8px;
+}
 .landing h1 {
-  font-family: "Spectral", serif; font-style: italic; font-weight: 500; font-size: 33px; line-height: 1.25;
-  margin: 0; color: var(--ink); text-wrap: balance;
+  font-family: var(--f-sans);
+  font-style: italic; font-weight: 300;
+  font-size: 54px; line-height: 1.05;
+  letter-spacing: -.015em;
+  margin: 12px 0 0; color: var(--ink); text-wrap: balance;
+  max-width: 14ch;
 }
-.landing p { font-family: "Spectral", serif; font-size: 16px; line-height: 1.65; color: #c6c1b5; margin: 0; max-width: 50ch; text-wrap: pretty; }
+.landing h1 b { font-style: normal; font-weight: 700; color: var(--ink); }
+.landing p {
+  font-family: var(--f-sans); font-weight: 300;
+  font-size: 17px; line-height: 1.6;
+  color: var(--ink-soft); margin: 0;
+  max-width: 56ch; text-wrap: pretty;
+}
 .landing .begin {
-  margin-top: 6px; display: inline-flex; align-items: center; gap: 12px; font-family: inherit;
-  font-size: 14px; letter-spacing: .16em; text-transform: uppercase; font-weight: 600; color: #0b0c0f;
-  background: var(--audio); border: none; padding: 16px 34px; border-radius: 10px; cursor: pointer;
-  box-shadow: 0 8px 30px -8px var(--audio);
+  margin-top: 6px;
+  display: inline-flex; align-items: center; gap: 12px;
+  font-family: var(--f-mono);
+  font-size: 13px; letter-spacing: .16em; text-transform: uppercase;
+  font-weight: 600; color: var(--white);
+  background: var(--red); border: 1.5px solid var(--red);
+  padding: 16px 30px; border-radius: 6px; cursor: pointer;
+  box-shadow: 0 6px 24px -10px var(--audio-glow);
 }
-.landing .begin .dot { width: 10px; height: 10px; border-radius: 50%; background: #0b0c0f; }
+.landing .begin .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--white); }
 
-/* ---- Journey picker ---- */
-.landing .card { max-width: 880px; }
-.landing .picker { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; margin-top: 6px; }
+/* Journey picker — brand-style index card list. */
+.landing .picker {
+  display: flex; flex-direction: column; align-items: stretch;
+  gap: 14px; width: 100%; margin-top: 16px;
+  padding-top: 22px;
+  border-top: 1px solid var(--ink-rule);
+}
 .landing .picker-label {
-  font-size: 10px; letter-spacing: .28em; text-transform: uppercase;
-  color: var(--muted); margin: 0;
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: var(--t-tracking-eyebrow); text-transform: uppercase;
+  color: var(--red); margin: 0;
 }
 .landing .picker-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 14px; width: 100%;
 }
 .landing .journey-card {
   display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
-  padding: 18px 20px; text-align: left;
-  background: rgba(20, 22, 28, 0.7); border: 1px solid var(--line);
-  border-radius: 10px; cursor: pointer; color: var(--ink);
-  font-family: inherit; transition: border-color .15s var(--ease), transform .15s var(--ease), box-shadow .15s var(--ease);
+  padding: 20px 22px; text-align: left;
+  background: var(--white);
+  border: 1px solid var(--ink-rule);
+  border-radius: var(--radius-card); cursor: pointer; color: var(--ink);
+  font-family: var(--f-sans);
+  transition: border-color .15s var(--ease), transform .15s var(--ease), box-shadow .15s var(--ease);
 }
 .landing .journey-card:hover {
-  border-color: var(--audio);
-  box-shadow: 0 6px 24px -10px var(--audio-glow);
+  border-color: var(--red);
+  box-shadow: 0 6px 24px -10px rgba(230,37,40,.35);
   transform: translateY(-1px);
 }
 .landing .journey-card h3 {
-  margin: 0; font-family: "Chakra Petch", sans-serif;
-  font-size: 16px; letter-spacing: .04em; color: var(--ink);
+  margin: 0; font-family: var(--f-sans);
+  font-size: 18px; font-weight: 600; letter-spacing: -.005em;
+  color: var(--ink);
 }
 .landing .journey-card p {
-  margin: 0; font-family: "Spectral", serif; font-size: 14px;
-  line-height: 1.5; color: var(--muted); max-width: none;
+  margin: 0; font-family: var(--f-sans); font-weight: 300;
+  font-size: 14px; line-height: 1.55;
+  color: var(--ink-soft); max-width: none;
 }
 .landing .journey-card .cta {
-  margin-top: auto; font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
-  color: var(--audio); font-weight: 600;
+  margin-top: auto;
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--red); font-weight: 600;
 }
-.landing .journey-card.free { border-color: var(--control-dim); }
+.landing .journey-card.free { border-color: var(--ink-rule); }
 .landing .journey-card.free:hover {
-  border-color: var(--control);
-  box-shadow: 0 6px 24px -10px var(--control-glow);
+  border-color: var(--rouge);
+  box-shadow: 0 6px 24px -10px rgba(122,20,24,.35);
 }
-.landing .journey-card.free .cta { color: var(--control); }
+.landing .journey-card.free .cta { color: var(--rouge); }
 
-/* ---- mobile header burger menu ---- */
+/* ──────────────────────────────────────────────────────────
+   MOBILE HEADER BURGER
+   ────────────────────────────────────────────────────────── */
 .header-mobile { display: none; position: relative; }
 .burger {
   display: inline-flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px;
   width: 38px; height: 38px;
-  background: transparent; border: 1px solid var(--line); border-radius: 6px;
+  background: transparent; border: 1px solid var(--ink-rule); border-radius: 4px;
   cursor: pointer; padding: 0;
   transition: .14s var(--ease);
 }
-.burger:hover { border-color: var(--muted); }
+.burger:hover { border-color: var(--ink-quiet); }
 .burger span {
   display: block; width: 18px; height: 2px; border-radius: 1px;
   background: var(--ink); transition: transform .18s var(--ease), opacity .14s var(--ease);
@@ -914,44 +1257,51 @@ header {
 .burger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
 .burger-menu {
   position: absolute; top: calc(100% + 8px); right: 0; z-index: 50;
-  min-width: 220px; padding: 12px;
-  background: linear-gradient(180deg, var(--panel-hi), var(--panel) 60%, var(--panel-lo));
-  border: 1px solid var(--line); border-radius: 9px;
-  box-shadow: 0 14px 28px -10px rgba(0,0,0,.7);
+  min-width: 240px; padding: 14px;
+  background: var(--white);
+  border: 1px solid var(--ink-rule); border-radius: var(--radius-card);
+  box-shadow: 0 14px 28px -10px rgba(0,0,0,.4);
   display: flex; flex-direction: column; gap: 12px;
 }
-.burger-legend { display: flex; flex-wrap: wrap; gap: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--silk-soft); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
-.burger-legend i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
-.burger-legend .a i { background: var(--audio); box-shadow: 0 0 8px var(--audio); }
-.burger-legend .c i { background: var(--control); box-shadow: 0 0 8px var(--control); }
-.burger-legend .g i { background: var(--gate); box-shadow: 0 0 8px var(--gate); }
+.burger-legend {
+  display: flex; flex-wrap: wrap; gap: 14px;
+  padding-bottom: 10px; border-bottom: 1px solid var(--ink-rule);
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.burger-legend i { display: inline-block; width: 16px; height: 2px; border-radius: 1px; margin-right: 6px; vertical-align: middle; }
+.burger-legend .a i { background: var(--audio); }
+.burger-legend .c i { background: var(--control); }
+.burger-legend .g i {
+  background: transparent;
+  height: 0;
+  border-top: 2px dashed var(--gate);
+}
 .burger-actions { display: flex; flex-direction: column; gap: 6px; }
 .burger-actions .icon-btn { justify-content: flex-start; width: 100%; padding: 10px 12px; font-size: 11px; }
 
-/* ---- mobile instructions/synth tabs ---- */
+/* Mobile tabs */
 .mobile-tabs {
   grid-area: mobile-tabs;
   display: none;
-  border-bottom: 1px solid var(--line);
-  background: rgba(13,14,18,.6);
+  border-bottom: 1px solid var(--ink-rule);
+  background: var(--paper);
 }
 .mobile-tab {
   flex: 1; padding: 12px 8px;
   background: transparent; border: none; border-bottom: 2px solid transparent;
-  font-family: inherit; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; font-weight: 600;
-  color: var(--muted); cursor: pointer; transition: .14s var(--ease);
+  font-family: var(--f-mono);
+  font-size: 11px; letter-spacing: .18em; text-transform: uppercase; font-weight: 600;
+  color: var(--ink-soft); cursor: pointer; transition: .14s var(--ease);
 }
 .mobile-tab:hover { color: var(--ink); }
-.mobile-tab.on { color: var(--ink); border-bottom-color: var(--audio); }
+.mobile-tab.on { color: var(--ink); border-bottom-color: var(--red); }
 
 @media (max-width: 960px) {
-  /* Below the breakpoint, the burger takes over: hide the inline legend +
-     action buttons and reveal the burger on the right of the header. */
   header .legend { display: none; }
   .header-mobile { display: block; }
 
-  /* Sidebar + main share a single grid row; the .wrap mobile-view-* class
-     toggles which one is visible so the active pane gets the full viewport. */
   .wrap {
     grid-template-areas:
       "header"
@@ -978,360 +1328,246 @@ header {
   .sidebar { border-right: none; max-height: none; overflow-y: auto; }
   .bus { display: flex; gap: 4px; overflow-x: auto; padding-left: 0; }
   .bus::before { display: none; }
-  .chap { flex: 0 0 auto; padding: 8px 12px; border: 1px solid var(--line); border-radius: 7px; }
+  .chap { flex: 0 0 auto; padding: 8px 12px; border: 1px solid var(--ink-rule); border-radius: 5px; }
   .chap .tap { display: none; }
+
+  .landing .card { padding: 36px 28px; }
+  .landing h1 { font-size: 40px; }
 }
 @media (max-width: 600px) {
   .narrator h2 { font-size: 22px; }
-  .landing h1 { font-size: 26px; }
+  .landing h1 { font-size: 32px; }
+  .landing p { font-size: 15px; }
 }
 
-/* ---- Module interaction ---- */
+/* Module interaction */
 .module.draggable .m-head { cursor: grab; }
 .module.draggable .m-head:active { cursor: grabbing; }
 body.module-dragging,
 body.module-dragging * { cursor: grabbing !important; }
 .module.draggable { transition: box-shadow .14s var(--ease); }
-.module.draggable:hover { box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45); }
-
-/* "Back to chapter" link inside the narrator when a module placard is shown. */
-.narrator-back {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  font-family: inherit;
-  font-size: 10px;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  color: var(--muted);
-  background: transparent;
-  border: 1px solid var(--line);
-  border-radius: 5px;
-  padding: 4px 8px;
-  cursor: pointer;
-  transition: .14s var(--ease);
+.module.draggable:hover {
+  box-shadow:
+    0 1px 0 var(--white) inset,
+    0 14px 30px -16px rgba(17,17,17,.45),
+    0 2px 4px rgba(17,17,17,.08);
 }
-.narrator-back:hover { color: var(--ink); border-color: var(--muted); }
-.narrator { position: relative; }
 
-/* ---- Inverter module body ---- */
+/* ──────────────────────────────────────────────────────────
+   INVERTER — text block on paper.
+   ────────────────────────────────────────────────────────── */
 .inverter-body {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 24px 12px;
-  gap: 14px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px 12px; gap: 14px;
 }
 .inverter-symbol {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  font-family: inherit;
-  font-size: 13px;
-  letter-spacing: .12em;
-  text-transform: uppercase;
+  display: flex; align-items: center; gap: 14px;
+  font-family: var(--f-mono);
+  font-size: 13px; letter-spacing: .12em; text-transform: uppercase;
   color: var(--ink);
 }
-.inverter-symbol .inv-label {
-  color: var(--control);
-  font-weight: 700;
-}
+.inverter-symbol .inv-label { color: var(--rouge); font-weight: 700; }
 .inverter-symbol .inv-op {
-  color: var(--muted);
+  color: var(--ink-soft);
   padding: 6px 12px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--panel-lo);
+  border: 1px solid var(--ink-rule); border-radius: 4px;
+  background: var(--paper-2);
   letter-spacing: .04em;
 }
 .inverter-hint {
-  font-size: 9px;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  color: var(--muted-dim);
+  font-family: var(--f-mono);
+  font-size: 9px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--ink-quiet);
 }
 
-/* ---- CV Mixer body ---- */
+/* CV Mixer */
 .cvmix-body {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 10px;
-  gap: 18px;
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+  padding: 14px 10px; gap: 18px;
 }
-.cvmix-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-around;
-  width: 100%;
-  gap: 6px;
-}
-.cvmix-strip {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
+.cvmix-row { display: flex; align-items: flex-start; justify-content: space-around; width: 100%; gap: 6px; }
+.cvmix-strip { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .cvmix-phase {
-  font-family: inherit;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--muted);
-  background: var(--panel-lo);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  width: 26px;
-  height: 22px;
-  cursor: pointer;
+  font-family: var(--f-mono);
+  font-size: 11px; font-weight: 700;
+  color: var(--ink-soft);
+  background: var(--paper-2);
+  border: 1px solid var(--ink-rule); border-radius: 3px;
+  width: 26px; height: 22px; cursor: pointer;
   transition: .14s var(--ease);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-flex; align-items: center; justify-content: center;
 }
-.cvmix-phase:hover { border-color: var(--muted); }
+.cvmix-phase:hover { border-color: var(--ink-quiet); }
 .cvmix-phase.on {
-  color: var(--bg);
-  background: var(--control);
-  border-color: var(--control);
+  color: var(--white); background: var(--rouge); border-color: var(--rouge);
   box-shadow: 0 0 8px var(--control-glow);
 }
 .cvmix-master {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  padding-top: 10px;
-  border-top: 1px dashed var(--line);
+  display: flex; justify-content: center; width: 100%;
+  padding-top: 10px; border-top: 1px dashed var(--ink-rule);
 }
 
-/* ---- Attenuverter body ---- */
+/* Attenuverter */
 .atv-body {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  padding: 18px 12px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 18px 12px;
 }
 .atv-axis {
-  display: flex;
-  justify-content: space-between;
+  display: flex; justify-content: space-between;
   width: 80%;
-  font-family: inherit;
-  font-size: 10px;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  color: var(--muted-dim);
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--ink-quiet);
 }
-.atv-axis .neg  { color: var(--audio); }
-.atv-axis .pos  { color: var(--control); }
-.atv-axis .zero { color: var(--muted); }
+.atv-axis .neg  { color: var(--red); }
+.atv-axis .pos  { color: var(--rouge); }
+.atv-axis .zero { color: var(--ink-soft); }
 .atv-hint {
-  font-size: 9px;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: var(--muted-dim);
+  font-family: var(--f-mono);
+  font-size: 9px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-quiet);
 }
 
+/* ──────────────────────────────────────────────────────────
+   PALETTE (module list) — Paper card on the Ink rack.
+   ────────────────────────────────────────────────────────── */
 .palette {
   position: absolute;
-  right: 18px;
-  top: 18px;
-  width: 168px;
-  padding: 12px;
-  background: rgba(20, 26, 30, 0.94);
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  right: 18px; top: 18px;
+  width: 184px;
+  padding: 14px;
+  background: var(--white);
+  border: 1px solid var(--ink-rule);
+  border-radius: var(--radius-card);
   z-index: 5;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 24px -12px rgba(17,17,17,.25);
 }
 .palette-head {
-  font-family: inherit;
-  font-size: 10px;
-  letter-spacing: .24em;
-  text-transform: uppercase;
-  color: var(--muted-dim);
-  margin: 0 0 10px;
-  padding: 0;
-  width: 100%;
-  background: transparent;
-  border: none;
-  cursor: pointer;
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: var(--t-tracking-eyebrow); text-transform: uppercase;
+  color: var(--ink-quiet);
+  margin: 0 0 12px;
+  padding: 0; width: 100%;
+  background: transparent; border: none; cursor: pointer;
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   transition: color .14s var(--ease);
 }
 .palette-head:hover { color: var(--ink); }
 .palette-toggle {
+  font-family: var(--f-mono);
   font-size: 14px; font-weight: 600;
   width: 18px; height: 18px;
   display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 4px;
-  background: var(--panel-lo); border: 1px solid var(--line);
-  color: var(--muted);
+  border-radius: 3px;
+  background: var(--paper-2); border: 1px solid var(--ink-rule);
+  color: var(--ink-soft);
   line-height: 1;
 }
 .palette.collapsed { padding: 8px 10px; width: auto; }
 .palette.collapsed .palette-head { margin-bottom: 0; }
-.palette-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
+.palette-list { display: flex; flex-direction: column; gap: 6px; }
 .palette-item {
-  font-family: inherit;
-  font-size: 12px;
-  letter-spacing: .04em;
+  font-family: var(--f-sans);
+  font-size: 13px; letter-spacing: 0;
   color: var(--ink);
-  background: transparent;
-  border: 1px solid var(--line);
-  border-radius: 5px;
-  padding: 7px 10px;
+  background: var(--white);
+  border: 1px solid var(--ink-rule);
+  border-radius: 4px;
+  padding: 8px 10px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: flex; align-items: center; gap: 8px;
   text-align: left;
   transition: .14s var(--ease);
 }
-.palette-item:hover { border-color: var(--muted); background: rgba(255, 255, 255, 0.03); }
+.palette-item:hover { border-color: var(--ink-quiet); background: var(--paper-2); }
 .palette-item .plus {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-  font-weight: 700;
-  font-size: 13px;
-  line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 3px;
+  font-family: var(--f-mono);
+  font-weight: 700; font-size: 13px; line-height: 1;
 }
-.palette-item.audio   .plus { color: var(--audio);   background: rgba(255, 180, 84, 0.12); }
-.palette-item.control .plus { color: var(--control); background: rgba(108, 211, 230, 0.12); }
+.palette-item.audio   .plus { color: var(--red);   background: var(--audio-soft); }
+.palette-item.control .plus { color: var(--rouge); background: var(--control-soft); }
 
-/* ---- Port markers ----
-   The dot sits exactly on the module border. The label extends OUTWARD into
-   the gutter (so it never overlaps the module's internal UI). A 0-sized
-   .port-anchor at the very far end of the pill carries `data-port-id` —
-   <Wires> attaches each wire endpoint there, so wires emerge past the label
-   instead of crossing it. */
-.module { position: relative; }   /* needed for absolute port positioning */
+/* ──────────────────────────────────────────────────────────
+   PORT MARKERS — round panel-pot style.
+   Outputs: filled disc in Red/Rouge with a Paper rim ("live").
+   Inputs:  hollow ring on Paper, ringed in the signal colour.
+   ────────────────────────────────────────────────────────── */
+.module { position: relative; }
 
 .ports {
   position: absolute;
-  display: flex;
-  gap: 8px;
-  z-index: 3;
-  pointer-events: none;
+  display: flex; gap: 8px; z-index: 3; pointer-events: none;
 }
 .ports .port { pointer-events: auto; }
-
-/* Left/right edges: pill is a horizontal row; multiple ports stack vertically.
-   Container's outer edge sits at the module's border, then we shift by half a
-   dot so the dot's centre lands exactly on the border. */
 .ports-right {
   left: 100%; top: 50%;
   flex-direction: column; align-items: flex-start;
   transform: translate(-5px, -50%);
 }
-.ports-right .port { flex-direction: row; }   /* dot at module border, label outward right */
-
+.ports-right .port { flex-direction: row; }
 .ports-left {
   right: 100%; top: 50%;
   flex-direction: column; align-items: flex-end;
   transform: translate(5px, -50%);
 }
-.ports-left .port { flex-direction: row-reverse; }  /* dot at border, label outward left */
-
-/* Top/bottom edges: container is a horizontal row; each pill is a column
-   stacking dot at the border and label out into the gutter. */
+.ports-left .port { flex-direction: row-reverse; }
 .ports-top {
   bottom: 100%; left: 0; right: 0;
   flex-direction: row; justify-content: center; align-items: flex-end;
-  transform: translateY(5px);
-  flex-wrap: wrap;
+  transform: translateY(5px); flex-wrap: wrap;
 }
-.ports-top .port {
-  flex-direction: column-reverse;   /* dot at bottom (border), label above */
-  align-items: center;
-}
-
+.ports-top .port { flex-direction: column-reverse; align-items: center; }
 .ports-bottom {
   top: 100%; left: 0; right: 0;
   flex-direction: row; justify-content: center; align-items: flex-start;
-  transform: translateY(-5px);
-  flex-wrap: wrap;
+  transform: translateY(-5px); flex-wrap: wrap;
 }
-.ports-bottom .port {
-  flex-direction: column;   /* dot at top (border), label below */
-  align-items: center;
-}
+.ports-bottom .port { flex-direction: column; align-items: center; }
 
 .port {
-  background: transparent;
-  border: none;
-  padding: 0;
-  display: inline-flex;
-  /* center on the cross-axis so dot, label, and the 1px anchor all line up
-     — without this the anchor (smallest item) sticks to the top of a row
-     pill, and the wire endpoint lands above the label instead of beside it. */
-  align-items: center;
-  justify-content: center;
+  background: transparent; border: none; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
   gap: 5px;
-  font-family: inherit;
-  font-size: 9px;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--muted-dim);
-  cursor: pointer;
+  font-family: var(--f-mono);
+  font-size: 9px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-quiet); cursor: pointer;
   transition: color .14s var(--ease);
 }
 .port:hover { color: var(--ink); }
 .port-dot {
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  flex: 0 0 15px;
+  width: 16px; height: 16px; border-radius: 50%;
+  flex: 0 0 16px;
   transition: box-shadow .14s var(--ease);
 }
-/* Outputs: filled, glowing — "emitting" affordance.
-   Inputs: hollow ring on a dark fill — "receiving" affordance. */
 .port-out .port-dot {
   background: var(--port-color);
-  box-shadow: 0 0 6px var(--port-color);
+  border: 2px solid var(--paper);
+  box-shadow: 0 0 0 1px var(--port-color), 0 0 6px var(--port-color);
 }
 .port-in .port-dot {
-  background: var(--bg);
+  background: var(--paper);
   border: 2px solid var(--port-color);
-  box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 0 1px var(--port-color);
 }
-.port-out .port-label { font-weight: 700; color: var(--ink); }
-.port-in  .port-label { font-weight: 400; font-style: italic; }
+.port-out .port-label { font-weight: 600; color: var(--ink); }
+.port-in  .port-label { font-weight: 400; color: var(--ink-soft); font-style: italic; }
 .port-label { line-height: 1; }
-/* 1×1 instead of 0×0 so the browser allocates a real layout box past the
-   label — a 0-sized inline-block in flex can collapse onto the previous
-   item's position, which silently snaps the wire back to the dot. */
 .port-anchor {
-  display: inline-block;
-  width: 1px;
-  height: 1px;
-  pointer-events: none;
+  display: inline-block; width: 1px; height: 1px; pointer-events: none;
 }
 
-/* Armed / candidate states — apply to the dot since there's no pill border. */
+/* Armed / candidate states */
 .port.armed .port-dot {
-  box-shadow: 0 0 0 2px var(--port-color), 0 0 14px var(--port-color);
+  box-shadow: 0 0 0 3px var(--port-color), 0 0 14px var(--port-color);
 }
 .port.armed .port-label { color: var(--ink); }
-.port.candidate .port-dot {
-  animation: portPulse 1.4s ease-in-out infinite;
-}
+.port.candidate .port-dot { animation: portPulse 1.4s ease-in-out infinite; }
 .port.candidate .port-label { color: var(--ink); }
-/* Drop target: the compatible input under a dragged wire — fill the hollow
-   ring so it reads as "release here to connect". */
 .port.drop-target .port-dot {
   background: var(--port-color);
   box-shadow: 0 0 0 3px var(--port-color), 0 0 18px var(--port-color);
@@ -1339,11 +1575,14 @@ body.module-dragging * { cursor: grabbing !important; }
 }
 .port.drop-target .port-label { color: var(--ink); }
 @keyframes portPulse {
-  0%, 100% { box-shadow: 0 0 0 0 var(--port-color), 0 0 6px var(--port-color); }
-  50%      { box-shadow: 0 0 0 4px transparent,    0 0 6px var(--port-color); }
+  0%, 100% { box-shadow: 0 0 0 1px var(--port-color), 0 0 6px var(--port-color); }
+  50%      { box-shadow: 0 0 0 4px transparent,        0 0 6px var(--port-color); }
 }
 
-/* ---- Wires overlay ---- */
+/* Wires overlay */
 .wires { overflow: visible; }
 .wires .wire { transition: opacity .14s var(--ease); }
-.wires .wire:hover path:not([stroke="transparent"]) { opacity: 1; filter: drop-shadow(0 0 4px currentColor); }
+.wires .wire:hover path:not([stroke="transparent"]) {
+  opacity: 1;
+  filter: drop-shadow(0 0 4px currentColor);
+}
