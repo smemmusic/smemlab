@@ -4,11 +4,13 @@ import { Knob } from "../../components/controls/Knob.jsx";
 import { Canvas } from "../../components/viz/Canvas.jsx";
 import { drawEnv } from "../../components/viz/drawEnv.js";
 import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
+import { usePuzzleShow } from "../../content/puzzleHooks.js";
 
 const DEFAULT_PARAMS = { a: 0.05, d: 0.2, s: -8, r: 0.4 };
 
 export function EnvelopePanel() {
   const { instanceId: id } = useModuleInstance();
+  const show = usePuzzleShow(id);
 
   const rawParams = useSynthStore((s) => s.modules.find((m) => m.id === id)?.params) || DEFAULT_PARAMS;
   // Backward compat: a few code paths can land an unmigrated env module
@@ -33,15 +35,18 @@ export function EnvelopePanel() {
     get start() { return engine.getInstanceEnvStart(id); },
   };
 
+  const knobs = [
+    show("a") && <Knob key="a" label="Attack"  value={params.a} min={0} max={2} step={0.005} unit="s"  onChange={(v) => applyPartial({ a: v })} />,
+    show("d") && <Knob key="d" label="Decay"   value={params.d} min={0} max={2} step={0.005} unit="s"  onChange={(v) => applyPartial({ d: v })} />,
+    show("s") && <Knob key="s" label="Sustain" value={params.s} min={-48} max={0} step={0.5} unit="dB" onChange={(v) => applyPartial({ s: v })} />,
+    show("r") && <Knob key="r" label="Release" value={params.r} min={0} max={5} step={0.005} unit="s"  onChange={(v) => applyPartial({ r: v })} />,
+  ].filter(Boolean);
   return (
     <>
-      <Canvas tag="Envelope · ADSR (dB)" draw={drawEnv} data={data} />
-      <div className="ctrl-grid">
-        <Knob label="Attack"  value={params.a}         min={0} max={2} step={0.005} unit="s"  onChange={(v) => applyPartial({ a: v })} />
-        <Knob label="Decay"   value={params.d}         min={0} max={2} step={0.005} unit="s"  onChange={(v) => applyPartial({ d: v })} />
-        <Knob label="Sustain" value={params.s}         min={-48}   max={0} step={0.5}   unit="dB" onChange={(v) => applyPartial({ s: v })} />
-        <Knob label="Release" value={params.r}         min={0} max={5} step={0.005} unit="s"  onChange={(v) => applyPartial({ r: v })} />
-      </div>
+      {show("scope") && <Canvas tag="Envelope · ADSR (dB)" draw={drawEnv} data={data} />}
+      {knobs.length > 0 && (
+        <div className={"ctrl-grid" + (knobs.length === 1 ? " one" : "")}>{knobs}</div>
+      )}
     </>
   );
 }

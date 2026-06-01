@@ -5,6 +5,7 @@ import { Toggle } from "../../components/controls/Toggle.jsx";
 import { Canvas } from "../../components/viz/Canvas.jsx";
 import { drawFilter } from "../../components/viz/drawFilter.js";
 import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
+import { usePuzzleShow } from "../../content/puzzleHooks.js";
 
 const FILTER_MODES = [
   { value: "lowpass",  label: "Low-pass",  short: "LP" },
@@ -15,6 +16,7 @@ const DEFAULT_PARAMS = { cutoff: 1200, resonance: 1, mode: "lowpass" };
 
 export function FilterPanel() {
   const { instanceId: id } = useModuleInstance();
+  const show = usePuzzleShow(id);
 
   const params  = useSynthStore((s) => s.modules.find((m) => m.id === id)?.params) || DEFAULT_PARAMS;
   // LFO overlay on the response curve: find an LFO module wired to this
@@ -53,14 +55,18 @@ export function FilterPanel() {
     playing,
   };
 
+  const showCutoff    = show("cutoff");
+  const showResonance = show("resonance");
   return (
     <>
-      <Canvas tag="Frequency response" draw={drawFilter} data={data} />
-      <Toggle options={FILTER_MODES} value={params.mode} onChange={(v) => setModuleParam(id, "mode", v)} />
-      <div className="ctrl-grid">
-        <Knob label="Cutoff"    value={params.cutoff}    min={80}  max={12000} unit="Hz" log onChange={(v) => setModuleParam(id, "cutoff", v)} />
-        <Knob label="Resonance" value={params.resonance} min={0.1} max={18}    step={0.1} unit="Q" onChange={(v) => setModuleParam(id, "resonance", v)} />
-      </div>
+      {show("response") && <Canvas tag="Frequency response" draw={drawFilter} data={data} />}
+      {show("mode")     && <Toggle options={FILTER_MODES} value={params.mode} onChange={(v) => setModuleParam(id, "mode", v)} />}
+      {(showCutoff || showResonance) && (
+        <div className={"ctrl-grid" + (showCutoff && showResonance ? "" : " one")}>
+          {showCutoff    && <Knob label="Cutoff"    value={params.cutoff}    min={80}  max={12000} unit="Hz" log onChange={(v) => setModuleParam(id, "cutoff", v)} />}
+          {showResonance && <Knob label="Resonance" value={params.resonance} min={0.1} max={18}    step={0.1} unit="Q" onChange={(v) => setModuleParam(id, "resonance", v)} />}
+        </div>
+      )}
     </>
   );
 }

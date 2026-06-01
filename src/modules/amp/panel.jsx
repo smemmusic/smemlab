@@ -6,11 +6,13 @@ import { Knob } from "../../components/controls/Knob.jsx";
 import { Canvas } from "../../components/viz/Canvas.jsx";
 import { drawMeter } from "../../components/viz/drawMeter.js";
 import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
+import { usePuzzleShow } from "../../content/puzzleHooks.js";
 
 const DEFAULT_PARAMS = { level: 0 };
 
 export function AmplifierPanel() {
   const { instanceId: id } = useModuleInstance();
+  const show = usePuzzleShow(id);
 
   const params  = useSynthStore((s) => s.modules.find((m) => m.id === id)?.params) || DEFAULT_PARAMS;
   const playing = useSynthStore((s) => s.playing);
@@ -40,10 +42,12 @@ export function AmplifierPanel() {
 
   return (
     <>
-      <Canvas tag="Output level · dB" screenClass="amber" draw={drawMeter} data={data} />
-      <div className="ctrl-grid one">
-        <Knob label="Gain" value={params.level} min={-48} max={12} step={0.5} unit="dB" onChange={(v) => setModuleParam(id, "level", v)} />
-      </div>
+      {show("meter") && <Canvas tag="Output level · dB" screenClass="amber" draw={drawMeter} data={data} />}
+      {show("level") && (
+        <div className="ctrl-grid one">
+          <Knob label="Gain" value={params.level} min={-48} max={12} step={0.5} unit="dB" onChange={(v) => setModuleParam(id, "level", v)} />
+        </div>
+      )}
     </>
   );
 }

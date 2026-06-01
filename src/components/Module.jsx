@@ -3,6 +3,7 @@ import { useSynthStore } from "../store/useSynthStore.js";
 import { ModuleInstanceContext } from "./ModuleInstanceContext.js";
 import { ModulePorts } from "./ModulePorts.jsx";
 import { byType } from "../modules/_registry.js";
+import { usePuzzleModule } from "../content/puzzleHooks.js";
 
 // Selectors that identify interactive children — clicks on these should NOT
 // trigger module focus (they have their own handlers, e.g. knob dragging,
@@ -14,6 +15,7 @@ const INTERACTIVE_SELECTOR = "button, input, select, textarea, .knob, .toggle, .
 // `position` field; the header acts as the drag handle.
 export function Module({ type, instanceId, children }) {
   const manifest = byType(type);
+  const puzzle   = usePuzzleModule(instanceId);
 
   const removeModuleInstance = useSynthStore((s) => s.removeModuleInstance);
   const setModulePosition    = useSynthStore((s) => s.setModulePosition);
@@ -37,6 +39,9 @@ export function Module({ type, instanceId, children }) {
 
   function onHeaderPointerDown(e) {
     if (e.target.closest("button")) return;
+    // Puzzle mode owns the layout (auto-snap) — dragging would just be
+    // undone on the next render, so disable it outright.
+    if (puzzle) return;
     e.preventDefault();
     dragDidMoveRef.current = false;
     const startX = e.clientX;
@@ -79,11 +84,19 @@ export function Module({ type, instanceId, children }) {
     top:  `${effectivePosition.y}px`,
   };
 
+  // In puzzle mode the rack owns the layout (no drag) and the module reads as
+  // a fixed piece, so we drop the `draggable` class and the remove button.
+  const classes = [
+    "module",
+    kind === "control" ? "control-mod" : "audio-mod",
+    puzzle ? "puzzle" : "draggable",
+  ].join(" ");
+
   return (
     <ModuleInstanceContext.Provider value={{ instanceId, type }}>
       <div
         ref={moduleRef}
-        className={"module draggable " + (kind === "control" ? "control-mod" : "audio-mod")}
+        className={classes}
         data-id={type}
         data-instance-id={instanceId}
         style={moduleStyle}
@@ -98,7 +111,7 @@ export function Module({ type, instanceId, children }) {
             <div className="m-title">{manifest.meta.title}</div>
           </div>
           {manifest.glyph}
-          {type !== "output" && (
+          {!puzzle && type !== "output" && (
             <button className="m-remove" title="Patch out" onClick={handleRemove}>✕</button>
           )}
         </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSynthStore } from "../store/useSynthStore.js";
 import { paletteList } from "../modules/_registry.js";
+import { usePuzzleConfig } from "../content/puzzleHooks.js";
 
 // Free-mode palette: lists every module type listed in PALETTE_ORDER
 // (see _registry.js), in array order. Each click adds a fresh instance to
@@ -14,11 +15,15 @@ import { paletteList } from "../modules/_registry.js";
 export function Palette() {
   const addModuleInstance = useSynthStore((s) => s.addModuleInstance);
   const journeyId = useSynthStore((s) => s.journeyId);
+  const puzzle = usePuzzleConfig();
   const [open, setOpen] = useState(journeyId == null);
   // Re-sync when the mode flips (back-to-journeys → pick free build, etc.):
   // Palette stays mounted across those transitions, so without this effect
   // the initial useState would never re-run and the default would stick.
   useEffect(() => { setOpen(journeyId == null); }, [journeyId]);
+  // Puzzle mode owns the module set (journey deltas) and the layout (auto-snap),
+  // so an "Add module" affordance has nothing useful to do — hide it entirely.
+  if (puzzle) return null;
   const items = paletteList();
 
   return (

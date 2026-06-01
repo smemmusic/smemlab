@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useSynthStore } from "../../store/useSynthStore.js";
 import { getEngine } from "../../audio/engineSingleton.js";
 import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
+import { usePuzzleShow } from "../../content/puzzleHooks.js";
 
 // Manual gate trigger. Press-and-hold button: opens the gate while pressed,
 // releases on lift. The gate emits from this instance's `gate` port and fans
@@ -30,6 +31,7 @@ function displayShortcut(code) {
 
 export function TriggerPanel() {
   const { instanceId: id } = useModuleInstance();
+  const show = usePuzzleShow(id);
 
   const params = useSynthStore((s) => s.modules.find((m) => m.id === id)?.params) || DEFAULT_PARAMS;
   const shortcut = params.shortcut ?? "Space";
@@ -111,29 +113,33 @@ export function TriggerPanel() {
 
   return (
     <div className="trigger-mod-body">
-      <button
-        type="button"
-        className={"trigger-button" + (held ? " held" : "")}
-        onPointerDown={press}
-        onPointerUp={release}
-        onPointerLeave={(e) => { if (held) release(e); }}
-        title={`Hold to open the gate (also: ${shortcutLabel})`}
-      >
-        <span className="trigger-lamp" />
-        <span className="trigger-label">Hold</span>
-        <span className="trigger-sub">{shortcutLabel.toLowerCase()} ▸ trigger</span>
-      </button>
-      <div className="trigger-shortcut">
-        <span className="trigger-shortcut-label">Shortcut</span>
+      {show("button") && (
         <button
           type="button"
-          className={"trigger-shortcut-btn" + (capturing ? " capturing" : "")}
-          onClick={() => setCapturing((c) => !c)}
-          title={capturing ? "Press a key… (Esc to cancel)" : "Click then press a key to rebind"}
+          className={"trigger-button" + (held ? " held" : "")}
+          onPointerDown={press}
+          onPointerUp={release}
+          onPointerLeave={(e) => { if (held) release(e); }}
+          title={`Hold to open the gate (also: ${shortcutLabel})`}
         >
-          {capturing ? "Press a key…" : shortcutLabel}
+          <span className="trigger-lamp" />
+          <span className="trigger-label">Hold</span>
+          <span className="trigger-sub">{shortcutLabel.toLowerCase()} ▸ trigger</span>
         </button>
-      </div>
+      )}
+      {show("shortcut") && (
+        <div className="trigger-shortcut">
+          <span className="trigger-shortcut-label">Shortcut</span>
+          <button
+            type="button"
+            className={"trigger-shortcut-btn" + (capturing ? " capturing" : "")}
+            onClick={() => setCapturing((c) => !c)}
+            title={capturing ? "Press a key… (Esc to cancel)" : "Click then press a key to rebind"}
+          >
+            {capturing ? "Press a key…" : shortcutLabel}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

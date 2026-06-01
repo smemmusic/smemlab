@@ -1,6 +1,7 @@
 import { PortMarker } from "./PortMarker.jsx";
 import { PORT_TYPE, PORT_DIR, listStaticPorts } from "../audio/graph/types.js";
 import { byType } from "../modules/_registry.js";
+import { usePuzzleModule } from "../content/puzzleHooks.js";
 
 // Layout:
 //   audio in   → left  edge
@@ -18,8 +19,15 @@ function layoutPorts(ports) {
 
 export function ModulePorts({ moduleId, type }) {
   const manifest = byType(type);
+  const puzzle = usePuzzleModule(moduleId);
   if (!manifest) return null;
-  const ports = listStaticPorts(manifest.Cls);
+  // In puzzle mode the journey declares exactly which ports participate;
+  // every other port is hidden so the piece's silhouette only shows the
+  // tabs/notches that actually connect to neighbours.
+  const allPorts = listStaticPorts(manifest.Cls);
+  const ports = puzzle
+    ? allPorts.filter((p) => puzzle.ports?.includes(p.name))
+    : allPorts;
   const { left, right, top, bottom } = layoutPorts(ports);
 
   return (

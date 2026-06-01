@@ -76,7 +76,7 @@ export const SETTINGS = {
 
 export const LANDING = {
   sub: "Swiss Museum and Centre for Electronic Music Instruments",
-  title: "<b>Patch a synthesiser,</b><br/>one step at a time.",
+  title: "<b>Build a synthesiser,</b><br/>one piece at a time.",
   prose: "Choose a journey to build one step by step — or open Free Build to patch anything you like.",
   pickJourney: "— Pick a journey —",
   freeTitle: "Free Build",

@@ -3,6 +3,7 @@ import { useSynthStore } from "../../store/useSynthStore.js";
 import { getEngine } from "../../audio/engineSingleton.js";
 import { Stepper } from "../../components/controls/Stepper.jsx";
 import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
+import { usePuzzleShow } from "../../content/puzzleHooks.js";
 
 const KEY_TO_SEMI = {
   a: 0, w: 1, s: 2, e: 3, d: 4, f: 5,
@@ -34,6 +35,7 @@ const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
 export function KeyboardPanel() {
   const { instanceId: id } = useModuleInstance();
+  const show = usePuzzleShow(id);
 
   const params = useSynthStore((s) => s.modules.find((m) => m.id === id)?.params) || DEFAULT_PARAMS;
   const octave = params.octave ?? 4;
@@ -116,53 +118,57 @@ export function KeyboardPanel() {
 
   return (
     <>
-      <div className="kb">
-        <div className="kb-whites">
-          {WHITE_NOTES.map((n) => {
-            const midi = baseMidi + n.semi;
-            const on = pressed.has(midi);
-            return (
-              <div
-                key={n.semi}
-                className={"kb-key white" + (on ? " on" : "")}
-                onPointerDown={mDown(midi)}
-                onPointerUp={mUp(midi)}
-                onPointerLeave={mLeave(midi)}
-              >
-                <span className="kb-label">{n.kbd}</span>
-              </div>
-            );
-          })}
+      {show("keys") && (
+        <div className="kb">
+          <div className="kb-whites">
+            {WHITE_NOTES.map((n) => {
+              const midi = baseMidi + n.semi;
+              const on = pressed.has(midi);
+              return (
+                <div
+                  key={n.semi}
+                  className={"kb-key white" + (on ? " on" : "")}
+                  onPointerDown={mDown(midi)}
+                  onPointerUp={mUp(midi)}
+                  onPointerLeave={mLeave(midi)}
+                >
+                  <span className="kb-label">{n.kbd}</span>
+                </div>
+              );
+            })}
+          </div>
+          <div className="kb-blacks">
+            {BLACK_NOTES.map((n) => {
+              const midi = baseMidi + n.semi;
+              const on = pressed.has(midi);
+              return (
+                <div
+                  key={n.semi}
+                  className={"kb-key black" + (on ? " on" : "")}
+                  style={{ left: `${n.leftPct}%` }}
+                  onPointerDown={mDown(midi)}
+                  onPointerUp={mUp(midi)}
+                  onPointerLeave={mLeave(midi)}
+                >
+                  <span className="kb-label">{n.kbd}</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
-        <div className="kb-blacks">
-          {BLACK_NOTES.map((n) => {
-            const midi = baseMidi + n.semi;
-            const on = pressed.has(midi);
-            return (
-              <div
-                key={n.semi}
-                className={"kb-key black" + (on ? " on" : "")}
-                style={{ left: `${n.leftPct}%` }}
-                onPointerDown={mDown(midi)}
-                onPointerUp={mUp(midi)}
-                onPointerLeave={mLeave(midi)}
-              >
-                <span className="kb-label">{n.kbd}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-      <Stepper
-        label="Octave"
-        value={octave}
-        min={OCTAVE_MIN}
-        max={OCTAVE_MAX}
-        format={(v) => `C${v}`}
-        onChange={setOctave}
-        downAriaLabel="Octave down (Z)"
-        upAriaLabel="Octave up (X)"
-      />
+      )}
+      {show("octave") && (
+        <Stepper
+          label="Octave"
+          value={octave}
+          min={OCTAVE_MIN}
+          max={OCTAVE_MAX}
+          format={(v) => `C${v}`}
+          onChange={setOctave}
+          downAriaLabel="Octave down (Z)"
+          upAriaLabel="Octave up (X)"
+        />
+      )}
     </>
   );
 }

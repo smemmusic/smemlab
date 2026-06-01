@@ -17,6 +17,32 @@ export default {
   difficulty: "beginner",
   estimatedMinutes: 10,
 
+  // Puzzle mode — opt-in alternative visual for beginners. Wires disappear,
+  // modules render as interlocking puzzle pieces, the rack auto-snaps so
+  // connected ports overlap, and panels only show the controls listed below
+  // (everything unlisted is hidden, including the named visual elements like
+  // "scope" / "response" that aren't params).
+  //   anchor — instance id whose position is preserved; everything else is
+  //            laid out relative to it via the port-snap walk.
+  //   modules — keyed by the instance ids used in this journey:
+  //     controls: ordered list of UI element names the panel should show
+  //     ports:    list of port names that participate in the patch over the
+  //               whole journey (these become puzzle tabs/notches; ports
+  //               outside this list don't render at all)
+  puzzle: {
+    anchor: "osc",
+    modules: {
+      osc:      { controls: ["scope", "type", "freq"],              ports: ["main", "pitch"] },
+      filter:   { controls: ["response", "mode", "cutoff"],         ports: ["input", "output", "cutoff"] },
+      amp:      { controls: ["meter", "level"],                     ports: ["input", "output", "level"] },
+      env:      { controls: ["scope", "a", "d", "s", "r"],          ports: ["env", "trigger"] },
+      trigger:  { controls: ["button"],                             ports: ["gate"] },
+      lfo:      { controls: ["scope", "shape", "rate", "depth"],    ports: ["cv"] },
+      keyboard: { controls: ["keys"],                               ports: ["pitch", "gate"] },
+      output:   { controls: ["scope", "speaker"],                   ports: ["input"] },
+    },
+  },
+
   initialPatch: {
     modules: [
       { id: "osc",    type: "oscillator", params: { type: "sine", freq: 110, octave: 0 }, position: { x: 0,    y: 0 } },

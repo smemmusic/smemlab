@@ -4,6 +4,7 @@ import { Selector } from "../../components/controls/Selector.jsx";
 import { Stepper } from "../../components/controls/Stepper.jsx";
 import { Oscilloscope } from "../../components/viz/Oscilloscope.jsx";
 import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
+import { usePuzzleShow } from "../../content/puzzleHooks.js";
 
 const SHAPES = [
   { value: "sine",     label: "Sine",  wf: "sine" },
@@ -32,6 +33,7 @@ function PitchPlaceholder({ caption }) {
 
 export function OscillatorPanel() {
   const { instanceId: id } = useModuleInstance();
+  const show = usePuzzleShow(id);
 
   const params = useSynthStore((s) => s.modules.find((m) => m.id === id)?.params) || DEFAULT_PARAMS;
   // Show the "from keyboard" override when a keyboard module is wired into
@@ -54,17 +56,19 @@ export function OscillatorPanel() {
 
   return (
     <>
-      <Oscilloscope tag="Oscilloscope · raw output" instanceId={id} />
-      <Selector options={SHAPES} value={params.type} onChange={(v) => setModuleParam(id, "type", v)} />
-      <div className="ctrl-grid one">{pitchControl}</div>
-      <Stepper
-        label="Octave"
-        value={octave}
-        min={OCTAVE_MIN}
-        max={OCTAVE_MAX}
-        format={fmtOctave}
-        onChange={setOctave}
-      />
+      {show("scope")  && <Oscilloscope tag="Oscilloscope · raw output" instanceId={id} />}
+      {show("type")   && <Selector options={SHAPES} value={params.type} onChange={(v) => setModuleParam(id, "type", v)} />}
+      {show("freq")   && <div className="ctrl-grid one">{pitchControl}</div>}
+      {show("octave") && (
+        <Stepper
+          label="Octave"
+          value={octave}
+          min={OCTAVE_MIN}
+          max={OCTAVE_MAX}
+          format={fmtOctave}
+          onChange={setOctave}
+        />
+      )}
     </>
   );
 }

@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { useSynthStore } from "../store/useSynthStore.js";
 import { PORT_TYPE, PORT_DIR, portsCompatible } from "../audio/graph/types.js";
+import { usePuzzleModule } from "../content/puzzleHooks.js";
 
 // Visual port socket. Two ways to patch, both supported at once:
 //
@@ -25,7 +26,86 @@ const TYPE_COLOR_VAR = {
 
 const DRAG_THRESHOLD = 4; // px of movement before a press becomes a drag
 
+// Which edge of the module a port sits on. Mirrors the layout in
+// ModulePorts.jsx — audio on horizontal edges, CV/pitch/gate on vertical.
+function portEdge(port) {
+  if (port.type === PORT_TYPE.AUDIO) return port.dir === PORT_DIR.IN ? "left" : "right";
+  return port.dir === PORT_DIR.OUT ? "top" : "bottom";
+}
+
+// Classic puzzle-piece tab/notch. The boundary is a three-arc construction:
+//
+//   straight edge → small concave "shoulder" arc curving outward → large
+//   convex "bulb" arc (≈250°) → mirror shoulder arc → straight edge resumes
+//
+// Outputs render as TABS (bulb bulges outside the module); inputs render as
+// NOTCHES (bulb bulges inside the module body, carving a cavity). The path
+// is the same for both — only the fill colour differs:
+//   tab fill   = --white (extends the module's white body outward)
+//   notch fill = --paper (erases the body, exposing the rack background)
+//
+// The fill closes via a 2 px sliver past the chord — that sliver sits over
+// the module's existing 1 px ink border so the straight edge gets painted
+// out at the port span. Without it, the module border would draw straight
+// across the cut-out. The stroke draws only the three arcs, so what's left
+// visible is exactly a clean break in the otherwise-straight edge.
+//
+// Geometry — sR=5, bR=10, bx=14 satisfies the tangent equations cleanly:
+//   shoulder centres at (±5, ±12), bulb centre at (14, 0), tangent points
+//   at edge=(0, ±12) and at shoulder↔bulb=(8, ±8). Port span on the edge is
+//   24 (= 2·sy); bulb pokes 24 past the edge (= bx + bR).
+const PUZZLE_OVERLAP = 2;
+function PuzzleShape({ edge, dir }) {
+  const isTab = dir === PORT_DIR.OUT;
+  const fill   = isTab ? "var(--white)" : "var(--paper)";
+  const stroke = "var(--ink)";
+
+  // Horizontal edges (audio in/out) — bulb extends to the RIGHT in
+  // port-anchor coords. Same path for right-edge tab and left-edge notch;
+  // the SVG just sits in different places relative to the module body.
+  // Sweep flags: shoulders go math-CW around their centres (sweep=0) so the
+  // path leaves the edge heading along the edge then curves smoothly into
+  // the bulb. The bulb is the LARGE math-CCW arc (large=1, sweep=1) so it
+  // wraps around the far side of the bulb (away from the module body).
+  if (edge === "right" || edge === "left") {
+    const strokeD = "M 0 -12 A 5 5 0 0 0 8 -8 A 10 10 0 1 1 8 8 A 5 5 0 0 0 0 12";
+    const fillD   = strokeD + " L -2 12 L -2 -12 Z";
+    return (
+      <svg
+        className={"puzzle-shape edge-" + edge}
+        width={26}
+        height={24}
+        viewBox="-2 -12 26 24"
+        aria-hidden="true"
+        style={{ left: "-2px", top: "-12px" }}
+      >
+        <path d={fillD}   fill={fill}  stroke="none" />
+        <path d={strokeD} fill="none"  stroke={stroke} strokeWidth="1" />
+      </svg>
+    );
+  }
+  // Vertical edges (cv/pitch/gate) — bulb extends UPWARD in port-anchor
+  // coords. Same path for top-edge tab and bottom-edge notch. Sweep
+  // logic mirrors the horizontal case (rotated 90°).
+  const strokeD = "M -12 0 A 5 5 0 0 0 -8 -8 A 10 10 0 1 1 8 -8 A 5 5 0 0 0 12 0";
+  const fillD   = strokeD + " L 12 2 L -12 2 Z";
+  return (
+    <svg
+      className={"puzzle-shape edge-" + edge}
+      width={24}
+      height={26}
+      viewBox="-12 -24 24 26"
+      aria-hidden="true"
+      style={{ left: "-12px", top: "-24px" }}
+    >
+      <path d={fillD}   fill={fill}  stroke="none" />
+      <path d={strokeD} fill="none"  stroke={stroke} strokeWidth="1" />
+    </svg>
+  );
+}
+
 export function PortMarker({ moduleId, port }) {
+  const puzzle = usePuzzleModule(moduleId);
   const armedSource = useSynthStore((s) => s.ui.armedSource);
   const connections = useSynthStore((s) => s.connections);
   const armSource         = useSynthStore((s) => s.armSource);
@@ -190,10 +270,32 @@ export function PortMarker({ moduleId, port }) {
     "port",
     `port-${port.dir}`,
     `port-${port.type}`,
+    puzzle && "port-puzzle",
     isArmed && "armed",
     isCandidate && "candidate",
     isDropTarget && "drop-target",
   ].filter(Boolean).join(" ");
+
+  // Puzzle mode: the port is purely visual — no patching, no labels — so the
+  // module silhouette reads as an interlocking piece. The auto-snap layout
+  // places connected modules so each output port's `.port-anchor` lands on top
+  // of its target input port's anchor, producing the visual interlock.
+  if (puzzle) {
+    const edge = portEdge(port);
+    return (
+      <span
+        className={cls}
+        data-module-id={moduleId}
+        data-port-name={port.name}
+        data-port-dir={port.dir}
+        data-port-type={port.type}
+        title={`${port.name} · ${port.type} ${port.dir}`}
+      >
+        <PuzzleShape edge={edge} dir={port.dir} />
+        <span className="port-anchor" data-port-id={`${moduleId}:${port.name}`} aria-hidden="true" />
+      </span>
+    );
+  }
 
   return (
     <button

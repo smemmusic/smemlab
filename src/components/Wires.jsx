@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useLayoutEffect } from "react";
 import { useSynthStore } from "../store/useSynthStore.js";
 import { PORT_TYPE, PORT_DIR, listStaticPorts } from "../audio/graph/types.js";
 import { byType } from "../modules/_registry.js";
+import { usePuzzleConfig } from "../content/puzzleHooks.js";
 
 function lookupPort(modules, moduleId, portName) {
   const m = modules.find((x) => x.id === moduleId);
@@ -104,7 +105,11 @@ function nearestSegmentIndex(points, x, y) {
 // Unified wire overlay. Reads every connection in the store, looks up each
 // endpoint's screen position via [data-port-id="<moduleId>:<portName>"]
 // querySelector, and draws an SVG bezier between them.
+//
+// Puzzle mode short-circuits the entire overlay: connections are shown by the
+// interlocking module shapes instead of wires.
 export function Wires({ containerRef, panX = 0, panY = 0 }) {
+  const puzzle = usePuzzleConfig();
   const connections = useSynthStore((s) => s.connections);
   const modules     = useSynthStore((s) => s.modules);
   const selectedId  = useSynthStore((s) => s.ui.selectedConnectionId);
@@ -359,6 +364,7 @@ export function Wires({ containerRef, panX = 0, panY = 0 }) {
     removeWaypoint(conn.id, wpIndex);
   }
 
+  if (puzzle) return null;
   if (paths.length === 0 && !dragPreview) return null;
 
   return (
