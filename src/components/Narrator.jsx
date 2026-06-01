@@ -72,7 +72,12 @@ export function Narrator() {
         </div>
         <h2>{c.title}</h2>
         <p dangerouslySetInnerHTML={{ __html: c.prose }} />
-        <div className="try">{c.tryit}</div>
+        <div className="try">
+          {/* Wrap in a span so the parent flex sees one content child
+              (alongside the ::before "TRY" badge) — without this, each
+              text fragment and inline tag becomes its own flex column. */}
+          <span dangerouslySetInnerHTML={{ __html: c.tryit }} />
+        </div>
       </div>
       <div className="nav-row">
         <button

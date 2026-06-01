@@ -1,5 +1,4 @@
 import { Header } from "./components/Header.jsx";
-import { ChapterRail } from "./components/ChapterRail.jsx";
 import { Narrator } from "./components/Narrator.jsx";
 import { Stage } from "./components/Stage.jsx";
 import { Transport } from "./components/Transport.jsx";
@@ -42,7 +41,6 @@ export function App() {
         )}
         {showSidebar && (
           <aside className="sidebar">
-            <ChapterRail />
             <Narrator />
           </aside>
         )}

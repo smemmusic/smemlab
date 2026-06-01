@@ -212,52 +212,6 @@ header {
   min-width: 0;
 }
 
-/* Chapter rail = a "signal flow" diagram from the brand graphic language. */
-.rail { position: relative; }
-.rail-title {
-  font-family: var(--f-mono);
-  font-size: 10px; letter-spacing: var(--t-tracking-eyebrow); text-transform: uppercase;
-  color: var(--ink-quiet);
-  margin: 0 0 14px 18px;
-}
-/* Brand-style "— SECTION ·" rule before the rail title is rendered via .rail-title's container. */
-.bus { position: relative; padding-left: 18px; }
-.bus::before {
-  content: ""; position: absolute; left: 7px; top: 8px; bottom: 8px; width: 1px;
-  background: var(--ink-rule); border-radius: 1px;
-}
-.chap {
-  position: relative; display: block; width: 100%; text-align: left;
-  background: none; border: none; cursor: pointer;
-  padding: 10px 0 10px 20px; color: var(--ink-soft);
-  font-family: var(--f-sans);
-}
-.chap .tap {
-  position: absolute; left: -1px; top: 14px; width: 15px; height: 15px; border-radius: 50%;
-  background: var(--paper); border: 1.5px solid var(--ink-rule);
-  transition: .2s var(--ease);
-}
-.chap .ix {
-  font-family: var(--f-mono);
-  font-size: 9px; letter-spacing: .2em; text-transform: uppercase;
-  color: var(--ink-quiet); display: block; margin-bottom: 2px;
-}
-.chap .nm {
-  font-size: 14px; letter-spacing: .002em; line-height: 1.25;
-  font-weight: 400;
-}
-/* Completed chapter — filled red "indicator notch" — i.e. the logo's e-light, signal-on. */
-.chap.done .tap { background: var(--red); border-color: var(--red); }
-/* Active chapter — Ink fill */
-.chap.active .tap {
-  background: var(--ink); border-color: var(--ink);
-  box-shadow: 0 0 0 4px rgba(17,17,17,.06);
-}
-.chap.active { color: var(--ink); }
-.chap.active .nm { font-weight: 500; }
-.chap.locked { cursor: default; opacity: .42; }
-/* Control chapters use Rouge dot when done — quieter signal. */
-.chap.control.done .tap { background: var(--rouge); border-color: var(--rouge); }
 
 /* ──────────────────────────────────────────────────────────
    NARRATOR — museum placard typography.
@@ -1317,10 +1271,6 @@ header {
   .wrap.mobile-view-instructions .main-area { display: none; }
 
   .sidebar { border-right: none; max-height: none; overflow-y: auto; }
-  .bus { display: flex; gap: 4px; overflow-x: auto; padding-left: 0; }
-  .bus::before { display: none; }
-  .chap { flex: 0 0 auto; padding: 8px 12px; border: 1px solid var(--ink-rule); border-radius: 5px; }
-  .chap .tap { display: none; }
 
   .landing .card { padding: 36px 28px; }
   .landing h1 { font-size: 40px; }

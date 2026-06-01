@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSynthStore } from "../store/useSynthStore.js";
 import { paletteList } from "../modules/_registry.js";
 
@@ -7,9 +7,18 @@ import { paletteList } from "../modules/_registry.js";
 // the store; the bridge picks it up on reconcile. Collapsible — the header
 // is a button that toggles the list. Collapse state is purely local (no
 // store/persist) because it's a transient UI preference.
+//
+// Default state follows the mode: free build opens the list (you'll
+// reach for it immediately), a journey collapses it (the narrator
+// adds modules for you — keep the rack uncluttered).
 export function Palette() {
   const addModuleInstance = useSynthStore((s) => s.addModuleInstance);
-  const [open, setOpen] = useState(true);
+  const journeyId = useSynthStore((s) => s.journeyId);
+  const [open, setOpen] = useState(journeyId == null);
+  // Re-sync when the mode flips (back-to-journeys → pick free build, etc.):
+  // Palette stays mounted across those transitions, so without this effect
+  // the initial useState would never re-run and the default would stick.
+  useEffect(() => { setOpen(journeyId == null); }, [journeyId]);
   const items = paletteList();
 
   return (
