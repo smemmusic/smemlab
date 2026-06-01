@@ -64,8 +64,26 @@ export class GraphEngine {
     if (!this.ctx) {
       const Ctor = window.AudioContext || window.webkitAudioContext;
       this.ctx = new Ctor({ latencyHint: 0.005 });
-    } else if (this.ctx.state === "suspended") {
-      this.ctx.resume();
+      // Firefox and Safari always create the context in "suspended" state and
+      // only flip to "running" once resume() resolves — which is asynchronous.
+      // By the time it resolves, the bridge has already called addModule() for
+      // the journey's initial modules, and addModule() skipped instance.start()
+      // because isRunning() was still false. Catch the suspended→running
+      // transition and (re-)start every module then. AudioModule.start() is
+      // idempotent (oscillators guard with _started, others are no-op without
+      // a gate), so iterating every module is safe.
+      this.ctx.addEventListener("statechange", () => {
+        if (this.ctx?.state === "running") {
+          for (const m of this.modules.values()) m.start?.();
+        }
+      });
+    }
+    // resume() must be called for every newly-created context too — not only
+    // when re-entering a previously-suspended one. The user gesture must be on
+    // the call stack (Safari requirement), so this stays synchronous; the
+    // returned promise resolves on its own and statechange picks up the flip.
+    if (this.ctx.state === "suspended") {
+      this.ctx.resume().catch(() => {});
     }
     for (const m of this.modules.values()) m.start?.();
   }
