@@ -287,6 +287,38 @@ header {
 }
 .narrator.control .try::before { color: var(--rouge); border-color: var(--control-soft); background: var(--control-soft); }
 
+/* Multi-step variant — TRY badge sits above the list (cleaner than baseline
+   alignment with a tall <ol>). Steps are numbered for sequential reading. */
+.narrator .try.try-list {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.narrator .try.try-list ol {
+  list-style: none;
+  counter-reset: try-step;
+  margin: 0; padding: 0;
+  width: 100%;
+  display: flex; flex-direction: column;
+  gap: 6px;
+}
+.narrator .try.try-list ol li {
+  position: relative;
+  padding-left: 22px;
+  counter-increment: try-step;
+  line-height: 1.45;
+}
+.narrator .try.try-list ol li::before {
+  content: counter(try-step, decimal-leading-zero);
+  position: absolute; left: 0; top: 1px;
+  font-family: var(--f-mono);
+  font-style: normal;
+  font-size: 9px;
+  letter-spacing: .14em;
+  color: var(--rouge);
+  font-variant-numeric: tabular-nums;
+}
+
 .narrator .nav-row {
   flex: 0 0 auto;
   margin-top: 0;

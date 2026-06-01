@@ -42,7 +42,11 @@ export default {
       adds: null,
       title: "A kick begins with a single, very low sine wave.",
       prose: "At <b>50 Hz</b> you're below the range of most melodic notes — close to the fundamental of a real kick drum. On its own it's a continuous rumble; everything we add next will turn that rumble into a punch.",
-      tryit: "Listen. Slide the pitch up and back down — anything under ~100 Hz still reads as a kick's body.",
+      tryit: [
+        "Listen to the low rumble at <b>50 Hz</b>.",
+        "Slide the pitch up to <b>100 Hz</b> — still kick territory.",
+        "Slide it back down — feel the floor.",
+      ],
     },
 
     {
@@ -72,7 +76,11 @@ export default {
       },
       title: "An envelope shapes the rumble into a hit.",
       prose: "We splice an <b>amplifier</b> into the chain and pin its gain to <b>−∞ dB</b> — silent. An <b>AD envelope</b>, triggered by the <b>gate</b>, opens the amp on each press: <b>0 s attack</b> (instant) and <b>350 ms decay</b> back to silence. That envelope shape is the kick's body.",
-      tryit: "Press the Trigger (or hit <b>K</b>). Sweep the envelope's decay knob shorter and longer — short = tight kick, long = boomy floor tom.",
+      tryit: [
+        "Press the Trigger (or hit <b>K</b>) — one clean thump.",
+        "Shorten the envelope's <b>decay</b> — a tight kick.",
+        "Lengthen it — a boomy floor tom.",
+      ],
     },
 
     {
@@ -102,7 +110,12 @@ export default {
       },
       title: "A second envelope adds the click.",
       prose: "A real kick isn't just a thump — there's a fast <b>upward pitch sweep</b> at the start that the ear hears as a percussive click. A second <b>AD envelope</b>, much shorter (<b>175 ms</b>), drives the oscillator's <span class='cy'>pitch mod</span> through an <b>attenuverter</b> that scales it down to a tasteful burst. The same trigger fires both envelopes — one for the body, one for the click.",
-      tryit: "Hit the trigger (<b>K</b>). Raise the attenuverter's <b>amount</b> for a more aggressive click, or pull it past centre to invert (downward sweep). Shorten the pitch envelope's decay for tighter snap.",
+      tryit: [
+        "Hit the trigger (<b>K</b>) — now there's a click on top of the thump.",
+        "Raise the attenuverter's <b>amount</b> for a more aggressive click.",
+        "Pull it past centre to invert — the sweep goes downward.",
+        "Shorten the pitch envelope's <b>decay</b> for a tighter snap.",
+      ],
     },
 
     {
@@ -143,7 +156,12 @@ export default {
       },
       title: "A snare is mostly noise.",
       prose: "Where the kick's body is a tuned sine, the snare's body is <b>noise</b> — the metal-on-skin rattle has no pitch. We build the snare with the same recipe (oscillator → silent amp → AD envelope opens it on each gate), but the oscillator is set to <b>noise</b> and the decay is much shorter (<b>150 ms</b>) so the hit is tight and snappy. The new <span class='g'>snare trigger</span> has its own button and its own key — kick is on <b>K</b>, snare is on <b>S</b>, so you can play them independently.",
-      tryit: "Tap <b>K S K S</b> for a back-beat, or roll them together for fills. Sweep the snare envelope's decay to taste — shorter for a click, longer for a brushy hiss.",
+      tryit: [
+        "Tap <b>S</b> alone — hear the snare on its own.",
+        "Tap <b>K S K S</b> for a back-beat.",
+        "Shorten the snare envelope's <b>decay</b> — a sharp click.",
+        "Lengthen it — a brushy hiss.",
+      ],
     },
 
     {
@@ -185,7 +203,11 @@ export default {
       },
       title: "From rumble to sizzle.",
       prose: "Raw noise has energy at <b>every</b> frequency — including the low ones that overlap the kick and make the snare sound muddy. A <b>high-pass filter</b> set to <b>2 kHz</b> rolls off everything below that, leaving only the bright, hissy sparkle that makes a snare read as a snare. (Real 909 snares use exactly this trick — the noise generator runs through a fixed band-pass that emphasises the upper midrange.)",
-      tryit: "Sweep the filter's <b>cutoff</b> down toward 100 Hz — the snare becomes a low whoosh. Push it up to 8 kHz — pure metallic sizzle. Then leave it around 2 kHz where it sounds most like a snare.",
+      tryit: [
+        "Sweep the filter's <b>cutoff</b> down toward <b>100 Hz</b> — a low whoosh.",
+        "Push it up to <b>8 kHz</b> — pure metallic sizzle.",
+        "Leave it around <b>2 kHz</b> — that's the snare sweet spot.",
+      ],
     },
 
     {
@@ -246,7 +268,12 @@ export default {
       },
       title: "A snare has pitch too.",
       prose: "Listen carefully to a real snare and you'll hear a brief pitched <b>thwack</b> underneath the hiss — that's the drum's two skins resonating. We add a <b>triangle oscillator at 200 Hz</b> with its own amp and a very short (<b>80 ms</b>) envelope, fired by the same trigger as the noise. With <b>three audio sources</b> now (kick, snare noise, snare body), we route everything through an <b>audio mixer</b> so you can balance them by ear — turn the body up for more thump, the noise up for more sizzle.",
-      tryit: "Hit <b>S</b> and tweak the mixer's <b>channel 2</b> (noise) vs <b>channel 3</b> (body) — you can rebalance the snare's character on the fly. Then slide the tonal oscillator's pitch around <b>180–330 Hz</b> to tune the snare.",
+      tryit: [
+        "Hit <b>S</b> — the snare now has body underneath the hiss.",
+        "Raise the mixer's <b>channel 3</b> for more thwack.",
+        "Raise <b>channel 2</b> for more sizzle.",
+        "Tune the tonal oscillator's pitch between <b>180–330 Hz</b>.",
+      ],
     },
   ],
 };

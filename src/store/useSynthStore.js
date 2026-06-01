@@ -36,10 +36,11 @@ function cloneDeep(x) {
 // Empty graph used as a safe fallback. Free-build mode opens here.
 const EMPTY_GRAPH = { modules: [], connections: [] };
 
-// Default position for an auto-inserted Output in Free build — sits on the
-// right of the 1200px-min-width rack so it's the rightmost module on screen
-// once auto-fit kicks in.
-const DEFAULT_OUTPUT_POSITION = { x: 900, y: 60 };
+// Default position for an auto-inserted Output in Free build — anchored at
+// the far right of the work area so newly-added modules from the palette
+// land to its left, mirroring the signal-flow direction of the journeys
+// (where Output also sits at x=1200, the rightmost column).
+const DEFAULT_OUTPUT_POSITION = { x: 1200, y: 0 };
 
 function makeDefaultOutput() {
   return {

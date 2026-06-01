@@ -19,7 +19,7 @@ export default {
 
   initialPatch: {
     modules: [
-      { id: "osc",    type: "oscillator", params: { type: "sawtooth", freq: 110, octave: 0 }, position: { x: 0,    y: 0 } },
+      { id: "osc",    type: "oscillator", params: { type: "sine", freq: 110, octave: 0 }, position: { x: 0,    y: 0 } },
       { id: "output", type: "output",     params: { vol: 80 },                                  position: { x: 1200, y: 0 } },
     ],
     connections: [
@@ -36,7 +36,10 @@ export default {
       adds: null,
       title: "A synthesiser begins with a single, continuous tone.",
       prose: "The <b>oscillator</b> is the only part that actually makes sound. Everything you add later only reshapes what it produces. Watch its raw waveform, switch between the five shapes, and slide the pitch.",
-      tryit: "Switch shapes — including noise — then move the pitch.",
+      tryit: [
+        "Switch between the five wave shapes.",
+        "Slide the pitch up and down.",
+      ],
     },
 
     {
@@ -47,7 +50,7 @@ export default {
       addLabel: "Add Filter",
       adds: {
         modules: [
-          { id: "filter", type: "filter", params: { cutoff: 1200, resonance: 1, mode: "lowpass" }, position: { x: 400, y: 0 } },
+          { id: "filter", type: "filter", params: { cutoff: 550, resonance: 1, mode: "lowpass" }, position: { x: 400, y: 0 } },
         ],
         // Splice the filter into the audio chain: drop osc→output, add osc→filter and filter→output.
         removeConnections: ["c-osc-out"],
@@ -58,7 +61,12 @@ export default {
       },
       title: "A filter carves harmonics away from the tone.",
       prose: "Signal now flows <b>oscillator → filter → output</b>. A <b>low-pass</b> filter removes harmonics above the cutoff, darkening the sound; flip the switch to <b>high-pass</b> and it does the opposite. <b>Resonance</b> emphasises frequencies right at the cutoff.",
-      tryit: "Pull the cutoff down, then throw the LP / HP switch.",
+      tryit: [
+        "Set the oscillator shape to saw or square so the filter's effect is more obvious.",
+        "Pull the <b>cutoff</b> down — the sound darkens.",
+        "Raise the <b>resonance</b> and sweep the cutoff to hear the peak.",
+        "Flip the switch to <b>high-pass</b> — now the lows disappear instead.",
+      ],
     },
 
     {
@@ -80,7 +88,11 @@ export default {
       },
       title: "Gain is measured in decibels",
       prose: "The <b>amplifier</b> applies a gain in <b>decibels</b>. Push it above <b>0 dB</b> and it amplifies, louder than the source; pull it below and it attenuates.",
-      tryit: "Push the gain above 0 dB, then well below it.",
+      tryit: [
+        "Push the gain above <b>0 dB</b> — louder than the source.",
+        "Pull it well below <b>0 dB</b> — almost silent.",
+        "Park it at <b>0 dB</b> — unity, the source passes through unchanged.",
+      ],
     },
 
     {
@@ -105,7 +117,12 @@ export default {
       },
       title: "A silent signal that reshapes the sound.",
       prose: "The <span class='cy'>envelope</span> makes no sound on its own. It is a control signal, meant to modify a parameter of another module. Here we connected it to the gain. When the <b>gate</b> signal is held high: the envelope goes through → attack, decay, sustain; release phases.",
-      tryit: "Hold the Trigger and watch the envelope shape the signal's amplitude.",
+      tryit: [
+        "Hold the <b>Trigger</b> — the envelope opens the amp.",
+        "Release it and listen as the sound fades out.",
+        "Raise the <b>attack</b> for a slower fade-in.",
+        "Shorten the <b>release</b> for a snappier tail.",
+      ],
     },
 
     {
@@ -124,7 +141,11 @@ export default {
       },
       title: "An oscillator too slow to hear becomes a controller.",
       prose: "The <span class='cy'>LFO</span> is the same circuit as your very first module — only slow, and patched somewhere other than the speaker. Here it drives the <b>filter cutoff</b>: its ±1 output is multiplied by the <b>depth</b>.",
-      tryit: "Raise the LFO depth and watch the filter breathe.",
+      tryit: [
+        "Raise the LFO <b>depth</b> — the filter starts to breathe.",
+        "Increase the <b>rate</b> for a faster wobble.",
+        "Change the LFO's <b>shape</b> — sine sweeps, square steps.",
+      ],
     },
 
     {
@@ -146,7 +167,11 @@ export default {
       },
       title: "Stop turning. Start playing.",
       prose: "The <span class='cy'>keyboard</span> is another manual control source — here patched into the oscillator's <b>pitch</b>. Each key sends a fixed frequency, so the pitch knob steps aside. Use the on-screen keys, the computer keys <b>A&nbsp;W&nbsp;S&nbsp;E&nbsp;D&nbsp;F&nbsp;T&nbsp;G&nbsp;Y&nbsp;H&nbsp;U&nbsp;J</b>, and shift octaves with <b>Z</b> / <b>X</b>.<br/>When pressing a key, this module also emits a gate signal to trigger the envelope.",
-      tryit: "Play a melody on A S D F G H J.",
+      tryit: [
+        "Play a melody on <b>A S D F G H J</b>.",
+        "Shift octaves with <b>Z</b> / <b>X</b>.",
+        "Hold a key — the envelope opens and stays open.",
+      ],
     },
   ],
 };

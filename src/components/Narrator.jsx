@@ -72,12 +72,26 @@ export function Narrator() {
         </div>
         <h2>{c.title}</h2>
         <p dangerouslySetInnerHTML={{ __html: c.prose }} />
-        <div className="try">
-          {/* Wrap in a span so the parent flex sees one content child
-              (alongside the ::before "TRY" badge) — without this, each
-              text fragment and inline tag becomes its own flex column. */}
-          <span dangerouslySetInnerHTML={{ __html: c.tryit }} />
-        </div>
+        {/* tryit accepts either a string (single instruction) or an
+            array (multiple atomic steps). Multiple steps render as a
+            numbered list under a single TRY badge — keeps the badge
+            from repeating and signals "do these in order". */}
+        {(() => {
+          const steps = Array.isArray(c.tryit) ? c.tryit : [c.tryit];
+          return (
+            <div className={"try" + (steps.length > 1 ? " try-list" : "")}>
+              {steps.length === 1 ? (
+                <span dangerouslySetInnerHTML={{ __html: steps[0] }} />
+              ) : (
+                <ol>
+                  {steps.map((step, i) => (
+                    <li key={i} dangerouslySetInnerHTML={{ __html: step }} />
+                  ))}
+                </ol>
+              )}
+            </div>
+          );
+        })()}
       </div>
       <div className="nav-row">
         <button
