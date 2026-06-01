@@ -19,8 +19,8 @@ export default {
 
   initialPatch: {
     modules: [
-      { id: "osc",    type: "oscillator", params: { type: "sawtooth", freq: 110, octave: 0 }, position: { x: 0,   y: 0 } },
-      { id: "output", type: "output",     params: { vol: 80 },                                  position: { x: 870, y: 0 } },
+      { id: "osc",    type: "oscillator", params: { type: "sawtooth", freq: 110, octave: 0 }, position: { x: 0,    y: 0 } },
+      { id: "output", type: "output",     params: { vol: 80 },                                  position: { x: 1200, y: 0 } },
     ],
     connections: [
       { id: "c-osc-out", fromId: "osc", fromPort: "main", toId: "output", toPort: "input" },
@@ -47,7 +47,7 @@ export default {
       addLabel: "Add Filter",
       adds: {
         modules: [
-          { id: "filter", type: "filter", params: { cutoff: 1200, resonance: 1, mode: "lowpass" }, position: { x: 290, y: 0 } },
+          { id: "filter", type: "filter", params: { cutoff: 1200, resonance: 1, mode: "lowpass" }, position: { x: 400, y: 0 } },
         ],
         // Splice the filter into the audio chain: drop osc→output, add osc→filter and filter→output.
         removeConnections: ["c-osc-out"],
@@ -69,7 +69,7 @@ export default {
       addLabel: "Add Amplifier",
       adds: {
         modules: [
-          { id: "amp", type: "amp", params: { level: 0 }, position: { x: 580, y: 0 } },
+          { id: "amp", type: "amp", params: { level: 0 }, position: { x: 800, y: 0 } },
         ],
         // Splice amp between filter and output.
         removeConnections: ["c-filter-output"],
@@ -91,8 +91,8 @@ export default {
       addLabel: "Add Envelope",
       adds: {
         modules: [
-          { id: "env",  type: "env",  params: { a: 0.05, d: 0.2, s: -8, r: 0.4 }, position: { x: 580, y: 470 } },
-          { id: "trigger", type: "trigger", params: {},                                       position: { x: 870, y: 470 } },
+          { id: "env",  type: "env",  params: { a: 0.05, d: 0.2, s: -8, r: 0.4 }, position: { x: 800,  y: 520 } },
+          { id: "trigger", type: "trigger", params: {},                                       position: { x: 1200, y: 520 } },
         ],
         connections: [
           { id: "c-env-amp",   fromId: "env",     fromPort: "env",  toId: "amp", toPort: "level"   },
@@ -116,7 +116,7 @@ export default {
       addLabel: "Add LFO",
       adds: {
         modules: [
-          { id: "lfo", type: "lfo", params: { rate: 5, depth: 0.4, shape: "sine" }, position: { x: 290, y: 470 } },
+          { id: "lfo", type: "lfo", params: { rate: 1, depth: 0.4, shape: "sine" }, position: { x: 400, y: 520 } },
         ],
         connections: [
           { id: "c-lfo-cutoff", fromId: "lfo", fromPort: "cv", toId: "filter", toPort: "cutoff" },
@@ -135,7 +135,7 @@ export default {
       addLabel: "Add Keyboard",
       adds: {
         modules: [
-          { id: "keyboard", type: "keyboard", params: { octave: 4 }, position: { x: 0, y: 470 } },
+          { id: "keyboard", type: "keyboard", params: { octave: 4 }, position: { x: 0, y: 520 } },
         ],
         connections: [
           { id: "c-kb-pitch", fromId: "keyboard", fromPort: "pitch", toId: "osc", toPort: "pitch"   },
