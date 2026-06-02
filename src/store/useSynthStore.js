@@ -203,9 +203,15 @@ export const useSynthStore = create(
           set((s) => ({ modules: upsertModule(s.modules, mod) }));
           return id;
         },
+        // Sets a module's absolute position in model coords. Callers are
+        // expected to clamp if they want to prevent off-rack positions —
+        // the store stores whatever it's given. (The drag handler in
+        // Module.jsx clamps to >= 0 so users can't lose a module off the
+        // top-left; the puzzle-mode auto-snap intentionally allows
+        // sub-pixel negative values so its threshold convergence works.)
         setModulePosition: (id, x, y) => set((s) => ({
           modules: s.modules.map((m) =>
-            m.id === id ? { ...m, position: { x: Math.max(0, x), y: Math.max(0, y) } } : m
+            m.id === id ? { ...m, position: { x, y } } : m
           ),
         })),
         removeModuleInstance: (id) => set((s) => {
@@ -282,6 +288,7 @@ export const useSynthStore = create(
         // are idempotent: re-applying after a back-then-forward navigation
         // does not duplicate modules or connections.
         //   delta.modules?           — array of { id, type, params, position } to add (skip if id exists)
+        //   delta.removeModules?     — array of module ids to remove (cascade-removes connections)
         //   delta.connections?       — array of { id, fromId, fromPort, toId, toPort } to add (skip if id exists)
         //   delta.removeConnections? — array of connection ids to remove
         //   delta.setParams?         — { [moduleId]: { ...paramsToMerge } }
@@ -295,6 +302,18 @@ export const useSynthStore = create(
               if (!modules.some((x) => x.id === m.id)) {
                 modules = [...modules, cloneDeep(m)];
               }
+            }
+          }
+
+          // Drop modules (and any wires that referenced them). Idempotent:
+          // re-applying the same delta after a Prev → Next round-trip is a
+          // no-op for already-absent ids. Cascade-removes connections so
+          // we never persist a dangling endpoint.
+          if (Array.isArray(delta.removeModules)) {
+            for (const mid of delta.removeModules) {
+              if (!modules.some((m) => m.id === mid)) continue;
+              modules = modules.filter((m) => m.id !== mid);
+              connections = connections.filter((c) => c.fromId !== mid && c.toId !== mid);
             }
           }
 

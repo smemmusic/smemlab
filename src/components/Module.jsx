@@ -56,7 +56,11 @@ export function Module({ type, instanceId, children }) {
       const dy = (ev.clientY - startY) / scale;
       if (Math.abs(dx) + Math.abs(dy) > 3) dragDidMoveRef.current = true;
       if (dragDidMoveRef.current) {
-        setModulePosition(instanceId, origX + dx, origY + dy);
+        // Clamp the dragged position to non-negative so users can't lose a
+        // module off the top-left corner of the rack. The store itself no
+        // longer clamps (so the puzzle-mode snap can settle on sub-pixel
+        // negative offsets without ping-ponging against the floor).
+        setModulePosition(instanceId, Math.max(0, origX + dx), Math.max(0, origY + dy));
       }
     }
     function onUp() {
@@ -83,6 +87,12 @@ export function Module({ type, instanceId, children }) {
     left: `${effectivePosition.x}px`,
     top:  `${effectivePosition.y}px`,
   };
+  // Puzzle mode sizes modules in N×U rack units (see --u-w / --u-h in
+  // global.css). The journey's puzzle config declares each module's w and h
+  // in those units; we surface them as CSS variables on the module so
+  // puzzle.css can resolve the final width/height via calc().
+  if (puzzle?.w !== undefined) moduleStyle["--puzzle-w"] = puzzle.w;
+  if (puzzle?.h !== undefined) moduleStyle["--puzzle-h"] = puzzle.h;
 
   // In puzzle mode the rack owns the layout (no drag) and the module reads as
   // a fixed piece, so we drop the `draggable` class and the remove button.

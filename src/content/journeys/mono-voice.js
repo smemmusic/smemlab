@@ -25,21 +25,42 @@ export default {
   //   anchor — instance id whose position is preserved; everything else is
   //            laid out relative to it via the port-snap walk.
   //   modules — keyed by the instance ids used in this journey:
-  //     controls: ordered list of UI element names the panel should show
-  //     ports:    list of port names that participate in the patch over the
-  //               whole journey (these become puzzle tabs/notches; ports
-  //               outside this list don't render at all)
+  //     w, h:    module size in rack units (1U = --u-w wide / --u-h tall).
+  //     controls: ordered list of UI element names the panel should show.
+  //     ports:    port names that participate in the patch over the whole
+  //               journey (these become puzzle tabs/notches; ports outside
+  //               this list don't render at all).
+  //     portPositions: optional { name: fraction-along-edge }. Lets wide
+  //                    modules pin specific ports to specific columns —
+  //                    e.g. the 3U keyboard puts its pitch tab at 1/6 of
+  //                    the top edge so it lines up with osc above, and
+  //                    its gate tab at 5/6 to reach env's trigger notch.
+  //                    Omit to evenly distribute ports along the edge.
   puzzle: {
     anchor: "osc",
     modules: {
-      osc:      { controls: ["scope", "type", "freq"],              ports: ["main", "pitch"] },
-      filter:   { controls: ["response", "mode", "cutoff", "resonance"], ports: ["input", "output", "cutoff"] },
-      amp:      { controls: ["meter", "level"],                     ports: ["input", "output", "level"] },
-      env:      { controls: ["scope", "a", "d", "s", "r"],          ports: ["env", "trigger"] },
-      trigger:  { controls: ["button"],                             ports: ["gate"] },
-      lfo:      { controls: ["scope", "shape", "rate", "depth"],    ports: ["cv"] },
-      keyboard: { controls: ["keys"],                               ports: ["pitch", "gate"] },
-      output:   { controls: ["scope", "speaker"],                   ports: ["input"] },
+      // Osc is 4U tall so the keyboard (in row 3) can interlock its gate
+       // tab with env's trigger notch — env's bottom sits at the same y as
+       // osc's bottom because env (h=2) is in row 2 below amp. With both
+       // bottoms at y = 4·U_H, kb (which attaches under osc.pitch) lands
+       // directly underneath BOTH osc and env in one clean row.
+       // `main` is pinned to the top quarter (y = 1/4 of osc.height) so the
+       // audio chain (filter/amp/output, h=2) stays top-aligned with osc
+       // rather than centre-aligning at osc's vertical midpoint.
+      osc:      { w: 1, h: 4, controls: ["scope", "type", "freq"],              ports: ["main", "pitch"],
+                  portPositions: { main: 0.25 } },
+      filter:   { w: 1, h: 2, controls: ["response", "mode", "cutoff", "resonance"], ports: ["input", "output", "cutoff"] },
+      amp:      { w: 1, h: 2, controls: ["meter", "level"],                     ports: ["input", "output", "level"] },
+      env:      { w: 1, h: 2, controls: ["scope", "a", "d", "s", "r"],          ports: ["env", "trigger"] },
+      trigger:  { w: 1, h: 1, controls: ["button"],                             ports: ["gate"] },
+      lfo:      { w: 1, h: 2, controls: ["scope", "shape", "rate", "depth"],    ports: ["cv"] },
+      keyboard: {
+        w: 3, h: 1,
+        controls: ["keys"],
+        ports: ["pitch", "gate"],
+        portPositions: { pitch: 1/6, gate: 5/6 },
+      },
+      output:   { w: 1, h: 2, controls: ["scope", "speaker"],                   ports: ["input"] },
     },
   },
 
@@ -184,6 +205,10 @@ export default {
         modules: [
           { id: "keyboard", type: "keyboard", params: { octave: 4 }, position: { x: 0, y: 520 } },
         ],
+        // The keyboard supplies both V/oct pitch AND a gate per key, so the
+        // standalone Trigger from chapter 04 becomes redundant — drop it (and
+        // its c-trig-env wire, cascade-removed by removeModules).
+        removeModules: ["trigger"],
         connections: [
           { id: "c-kb-pitch", fromId: "keyboard", fromPort: "pitch", toId: "osc", toPort: "pitch"   },
           { id: "c-kb-gate",  fromId: "keyboard", fromPort: "gate",  toId: "env", toPort: "trigger" },
