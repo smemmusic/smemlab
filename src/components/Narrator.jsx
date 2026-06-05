@@ -2,6 +2,7 @@ import { useSynthStore } from "../store/useSynthStore.js";
 import { byId as journeyById } from "../content/journeys/index.js";
 import { NARRATOR_UI } from "../content/ui.js";
 import { byType } from "../modules/_registry.js";
+import { usePuzzleAvailable } from "../content/puzzleHooks.js";
 
 const KIND_LABEL = {
   audio:   "Audio · Module",
@@ -17,6 +18,9 @@ export function Narrator() {
   const focusedType  = useSynthStore((s) => s.ui.focusedModuleSlot);
   const clearFocus   = useSynthStore((s) => s.clearFocus);
   const setMobileView = useSynthStore((s) => s.setMobileView);
+  const fullModular  = useSynthStore((s) => s.fullModular);
+  const setFullModular = useSynthStore((s) => s.setFullModular);
+  const puzzleAvailable = usePuzzleAvailable();
 
   if (!journeyId) return null;
   const journey  = journeyById(journeyId);
@@ -92,6 +96,25 @@ export function Narrator() {
             </div>
           );
         })()}
+        {/* Last step of a puzzle journey: invite the learner to "go further"
+            by leaving the guided puzzle for the full modular view. Only shown
+            while still in puzzle mode — once switched, the header button is
+            the way back. */}
+        {atEnd && puzzleAvailable && !fullModular && (
+          <div className="go-further">
+            <h3>Ready to go further?</h3>
+            <p>
+              You've built the whole patch. Switch to the <b>full modular view</b> to
+              see the wires, reveal every control, and add your own modules.
+            </p>
+            <button
+              className="go-further-btn"
+              onClick={() => { setFullModular(true); setMobileView("synth"); }}
+            >
+              Switch to modular view →
+            </button>
+          </div>
+        )}
       </div>
       <div className="nav-row">
         <button

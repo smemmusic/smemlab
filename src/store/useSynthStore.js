@@ -36,6 +36,33 @@ function cloneDeep(x) {
 // Empty graph used as a safe fallback. Free-build mode opens here.
 const EMPTY_GRAPH = { modules: [], connections: [] };
 
+// Collect the canonical (authored) position for every module a journey
+// defines, scanning its initialPatch and every chapter delta (`adds.modules`
+// and `adds.setPositions`). Used when a visitor leaves puzzle mode for the
+// full modular view: puzzle layout interlocks the pieces (overlapping
+// coordinates), so we spread them back out to the journey's spaced-out
+// authored layout instead of leaving them stacked.
+function journeyModulePositions(journey) {
+  const pos = {};
+  if (!journey) return pos;
+  for (const m of journey.initialPatch?.modules || []) {
+    if (m.position) pos[m.id] = { ...m.position };
+  }
+  for (const ch of journey.chapters || []) {
+    const adds = ch.adds;
+    if (!adds) continue;
+    for (const m of adds.modules || []) {
+      if (m.position) pos[m.id] = { ...m.position };
+    }
+    if (adds.setPositions) {
+      for (const [id, p] of Object.entries(adds.setPositions)) {
+        pos[id] = { x: p.x, y: p.y };
+      }
+    }
+  }
+  return pos;
+}
+
 // Default position for an auto-inserted Output in Free build — anchored at
 // the far right of the work area so newly-added modules from the palette
 // land to its left, mirroring the signal-flow direction of the journeys
@@ -128,6 +155,7 @@ function applyPatchObject(set, patch) {
     ui: { armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1, mobileView: "synth" },
     chapter: 0,
     journeyId: null,
+    fullModular: false,
     started: true,
     patchesOpen: false,
   });
@@ -177,6 +205,11 @@ export const useSynthStore = create(
         chapter: 0,
         started: false,
         journeyId: null,
+        // Puzzle-enabled journeys render as interlocking pieces by default.
+        // Flipping this to true drops back to the full modular view (wires,
+        // palette, every control + port visible) so an advanced visitor can
+        // "go further". Only meaningful while a puzzle journey is active.
+        fullModular: false,
         settingsOpen: false,
         patchesOpen: false,
 
@@ -432,6 +465,21 @@ export const useSynthStore = create(
           applyPatchObject(set, patch);
         },
 
+        // ---- Puzzle ⇄ full modular view ----
+        // Toggle a puzzle journey between its interlocking-pieces view and the
+        // full modular view. Switching INTO full modular re-spreads the
+        // modules to the journey's authored positions (puzzle layout overlaps
+        // them); switching back lets Rack's auto-snap re-interlock them.
+        setFullModular: (on) => set((s) => {
+          const fullModular = !!on;
+          if (!fullModular || !s.journeyId) return { fullModular };
+          const wanted = journeyModulePositions(journeyById(s.journeyId));
+          const modules = s.modules.map((m) =>
+            wanted[m.id] ? { ...m, position: { ...wanted[m.id] } } : m
+          );
+          return { fullModular, modules };
+        }),
+
         // ---- Chapters ----
         goChapter:   (i) => set({ chapter: i }),
         nextChapter: () => set((s) => ({ chapter: s.chapter + 1 })),
@@ -456,6 +504,7 @@ export const useSynthStore = create(
             ui: { armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1, mobileView: "instructions" },
             chapter: 0,
             journeyId: id,
+            fullModular: false,
             started: true,
           });
         },
@@ -470,6 +519,7 @@ export const useSynthStore = create(
           ui: { armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1, mobileView: "synth" },
           chapter: 0,
           journeyId: null,
+          fullModular: false,
           started: true,
         }),
 
@@ -480,6 +530,7 @@ export const useSynthStore = create(
           ui: { armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1, mobileView: "synth" },
           chapter: 0,
           journeyId: null,
+          fullModular: false,
           started: false,
           playing: false,
         }),
@@ -500,6 +551,7 @@ export const useSynthStore = create(
               vol: deriveVolFromModules(fixed.modules, 80),
               ui: { ...s.ui, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null },
               chapter: 0,
+              fullModular: false,
             };
           }
           return {
@@ -508,6 +560,7 @@ export const useSynthStore = create(
             vol: 80,
             ui: { ...s.ui, armedSource: null, selectedConnectionId: null, focusedModuleSlot: null },
             chapter: 0,
+            fullModular: false,
           };
         }),
       }),
@@ -525,6 +578,7 @@ export const useSynthStore = create(
           chapter: s.chapter,
           started: s.started,
           journeyId: s.journeyId,
+          fullModular: s.fullModular,
           savedPatches: s.savedPatches,
         }),
         // v14: removed canonical/free-mode split. Anything from before this

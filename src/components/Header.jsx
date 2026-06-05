@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { BRAND, LEGEND, RESTART, SETTINGS } from "../content/ui.js";
 import { useSynthStore } from "../store/useSynthStore.js";
 import { byId as journeyById } from "../content/journeys/index.js";
+import { usePuzzleAvailable } from "../content/puzzleHooks.js";
 import { getEngine } from "../audio/engineSingleton.js";
 
 export function Header() {
@@ -10,6 +11,9 @@ export function Header() {
   const setSettingsOpen = useSynthStore((s) => s.setSettingsOpen);
   const setPatchesOpen  = useSynthStore((s) => s.setPatchesOpen);
   const journeyId       = useSynthStore((s) => s.journeyId);
+  const fullModular     = useSynthStore((s) => s.fullModular);
+  const setFullModular  = useSynthStore((s) => s.setFullModular);
+  const puzzleAvailable = usePuzzleAvailable();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -48,6 +52,18 @@ export function Header() {
   // burger dropdown (mobile). CSS controls which group is visible.
   const actions = (
     <>
+      {puzzleAvailable && (
+        <button
+          className="icon-btn"
+          onClick={run(() => setFullModular(!fullModular))}
+          title={fullModular
+            ? "Back to the guided puzzle view"
+            : "Switch to the full modular view — wires, every control, add your own modules"}
+        >
+          <span aria-hidden="true">{fullModular ? "⧉" : "⊞"}</span>
+          {fullModular ? "Puzzle view" : "Modular view"}
+        </button>
+      )}
       <button className="icon-btn" onClick={run(() => setPatchesOpen(true))} title="Save / load patches">
         <span aria-hidden="true">⎙</span> Patches
       </button>

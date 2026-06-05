@@ -355,6 +355,35 @@ header {
 }
 .narrator .nextbtn:hover { background: var(--red); border-color: var(--red); }
 
+/* "Go further" callout — appears at the last step of a puzzle journey,
+   inviting the learner to leave the guided puzzle for the full modular view. */
+.narrator .go-further {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid var(--ink-rule);
+  border-radius: 8px;
+  background: var(--paper-2);
+}
+.narrator .go-further h3 {
+  margin: 0 0 6px;
+  font-family: var(--f-mono);
+  font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+  font-weight: 600; color: var(--ink);
+}
+.narrator .go-further p {
+  margin: 0 0 12px;
+  font-size: 13px; line-height: 1.5; color: var(--ink-soft);
+}
+.narrator .go-further-btn {
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+  font-weight: 500;
+  color: var(--white); background: var(--ink); border: 1px solid var(--ink);
+  padding: 10px 16px; border-radius: 6px;
+  cursor: pointer; transition: .14s var(--ease);
+}
+.narrator .go-further-btn:hover { background: var(--red); border-color: var(--red); }
+
 /* "Back to chapter" pill — top-right of the placard. */
 .narrator-back {
   position: absolute; top: 8px; right: 8px;

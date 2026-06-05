@@ -9,22 +9,35 @@ import { useSynthStore } from "../store/useSynthStore.js";
 import { byId as journeyById } from "./journeys/index.js";
 
 // Returns the journey's `puzzle` block, or null when the current journey is
-// not in puzzle mode (or no journey is active).
+// not in puzzle mode (or no journey is active). When the visitor has switched
+// to the full modular view (`fullModular`), puzzle mode is suppressed even
+// though the journey still declares a puzzle block — so every consumer
+// (rack class, wires, palette, ports, panels) reverts to modular rendering.
 export function usePuzzleConfig() {
   return useSynthStore((s) => {
-    if (!s.journeyId) return null;
+    if (s.fullModular || !s.journeyId) return null;
     const j = journeyById(s.journeyId);
     return j?.puzzle ?? null;
   });
 }
 
 // Returns the per-instance puzzle entry: `{ controls: [...], ports: [...] }`
-// or null when this instance has no entry (or puzzle mode is off).
+// or null when this instance has no entry (or puzzle mode is off / suppressed).
 export function usePuzzleModule(instanceId) {
   return useSynthStore((s) => {
-    if (!s.journeyId || !instanceId) return null;
+    if (s.fullModular || !s.journeyId || !instanceId) return null;
     const j = journeyById(s.journeyId);
     return j?.puzzle?.modules?.[instanceId] ?? null;
+  });
+}
+
+// Whether the active journey declares a puzzle block at all — independent of
+// the `fullModular` toggle. Drives the "switch view" affordances, which are
+// only meaningful when a puzzle layout exists to switch away from / back to.
+export function usePuzzleAvailable() {
+  return useSynthStore((s) => {
+    if (!s.journeyId) return false;
+    return !!journeyById(s.journeyId)?.puzzle;
   });
 }
 
