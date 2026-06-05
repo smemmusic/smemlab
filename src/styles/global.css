@@ -1443,6 +1443,80 @@ body.module-dragging * { cursor: grabbing !important; }
   color: var(--ink-quiet);
 }
 
+/* Offset — a one-knob constant source; trim its height to a compact tile (it
+   shares the .atv-body layout with the attenuverter, so scope by type). Width
+   stays at the default; drop the outer padding, the axis row and the hint so
+   it collapses to roughly just the knob. */
+.module[data-id="offset"] { padding-top: 10px; padding-bottom: 8px; }
+.module[data-id="offset"] .atv-body { padding: 4px 8px; gap: 6px; }
+.module[data-id="offset"] .atv-axis { display: none; }
+.module[data-id="offset"] .atv-hint { display: none; }
+
+/* ──────────────────────────────────────────────────────────
+   SEQUENCER MODULES — Counter, Multiplexer, Quantizer
+   ────────────────────────────────────────────────────────── */
+.counter-body, .mux-body, .quant-body {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 14px 12px;
+}
+.counter-hint, .mux-hint, .quant-hint {
+  font-family: var(--f-mono);
+  font-size: 9px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-quiet);
+}
+
+/* Counter — decimal readout + two binary LEDs */
+.counter-readout {
+  font-family: var(--f-mono);
+  font-size: 30px; line-height: 1; font-weight: 600; color: var(--ink);
+}
+.counter-bits { display: flex; gap: 20px; }
+.counter-bit { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.counter-led {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--gate-soft);
+  box-shadow: 0 0 0 1px var(--ink-rule) inset;
+  transition: background .06s linear, box-shadow .06s linear;
+}
+.counter-bit.on .counter-led {
+  background: var(--gate);
+  box-shadow: 0 0 14px var(--gate-glow), 0 0 0 1px rgba(0,0,0,.25) inset;
+}
+.counter-bit-label {
+  font-family: var(--f-mono);
+  font-size: 9px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-quiet);
+}
+
+/* The 8→1 mux carries 12 ports (8 in + 3 address + out); give it more width
+   so the input markers along the edge aren't cramped. */
+.module[data-id="mux8"] { width: 440px; }
+
+/* Multiplexer — step lamps (4 or 8; wraps if the row runs out of room) */
+.mux-steps { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.mux-step { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.mux-led {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--gate-soft);
+  box-shadow: 0 0 0 1px var(--ink-rule) inset;
+  transition: background .06s linear, box-shadow .06s linear;
+}
+.mux-step.on .mux-led {
+  background: var(--rouge);
+  box-shadow: 0 0 12px var(--control-glow), 0 0 0 1px rgba(0,0,0,.25) inset;
+}
+.mux-step-label {
+  font-family: var(--f-mono);
+  font-size: 10px; color: var(--ink-quiet);
+}
+
+/* Quantizer — note readout above scale + range controls */
+.quant-readout {
+  font-family: var(--f-mono);
+  font-size: 26px; line-height: 1; font-weight: 600; color: var(--ink);
+}
+
 /* ──────────────────────────────────────────────────────────
    PALETTE (module list) — Paper card on the Ink rack.
    Anchored bottom-left of the stage and "opens up": the header

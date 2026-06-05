@@ -14,7 +14,7 @@ function format(v, unit) {
   }
 }
 
-export function Knob({ label, value, min, max, step, unit, log, onChange }) {
+export function Knob({ label, value, min, max, step, unit, log, onChange, format: customFormat }) {
   const norm = log ? Math.log(value / min) / Math.log(max / min) : (value - min) / (max - min);
   const angle = -135 + clamp(norm, 0, 1) * 270;
 
@@ -45,7 +45,7 @@ export function Knob({ label, value, min, max, step, unit, log, onChange }) {
         <span className="mark" style={{ transform: `translateX(-50%) rotate(${angle}deg)` }} />
       </div>
       <div className="lab">{label}</div>
-      <div className="val">{format(value, unit)}</div>
+      <div className="val">{customFormat ? customFormat(value) : format(value, unit)}</div>
     </div>
   );
 }

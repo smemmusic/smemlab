@@ -5,8 +5,9 @@
 
 import monoVoice from "./mono-voice.js";
 import kick      from "./kick.js";
+import sequencer from "./sequencer.js";
 
-export const JOURNEYS = [monoVoice, kick];
+export const JOURNEYS = [monoVoice, kick, sequencer];
 
 export function byId(id) {
   return JOURNEYS.find((j) => j.id === id) || null;

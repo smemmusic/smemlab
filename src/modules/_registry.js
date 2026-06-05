@@ -14,6 +14,11 @@ import { Keyboard }   from "./keyboard/index.js";
 import { Trigger }    from "./trigger/index.js";
 import { Clock }      from "./clock/index.js";
 import { DrumSeq }    from "./drumseq/index.js";
+import { Counter }     from "./counter/index.js";
+import { Counter3 }    from "./counter3/index.js";
+import { Multiplexer } from "./multiplexer/index.js";
+import { Mux8 }        from "./mux8/index.js";
+import { Quantizer }   from "./quantizer/index.js";
 import { Output }     from "./output/index.js";
 import { Inverter }    from "./inverter/index.js";
 import { CvMixer }     from "./cvmixer/index.js";
@@ -24,7 +29,7 @@ import { AudioMixer }  from "./audiomixer/index.js";
 
 export const MODULES = [
   Oscillator, Filter, Amp, Env, ArEnv, AdEnv, Lfo,
-  Keyboard, Trigger, Clock, DrumSeq, Output,
+  Keyboard, Trigger, Clock, DrumSeq, Counter, Counter3, Multiplexer, Mux8, Quantizer, Output,
   Inverter, CvMixer, Attenuator, Attenuverter, Offset, AudioMixer,
 ];
 
@@ -34,7 +39,7 @@ export const MODULES = [
 // guarantees, so it isn't user-addable.
 const PALETTE_ORDER = [
   "oscillator", "filter", "audiomixer", "amp", "env", "arenv", "adenv", "lfo",
-  "keyboard", "trigger", "clock", "drumseq",
+  "keyboard", "trigger", "clock", "drumseq", "counter", "counter3", "multiplexer", "mux8", "quantizer",
   "inverter", "attenuator", "attenuverter", "cvmixer", "offset",
 ];
 

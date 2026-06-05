@@ -37,13 +37,16 @@ export function ClockPanel() {
   }, [id]);
 
   const isSync = params.mode === "sync";
+  // Fall back to the default rate if a patch added the clock without a freq
+  // param (e.g. a journey delta) — Free mode reads it directly.
+  const freq = params.freq ?? 2;
 
   return (
     <div className="clock-body">
       <div className="clock-lamp-row">
         <span className={"clock-lamp" + (lit ? " on" : "")} />
         <span className="clock-lamp-label">
-          {isSync ? `${bpm} bpm` : `${params.freq.toFixed(2)} Hz`}
+          {isSync ? `${bpm} bpm` : `${freq.toFixed(2)} Hz`}
         </span>
         <button
           type="button"
@@ -73,9 +76,10 @@ export function ClockPanel() {
         <div className="ctrl-grid one">
           <Knob
             label="Freq"
-            value={params.freq}
+            value={freq}
             min={0.1} max={20} step={0.05}
             unit="Hz" log
+            format={(v) => `${v.toFixed(2)} Hz`}
             onChange={(v) => set("freq", v)}
           />
         </div>
