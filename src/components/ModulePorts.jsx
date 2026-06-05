@@ -33,6 +33,17 @@ const PUZZLE_U_H = 240;
 // for absolutely-positioned children resolve against the padding-box, and the
 // 1 px shift accumulates into sub-pixel misalignment between tabs and notches.
 const PUZZLE_BORDER = 1;
+// How deep the snapped overlap is on each axis. The auto-snap places adjacent
+// modules so their port-anchors coincide; setting the anchor N pixels inside
+// the module from the far edge pulls the neighbor N pixels into this module
+// for a visible interlock.
+//   - Horizontal (audio chain): 1 px so the audio-chain modules touch at
+//     border lines (just enough to share a single seam line, no visible gap).
+//   - Vertical (CV / gate / pitch): 16 px so control modules sit 16 px inside
+//     the audio module above them — the puzzle tab visibly embeds into the
+//     upper module's body rather than barely brushing its edge.
+const PUZZLE_OVERLAP_X = 1;
+const PUZZLE_OVERLAP_Y = 16;
 
 // Position style for a port in puzzle mode. Each port is absolutely positioned
 // at a fraction along its edge — that fraction is interpreted as a fraction of
@@ -40,23 +51,26 @@ const PUZZLE_BORDER = 1;
 // matching absolute offsets (e.g. the 3U keyboard's pitch at 1/6 lines up
 // exactly with a 1U oscillator's pitch at 1/2). We convert to pixels because
 // CSS `%` would resolve against padding-box and lose the border to drift.
-//
-// Top/left anchors sit at the border-box edge; bottom/right anchors sit ONE
-// PIXEL INSIDE the border-box edge. That asymmetry makes the snap pull
-// adjacent modules into a 1-pixel overlap so their two 1-pixel borders share
-// the same pixel row instead of stacking adjacent and reading as a thicker
-// 2-pixel seam between every pair of touching modules.
 function puzzlePortStyle(edge, fraction, w, h) {
   const moduleW = w * PUZZLE_U_W;
   const moduleH = h * PUZZLE_U_H;
   const xPx = fraction * moduleW - PUZZLE_BORDER;
   const yPx = fraction * moduleH - PUZZLE_BORDER;
-  const farEdgeX = moduleW - PUZZLE_BORDER * 2;
-  const farEdgeY = moduleH - PUZZLE_BORDER * 2 - 15;
+  // The port-anchors live OVERLAP_* px inside the SOURCE module's far edge,
+  // so on the TARGET module they live OVERLAP_* px OUTSIDE the near edge —
+  // both modules then share the same anchor coordinate at a point that's
+  // OVERLAP_* px deep inside the source. When the snap aligns those anchors,
+  // the target's frame lands exactly on the source's edge AND its tab SVG
+  // (which always draws upward/leftward from the anchor) overlays the
+  // source's notch SVG pixel-for-pixel.
+  const farEdgeX = moduleW - PUZZLE_BORDER - PUZZLE_OVERLAP_X;
+  const farEdgeY = moduleH - PUZZLE_BORDER - PUZZLE_OVERLAP_Y;
+  const nearEdgeX = -PUZZLE_BORDER - PUZZLE_OVERLAP_X;
+  const nearEdgeY = -PUZZLE_BORDER - PUZZLE_OVERLAP_Y;
   switch (edge) {
     case "right":  return { position: "absolute", left: `${farEdgeX}px`, top:  `${yPx}px` };
-    case "left":   return { position: "absolute", left: `-${PUZZLE_BORDER}px`, top:  `${yPx}px` };
-    case "top":    return { position: "absolute", top:  `-${PUZZLE_BORDER}px`, left: `${xPx}px` };
+    case "left":   return { position: "absolute", left: `${nearEdgeX}px`, top:  `${yPx}px` };
+    case "top":    return { position: "absolute", top:  `${nearEdgeY}px`, left: `${xPx}px` };
     case "bottom": return { position: "absolute", top:  `${farEdgeY}px`, left: `${xPx}px` };
     default:       return { position: "absolute" };
   }

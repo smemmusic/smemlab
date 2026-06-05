@@ -172,8 +172,12 @@ function layoutPuzzle({ modules, connections, puzzle, viewScale }) {
       const theirOffset = portOffsetWithinModule(other, theirPort, liveScale);
       if (!myOffset || !theirOffset) continue;
       // Snap math: place `other` so other.position + theirOffset == myPos + myOffset
-      // (i.e. both port-anchor centres land at the same screen point, which
-      // is what makes the tab visually plug into the notch).
+      // (port-anchor centres coincide → the tab visually plugs into the notch).
+      // The port-anchors on near/far edges in ModulePorts.jsx are intentionally
+      // symmetric around the shared anchor point — top/left edges sit
+      // OVERLAP_* px OUTSIDE the module, bottom/right edges sit OVERLAP_* px
+      // INSIDE — so this raw alignment also lands the target's FRAME on the
+      // source's edge with no extra shift here.
       positions[other] = {
         x: myPos.x + myOffset.x - theirOffset.x,
         y: myPos.y + myOffset.y - theirOffset.y,
