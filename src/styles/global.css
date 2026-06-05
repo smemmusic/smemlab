@@ -1319,6 +1319,18 @@ header {
   header .legend { display: none; }
   .header-mobile { display: block; }
 
+  /* Keep the burger pinned to the right no matter how long the journey title
+     is: the header stays a single row, and the title truncates with an
+     ellipsis instead of growing the brand and pushing the burger onto its own
+     (left-aligned) line. */
+  header { flex-wrap: nowrap; }
+  .brand { min-width: 0; }
+  .brand h1 {
+    min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .header-mobile { flex: 0 0 auto; }
+
   .wrap {
     grid-template-areas:
       "header"
