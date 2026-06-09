@@ -9,6 +9,18 @@ import sequencer from "./sequencer.js";
 
 export const JOURNEYS = [monoVoice, kick, sequencer];
 
+// Journey levels — an ordered learning progression, not a difficulty score.
+// Each journey declares one via its `level` field; the label is shown as a
+// badge on the picker. Array order = ascending progression.
+export const LEVELS = [
+  { key: "foundations", label: "Foundations" },
+  { key: "techniques",  label: "Techniques" },
+  { key: "systems",     label: "Systems" },
+];
+
+const _levelLabel = new Map(LEVELS.map((l) => [l.key, l.label]));
+export const levelLabel = (key) => _levelLabel.get(key) || null;
+
 export function byId(id) {
   return JOURNEYS.find((j) => j.id === id) || null;
 }

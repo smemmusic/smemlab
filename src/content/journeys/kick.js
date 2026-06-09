@@ -20,7 +20,7 @@ export default {
   id: "kick",
   title: "Drum Sounds",
   objective: "Build a kick from a sub-bass sine, then layer a noise-based snare on top — two voices with independent triggers, summing into one output.",
-  difficulty: "intermediate",
+  level: "techniques",
   estimatedMinutes: 12,
 
   initialPatch: {

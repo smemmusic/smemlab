@@ -1253,6 +1253,20 @@ header {
 }
 .landing .journey-card.free .cta { color: var(--rouge); }
 
+/* Level badge — a mono eyebrow chip pinned at the top of each journey card.
+   The three levels form an ascending accent (quiet ink → red → deep rouge)
+   so the progression reads at a glance. The free-build card has no level. */
+.landing .journey-level {
+  font-family: var(--f-mono);
+  font-size: 9px; letter-spacing: var(--t-tracking-eyebrow); text-transform: uppercase;
+  padding: 3px 7px; border-radius: 3px;
+  border: 1px solid currentColor;
+  color: var(--ink-quiet);
+}
+.landing .journey-level.level-foundations { color: var(--ink-quiet); }
+.landing .journey-level.level-techniques  { color: var(--red); }
+.landing .journey-level.level-systems     { color: var(--rouge); }
+
 /* ──────────────────────────────────────────────────────────
    MOBILE HEADER BURGER
    ────────────────────────────────────────────────────────── */

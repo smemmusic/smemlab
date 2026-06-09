@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useSynthStore } from "../store/useSynthStore.js";
 import { getEngine } from "../audio/engineSingleton.js";
 import { BRAND, LANDING } from "../content/ui.js";
-import { JOURNEYS } from "../content/journeys/index.js";
+import { JOURNEYS, levelLabel } from "../content/journeys/index.js";
 import { VIZ } from "./viz/gridHelpers.js";
 
 // Welcome screen + journey picker. Stays mounted (no unmount) so the fade-out
@@ -74,6 +74,9 @@ export function Landing() {
           <div className="picker-grid">
             {JOURNEYS.map((j) => (
               <button key={j.id} className="journey-card" onClick={() => pickJourney(j.id)}>
+                {levelLabel(j.level) && (
+                  <span className={"journey-level level-" + j.level}>{levelLabel(j.level)}</span>
+                )}
                 <h3>{j.title}</h3>
                 <p>{j.objective}</p>
                 <span className="cta">{LANDING.journeyStart}</span>

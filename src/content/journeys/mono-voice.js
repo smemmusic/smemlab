@@ -14,7 +14,7 @@ export default {
   id: "mono-voice",
   title: "Simple Mono Voice",
   objective: "Build a simple monophonic voice and follow the signal from oscillator to speaker.",
-  difficulty: "beginner",
+  level: "foundations",
   estimatedMinutes: 10,
 
   // Puzzle mode — opt-in alternative visual for beginners. Wires disappear,

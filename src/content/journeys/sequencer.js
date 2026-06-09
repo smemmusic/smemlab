@@ -32,7 +32,7 @@ export default {
   title: "Step Sequencer",
   objective:
     "Build a 4-step sequencer from scratch — a counter, a multiplexer, four voltage knobs, a clock, and a quantizer — and watch a melody play itself.",
-  difficulty: "intermediate",
+  level: "systems",
   estimatedMinutes: 14,
 
   initialPatch: {
