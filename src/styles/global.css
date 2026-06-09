@@ -1539,7 +1539,9 @@ body.module-dragging * { cursor: grabbing !important; }
 .palette {
   position: absolute;
   left: 18px; bottom: 18px;
-  width: 184px;
+  /* Wide enough for two columns of items; capped to the viewport (keeping the
+     18px left/right margins) so it never overflows on a narrow phone. */
+  width: min(340px, calc(100vw - 36px));
   /* The "Add module" head sits at the bottom; padding-bottom (7px) is the
      gap between the head and the palette's outer bottom edge. Collapsed
      state mirrors this value top-and-bottom so the head's vertical
@@ -1599,6 +1601,25 @@ body.module-dragging * { cursor: grabbing !important; }
   flex: 1 1 auto;
   min-height: 0;
 }
+/* Category buckets within the list. Items flow in a 2-column grid so the
+   list stays short; the head spans both columns as a band above its items. */
+.palette-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  align-content: start;
+}
+.palette-group-head {
+  grid-column: 1 / -1;
+  font-family: var(--f-mono);
+  font-size: 9px; letter-spacing: var(--t-tracking-eyebrow); text-transform: uppercase;
+  color: var(--ink-quiet);
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--ink-rule);
+}
+/* First group's head hugs the list top; later heads get breathing room
+   above so the categories read as distinct bands. */
+.palette-group + .palette-group { margin-top: 6px; }
 .palette-item {
   font-family: var(--f-sans);
   font-size: 13px; letter-spacing: 0;

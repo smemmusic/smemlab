@@ -33,25 +33,32 @@ export const MODULES = [
   Inverter, CvMixer, Attenuator, Attenuverter, Offset, AudioMixer,
 ];
 
-// Palette order. Membership = inclusion; index = display order. Modules absent
-// from this array don't appear in the palette. `output` is intentionally
-// excluded — every patch has exactly one Output module which the store
-// guarantees, so it isn't user-addable.
-const PALETTE_ORDER = [
-  "oscillator", "filter", "audiomixer", "amp", "env", "arenv", "adenv", "lfo",
-  "keyboard", "trigger", "clock", "drumseq", "counter", "counter3", "multiplexer", "mux8", "quantizer",
-  "inverter", "attenuator", "attenuverter", "cvmixer", "offset",
+// Palette grouping. Modules are organised into categories; within each group
+// the `types` order is the display order, and the groups themselves display
+// top-to-bottom in array order. Membership here = palette inclusion: a module
+// absent from every group doesn't appear in the palette. `output` is
+// intentionally excluded — every patch has exactly one Output module which the
+// store guarantees, so it isn't user-addable.
+const PALETTE_GROUPS = [
+  { key: "audio",      label: "Audio",      types: ["oscillator", "filter", "audiomixer", "amp"] },
+  { key: "modulation", label: "Modulation", types: ["env", "arenv", "adenv", "lfo"] },
+  { key: "trigger",    label: "Trigger",    types: ["keyboard", "trigger", "clock", "drumseq"] },
+  { key: "logic",      label: "Logic",      types: ["counter", "counter3", "multiplexer", "mux8"] },
+  { key: "utility",    label: "Utility",    types: ["quantizer", "inverter", "attenuator", "attenuverter", "cvmixer", "offset"] },
 ];
+
+// Flattened palette order, derived from the groups.
+const PALETTE_ORDER = PALETTE_GROUPS.flatMap((g) => g.types);
 
 // Validate at import time. A malformed manifest crashes startup loudly
 // instead of producing silent UI/audio bugs deep in some lookup.
 for (const m of MODULES) validateManifest(m);
 if (new Set(PALETTE_ORDER).size !== PALETTE_ORDER.length) {
-  throw new Error(`[modules] PALETTE_ORDER contains duplicates: ${PALETTE_ORDER.join(", ")}`);
+  throw new Error(`[modules] PALETTE_GROUPS contains duplicate types: ${PALETTE_ORDER.join(", ")}`);
 }
 for (const type of PALETTE_ORDER) {
   if (!MODULES.some((m) => m.type === type)) {
-    throw new Error(`[modules] PALETTE_ORDER references unknown module type: ${type}`);
+    throw new Error(`[modules] PALETTE_GROUPS references unknown module type: ${type}`);
   }
 }
 
@@ -59,3 +66,11 @@ const _byTypeMap = new Map(MODULES.map((m) => [m.type, m]));
 
 export const byType      = (type) => _byTypeMap.get(type) || null;
 export const paletteList = () => PALETTE_ORDER.map((type) => _byTypeMap.get(type));
+// Same modules as paletteList(), but bucketed by category for a grouped UI:
+// [{ key, label, items: Manifest[] }, …] in display order.
+export const paletteGroups = () =>
+  PALETTE_GROUPS.map((g) => ({
+    key: g.key,
+    label: g.label,
+    items: g.types.map((type) => _byTypeMap.get(type)),
+  }));

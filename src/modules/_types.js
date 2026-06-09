@@ -20,7 +20,7 @@
  * @property {string} placard                    HTML body shown in the narrator on click
  * @property {*} [glyph]                         m-head silkscreen SVG element (or null)
  *
- * Free-mode palette membership/order lives in `_registry.js` (PALETTE_ORDER).
+ * Free-mode palette membership/order/category lives in `_registry.js` (PALETTE_GROUPS).
  */
 
 const REQUIRED_FIELDS = ["type", "Cls", "Panel", "meta", "defaults", "placard"];
