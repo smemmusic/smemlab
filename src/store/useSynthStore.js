@@ -123,6 +123,24 @@ export function serialisePatch(name, patch) {
   };
 }
 
+// Module types renamed over time (folder regroups + shared base classes).
+// Applied when loading older persisted state and imported patch files so the
+// visitor's existing patches keep working. Port names and instance ids are
+// unaffected; only the module `type` changes.
+const LEGACY_TYPE_RENAMES = {
+  env: "adsrenv",          // ADSR envelope joined the shared EnvelopeModule base
+  counter: "counter2",     // counters grouped + named for their bit-width
+  multiplexer: "mux4",     // muxes grouped + named for their input count
+};
+
+function renameLegacyTypes(mods) {
+  if (!Array.isArray(mods)) return;
+  for (const m of mods) {
+    const next = m && LEGACY_TYPE_RENAMES[m.type];
+    if (next) m.type = next;
+  }
+}
+
 // Validate a parsed JSON object and return the inner {modules, connections}
 // shape, or null if it doesn't look like a patch file.
 export function validatePatchObject(obj) {
@@ -138,13 +156,11 @@ export function validatePatchObject(obj) {
         typeof c.fromId !== "string" || typeof c.fromPort !== "string" ||
         typeof c.toId !== "string"   || typeof c.toPort !== "string") return null;
   }
-  // Legacy patch files used module type "env" for the ADSR envelope (renamed
-  // to "adsrenv" when the envelope family moved under a shared base class).
-  // Map it forward so older exported patches still import. The sustainDb→s
-  // param rename is handled downstream by the envelope module/panel.
-  const modules = cloneDeep(p.modules).map((m) =>
-    m.type === "env" ? { ...m, type: "adsrenv" } : m,
-  );
+  // Map any renamed module types forward so older exported patches still
+  // import (see LEGACY_TYPE_RENAMES). Param-level migrations (e.g. the
+  // envelope's sustainDb→s) are handled downstream by the module/panel.
+  const modules = cloneDeep(p.modules);
+  renameLegacyTypes(modules);
   return { modules, connections: cloneDeep(p.connections) };
 }
 
@@ -625,19 +641,13 @@ export const useSynthStore = create(
             }
           }
           if (version < 16) {
-            // Module type `env` renamed to `adsrenv` — the envelope family
-            // (ADSR/AR/AD) now shares a base class and lives under
-            // modules/envelopes/. Rename in live modules and every saved patch
+            // Module types renamed as several families moved under shared base
+            // classes (env→adsrenv, counter→counter2, multiplexer→mux4 — see
+            // LEGACY_TYPE_RENAMES). Rename in live modules and every saved patch
             // so existing patches keep loading.
-            const renameType = (mods) => {
-              if (!Array.isArray(mods)) return;
-              for (const m of mods) {
-                if (m?.type === "env") m.type = "adsrenv";
-              }
-            };
-            renameType(persisted.modules);
+            renameLegacyTypes(persisted.modules);
             for (const p of persisted.savedPatches || []) {
-              renameType(p?.patch?.modules);
+              renameLegacyTypes(p?.patch?.modules);
             }
           }
           return persisted;

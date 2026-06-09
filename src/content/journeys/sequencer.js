@@ -78,7 +78,7 @@ export default {
       addLabel: "Add Counter",
       adds: {
         modules: [
-          { id: "counter", type: "counter", params: {},                 position: { x: 380, y: 690 } },
+          { id: "counter", type: "counter2", params: {},                 position: { x: 380, y: 690 } },
           { id: "rsttrig", type: "trigger", params: { shortcut: "KeyR" }, position: { x: 380, y: 970 } },
         ],
         connections: [
@@ -106,7 +106,7 @@ export default {
       addLabel: "Add Multiplexer + Voltages",
       adds: {
         modules: [
-          { id: "mux",  type: "multiplexer", params: {},               position: { x: 380, y: 230 } },
+          { id: "mux",  type: "mux4", params: {},               position: { x: 380, y: 230 } },
           { id: "off1", type: "offset",      params: { value: 0    },   position: { x: 0,   y: 0   } },
           { id: "off2", type: "offset",      params: { value: 0.25 },   position: { x: 0,   y: 230 } },
           { id: "off3", type: "offset",      params: { value: 0.5  },   position: { x: 0,   y: 460 } },

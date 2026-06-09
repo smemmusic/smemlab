@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { getEngine } from "../../audio/engineSingleton.js";
-import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
+import { getEngine } from "../../../audio/engineSingleton.js";
+import { useModuleInstance } from "../../../components/ModuleInstanceContext.js";
 
 // MSB → LSB so the lights read left-to-right like a written binary number.
 const BITS = [2, 1, 0];

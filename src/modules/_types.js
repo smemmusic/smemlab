@@ -7,8 +7,11 @@
 //   - glyph.jsx  exports the m-head silkscreen SVG (or `null`)
 //
 // Closely-related modules may be grouped under a family subfolder that also
-// holds shared code — e.g. the envelopes live in `src/modules/envelopes/`
-// (adsrenv/, arenv/, adenv/) and extend the common `EnvelopeModule` base there.
+// holds a shared base class they extend:
+//   - `envelopes/`  (adsrenv/, arenv/, adenv/) → EnvelopeModule
+//   - `counters/`   (counter2/, counter3/)     → CounterModule
+//   - `muxes/`      (mux4/, mux8/)             → MuxModule
+// Cross-family gate plumbing lives in `src/audio/GateAggregator.js`.
 //
 // validateManifest runs at import time on every module; a missing or malformed
 // manifest throws loudly at app startup so silent UI/audio bugs from forgotten

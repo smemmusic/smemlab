@@ -14,10 +14,10 @@ import { Keyboard }   from "./keyboard/index.js";
 import { Trigger }    from "./trigger/index.js";
 import { Clock }      from "./clock/index.js";
 import { DrumSeq }    from "./drumseq/index.js";
-import { Counter }     from "./counter/index.js";
-import { Counter3 }    from "./counter3/index.js";
-import { Multiplexer } from "./multiplexer/index.js";
-import { Mux8 }        from "./mux8/index.js";
+import { Counter2 }    from "./counters/counter2/index.js";
+import { Counter3 }    from "./counters/counter3/index.js";
+import { Mux4 }        from "./muxes/mux4/index.js";
+import { Mux8 }        from "./muxes/mux8/index.js";
 import { Quantizer }   from "./quantizer/index.js";
 import { Output }     from "./output/index.js";
 import { Inverter }    from "./inverter/index.js";
@@ -29,7 +29,7 @@ import { AudioMixer }  from "./audiomixer/index.js";
 
 export const MODULES = [
   Oscillator, Filter, Amp, AdsrEnv, ArEnv, AdEnv, Lfo,
-  Keyboard, Trigger, Clock, DrumSeq, Counter, Counter3, Multiplexer, Mux8, Quantizer, Output,
+  Keyboard, Trigger, Clock, DrumSeq, Counter2, Counter3, Mux4, Mux8, Quantizer, Output,
   Inverter, CvMixer, Attenuator, Attenuverter, Offset, AudioMixer,
 ];
 
@@ -43,7 +43,7 @@ const PALETTE_GROUPS = [
   { key: "audio",      label: "Audio",      types: ["oscillator", "filter", "audiomixer", "amp"] },
   { key: "modulation", label: "Modulation", types: ["adsrenv", "arenv", "adenv", "lfo"] },
   { key: "trigger",    label: "Trigger",    types: ["keyboard", "trigger", "clock", "drumseq"] },
-  { key: "logic",      label: "Logic",      types: ["counter", "counter3", "multiplexer", "mux8"] },
+  { key: "logic",      label: "Logic",      types: ["counter2", "counter3", "mux4", "mux8"] },
   { key: "utility",    label: "Utility",    types: ["quantizer", "inverter", "attenuator", "attenuverter", "cvmixer", "offset"] },
 ];
 

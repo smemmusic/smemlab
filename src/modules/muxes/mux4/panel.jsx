@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { getEngine } from "../../audio/engineSingleton.js";
-import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
+import { getEngine } from "../../../audio/engineSingleton.js";
+import { useModuleInstance } from "../../../components/ModuleInstanceContext.js";
 
-const STEPS = [0, 1, 2, 3, 4, 5, 6, 7];
-
-// Live readout of which of the eight inputs the 3-bit address selects.
-export function Mux8Panel() {
+// Live readout of which input the address currently selects. Mirrors the
+// module's `index` per frame and lights the matching lamp 1–4, so the visitor
+// can see the address (driven by the counter's two bits) pick one of four.
+export function Mux4Panel() {
   const { instanceId: id } = useModuleInstance();
   const [index, setIndex] = useState(0);
   const rafRef = useRef(0);
@@ -24,7 +24,7 @@ export function Mux8Panel() {
   return (
     <div className="mux-body">
       <div className="mux-steps">
-        {STEPS.map((i) => (
+        {[0, 1, 2, 3].map((i) => (
           <div key={i} className={"mux-step" + (i === index ? " on" : "")}>
             <span className="mux-led" />
             <span className="mux-step-label">{i + 1}</span>

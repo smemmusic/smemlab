@@ -1,4 +1,5 @@
 import { AudioModule } from "../../audio/AudioModule.js";
+import { GateAggregator } from "../../audio/GateAggregator.js";
 import { MODULE_KIND, PORT_TYPE, PORT_DIR, CV_POLARITY } from "../../audio/graph/types.js";
 
 // Shared base for the envelope family (ADSR / AR / AD). Holds everything the
@@ -39,7 +40,7 @@ export class EnvelopeModule extends AudioModule {
     this.cvOut = ctx.createConstantSource();
     this.cvOut.offset.value = 0;
     this.cvOut.start();
-    this._gateSources = new Set();
+    this._gate = new GateAggregator();
 
     this._registerCvOut("env", this.cvOut);
     this._registerGateInput("trigger", (sourceId, active) => this._handleGate(sourceId, active));
@@ -72,7 +73,7 @@ export class EnvelopeModule extends AudioModule {
     this.cvOut.offset.cancelScheduledValues(t);
     this.cvOut.offset.setValueAtTime(0, t);
     this.envPhase = "idle";
-    this._gateSources.clear();
+    this._gate.clear();
   }
 
   dispose() {
@@ -83,15 +84,12 @@ export class EnvelopeModule extends AudioModule {
   }
 
   // ── gate handling ──────────────────────────────────────────────
-  // Track gate sources so concurrent gates don't double-fire; only the
+  // Aggregate gate sources so concurrent gates don't double-fire; only the
   // rising/falling edge of "any source held" reaches the subclass hooks.
   _handleGate(sourceId, active) {
-    const wasOpen = this._gateSources.size > 0;
-    if (active) this._gateSources.add(sourceId);
-    else        this._gateSources.delete(sourceId);
-    const nowOpen = this._gateSources.size > 0;
-    if (!wasOpen && nowOpen)      this._onGateOpen();
-    else if (wasOpen && !nowOpen) this._onGateClose();
+    const { rising, falling } = this._gate.update(sourceId, active);
+    if (rising)       this._onGateOpen();
+    else if (falling) this._onGateClose();
   }
 
   // ── subclass hooks (override) ──────────────────────────────────

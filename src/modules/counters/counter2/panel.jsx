@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { getEngine } from "../../audio/engineSingleton.js";
-import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
+import { getEngine } from "../../../audio/engineSingleton.js";
+import { useModuleInstance } from "../../../components/ModuleInstanceContext.js";
 
 // Live readout of the counter's state. Mirrors the module's `count` per frame
 // (rAF, short-circuited when unchanged) and renders it three ways at once:
 // the decimal value, two binary LEDs (twos place + ones place), and the raw
 // bit string — so the visitor can watch 0/00 → 1/01 → 2/10 → 3/11 → 0/00.
-export function CounterPanel() {
+export function Counter2Panel() {
   const { instanceId: id } = useModuleInstance();
   const [count, setCount] = useState(0);
   const rafRef = useRef(0);

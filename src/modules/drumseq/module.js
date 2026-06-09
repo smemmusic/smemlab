@@ -1,4 +1,5 @@
 import { AudioModule } from "../../audio/AudioModule.js";
+import { GateAggregator } from "../../audio/GateAggregator.js";
 import { MODULE_KIND, PORT_TYPE, PORT_DIR } from "../../audio/graph/types.js";
 import { getEngine } from "../../audio/engineSingleton.js";
 
@@ -36,28 +37,21 @@ export class DrumSeqModule extends AudioModule {
     // for the current-step column highlight.
     this.stepIdx = -1;
     this._activeOuts = new Set();   // track names currently held high
-    this._clockSources = new Set(); // multi-source gate aggregation
-    this._resetSources = new Set();
+    this._clock = new GateAggregator();
+    this._reset = new GateAggregator();
 
     this._registerGateInput("clock", (sid, a) => this._onClock(sid, a));
     this._registerGateInput("reset", (sid, a) => this._onReset(sid, a));
   }
 
   _onClock(sourceId, active) {
-    const wasOpen = this._clockSources.size > 0;
-    if (active) this._clockSources.add(sourceId);
-    else        this._clockSources.delete(sourceId);
-    const nowOpen = this._clockSources.size > 0;
-    if (!wasOpen && nowOpen)      this._advance();
-    else if (wasOpen && !nowOpen) this._closeAll();
+    const { rising, falling } = this._clock.update(sourceId, active);
+    if (rising)       this._advance();
+    else if (falling) this._closeAll();
   }
 
   _onReset(sourceId, active) {
-    const wasOpen = this._resetSources.size > 0;
-    if (active) this._resetSources.add(sourceId);
-    else        this._resetSources.delete(sourceId);
-    const nowOpen = this._resetSources.size > 0;
-    if (!wasOpen && nowOpen) {
+    if (this._reset.update(sourceId, active).rising) {
       this.stepIdx = -1;
       this._closeAll();
     }
