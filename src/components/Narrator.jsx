@@ -33,7 +33,7 @@ export function Narrator() {
     const kind = focused.Cls.KIND;
     return (
       <div className={"narrator " + kind}>
-        <button className="narrator-back" onClick={clearFocus} title="Back to chapter">← Back</button>
+        <button className="narrator-back btn-ghost" onClick={clearFocus} title="Back to chapter">← Back</button>
         <div className={"eyebrow " + kind}>
           <span className="rule" />
           {KIND_LABEL[kind]}
@@ -108,7 +108,7 @@ export function Narrator() {
               see the wires, reveal every control, and add your own modules.
             </p>
             <button
-              className="go-further-btn"
+              className="go-further-btn btn-solid"
               onClick={() => { setFullModular(true); setMobileView("synth"); }}
             >
               Switch to modular view →
@@ -118,7 +118,7 @@ export function Narrator() {
       </div>
       <div className="nav-row">
         <button
-          className="prevbtn"
+          className="prevbtn btn-ghost"
           onClick={handlePrev}
           disabled={safeIdx === 0}
           title="Previous chapter"
@@ -126,7 +126,7 @@ export function Narrator() {
           ◂ Prev
         </button>
         {!atEnd
-          ? <button className="nextbtn" onClick={handleNext}>{label}</button>
+          ? <button className="nextbtn btn-solid" onClick={handleNext}>{label}</button>
           : <span className="await">{NARRATOR_UI.done}</span>}
       </div>
     </div>

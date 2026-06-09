@@ -108,7 +108,7 @@ export function PatchesModal() {
       <div className="modal patches-modal" role="dialog" aria-modal="true" aria-label="Patches" onClick={(e) => e.stopPropagation()}>
         <header className="modal-head">
           <h2>Patches</h2>
-          <button className="modal-close" onClick={() => setOpen(false)} aria-label="Close">✕</button>
+          <button className="modal-close btn-ghost" onClick={() => setOpen(false)} aria-label="Close">✕</button>
         </header>
 
         {/* ---- Save ---- */}

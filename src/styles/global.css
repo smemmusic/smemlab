@@ -8,6 +8,7 @@
    single bundle, so there is no extra-request cost at runtime.
    ============================================================ */
 @import "./tokens.css";      /* :root design system — palette, signals, geometry, type */
+@import "./primitives.css";  /* cross-cutting UI atoms (.btn-ghost / .btn-solid) */
 @import "./base.css";        /* reset, body, paper grain, .wrap app grid */
 @import "./chrome.css";      /* header, sidebar, narrator, transport, modal, landing, mobile */
 @import "./modules.css";     /* module shell + every module's controls */

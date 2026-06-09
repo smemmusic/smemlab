@@ -54,7 +54,7 @@ export function Header() {
     <>
       {puzzleAvailable && (
         <button
-          className="icon-btn"
+          className="icon-btn btn-ghost"
           onClick={run(() => setFullModular(!fullModular))}
           title={fullModular
             ? "Back to the guided puzzle view"
@@ -64,16 +64,16 @@ export function Header() {
           {fullModular ? "Puzzle view" : "Modular view"}
         </button>
       )}
-      <button className="icon-btn" onClick={run(() => setPatchesOpen(true))} title="Save / load patches">
+      <button className="icon-btn btn-ghost" onClick={run(() => setPatchesOpen(true))} title="Save / load patches">
         <span aria-hidden="true">⎙</span> Patches
       </button>
-      <button className="icon-btn" onClick={run(() => setSettingsOpen(true))} title={SETTINGS.open}>
+      <button className="icon-btn btn-ghost" onClick={run(() => setSettingsOpen(true))} title={SETTINGS.open}>
         <span aria-hidden="true">⚙</span> {SETTINGS.open}
       </button>
-      <button className="icon-btn" onClick={run(restart)} title={RESTART}>
+      <button className="icon-btn btn-ghost" onClick={run(restart)} title={RESTART}>
         <span aria-hidden="true">↺</span> {RESTART}
       </button>
-      <button className="icon-btn" onClick={run(leaveToJourneys)} title="Back to journeys">
+      <button className="icon-btn btn-ghost" onClick={run(leaveToJourneys)} title="Back to journeys">
         <span aria-hidden="true">←</span> Journeys
       </button>
     </>

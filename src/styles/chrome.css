@@ -49,14 +49,14 @@ header {
   height: 0;
   border-top: 2px dashed var(--gate);
 }
-.legend .icon-btn {
+/* Look + hover come from .btn-ghost (primitives.css); the bare .icon-btn
+   selector styles both the desktop legend and the mobile burger copies. */
+.icon-btn {
   font-family: var(--f-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
-  color: var(--ink-soft); background: transparent;
-  border: 1px solid var(--ink-rule); border-radius: 5px;
-  padding: 6px 10px; cursor: pointer; transition: .14s var(--ease);
+  border-radius: 5px;
+  padding: 6px 10px;
   display: inline-flex; align-items: center; gap: 6px;
 }
-.legend .icon-btn:hover { color: var(--ink); border-color: var(--ink-quiet); background: var(--paper-2); }
 
 /* ──────────────────────────────────────────────────────────
    SIDEBAR — Paper. Chapter rail (signal flow) + Narrator.
@@ -199,23 +199,16 @@ header {
   font-size: 13px; color: var(--ink-quiet);
   margin-left: auto;
 }
+/* prev = .btn-ghost, next = .btn-solid (primitives.css); these add only the
+   shared typography + geometry. */
 .narrator .prevbtn, .narrator .nextbtn {
   font-family: var(--f-mono);
   font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
   font-weight: 500;
-  background: transparent;
-  border: 1px solid var(--ink-rule);
   padding: 10px 16px; border-radius: 6px;
-  cursor: pointer; transition: .14s var(--ease);
 }
-.narrator .prevbtn { color: var(--ink-soft); }
-.narrator .prevbtn:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-quiet); background: var(--paper-2); }
 .narrator .prevbtn:disabled { opacity: .35; cursor: not-allowed; }
-.narrator .nextbtn {
-  color: var(--white); background: var(--ink); border-color: var(--ink);
-  margin-left: auto;
-}
-.narrator .nextbtn:hover { background: var(--red); border-color: var(--red); }
+.narrator .nextbtn { margin-left: auto; }
 
 /* "Go further" callout — appears at the last step of a puzzle journey,
    inviting the learner to leave the guided puzzle for the full modular view. */
@@ -240,22 +233,17 @@ header {
   font-family: var(--f-mono);
   font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
   font-weight: 500;
-  color: var(--white); background: var(--ink); border: 1px solid var(--ink);
   padding: 10px 16px; border-radius: 6px;
-  cursor: pointer; transition: .14s var(--ease);
 }
-.narrator .go-further-btn:hover { background: var(--red); border-color: var(--red); }
 
 /* "Back to chapter" pill — top-right of the placard. */
 .narrator-back {
   position: absolute; top: 8px; right: 8px;
   font-family: var(--f-mono);
   font-size: 9px; letter-spacing: .16em; text-transform: uppercase;
-  color: var(--ink-soft); background: transparent;
-  border: 1px solid var(--ink-rule); border-radius: 4px;
-  padding: 4px 8px; cursor: pointer; transition: .14s var(--ease);
+  border-radius: 4px;
+  padding: 4px 8px;
 }
-.narrator-back:hover { color: var(--ink); border-color: var(--ink-quiet); background: var(--paper-2); }
 .narrator { position: relative; }
 
 /* ── transport · modal · patches · landing · burger · mobile-tabs ── */
@@ -366,12 +354,9 @@ header {
   margin: 0; color: var(--ink);
 }
 .modal-close {
-  background: transparent;
-  border: 1px solid var(--ink-rule); color: var(--ink-soft);
   width: 26px; height: 26px; border-radius: 4px;
-  cursor: pointer; font-size: 12px; line-height: 1;
+  font-size: 12px; line-height: 1;
 }
-.modal-close:hover { color: var(--ink); border-color: var(--ink-quiet); background: var(--paper-2); }
 
 .setting-group { padding: 16px 0 6px; border-top: 1px solid var(--ink-rule); }
 .setting-group:first-of-type { padding-top: 4px; border-top: none; }

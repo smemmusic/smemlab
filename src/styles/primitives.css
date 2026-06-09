@@ -1,0 +1,32 @@
+/* ============================================================
+   smem — primitives · cross-cutting UI atoms.
+   ──────────────────────────────────────────────────────────────
+   A component adds one of these classes for its look + interaction,
+   then declares only its own size / padding / typography. Keeps the
+   button treatments defined once instead of re-typed per component.
+   ============================================================ */
+
+/* Ghost button — transparent chip with an ink hairline that warms on
+   hover. Secondary actions: header icon buttons, prev, back, modal close. */
+.btn-ghost {
+  background: transparent;
+  color: var(--ink-soft);
+  border: 1px solid var(--ink-rule);
+  cursor: pointer;
+  transition: .14s var(--ease);
+}
+.btn-ghost:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--ink-quiet);
+  background: var(--paper-2);
+}
+
+/* Solid button — white-on-ink that flips to red on hover (primary action). */
+.btn-solid {
+  color: var(--white);
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  cursor: pointer;
+  transition: .14s var(--ease);
+}
+.btn-solid:hover { background: var(--red); border-color: var(--red); }

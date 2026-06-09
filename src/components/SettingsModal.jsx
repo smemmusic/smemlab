@@ -66,7 +66,7 @@ export function SettingsModal() {
       <div className="modal" role="dialog" aria-modal="true" aria-label={SETTINGS.title} onClick={(e) => e.stopPropagation()}>
         <header className="modal-head">
           <h2>{SETTINGS.title}</h2>
-          <button className="modal-close" onClick={() => setOpen(false)} aria-label={SETTINGS.close}>✕</button>
+          <button className="modal-close btn-ghost" onClick={() => setOpen(false)} aria-label={SETTINGS.close}>✕</button>
         </header>
 
         <section className="setting-group">
