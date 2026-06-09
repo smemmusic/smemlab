@@ -1,0 +1,349 @@
+/* rack — stage · palette · ports · wires */
+
+/* ──────────────────────────────────────────────────────────
+   STAGE — the Ink "vitrine" the modules float inside.
+   ────────────────────────────────────────────────────────── */
+.stage {
+  position: relative; flex: 1; overflow: hidden;
+  padding: 10px 24px 18px; min-height: 0;
+  background: var(--paper);
+  /* A faint hairline grid suggests the brand's lab-notebook ruling without
+     competing with modules or wires. */
+  background-image:
+    linear-gradient(var(--ink-rule-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--ink-rule-soft) 1px, transparent 1px);
+  background-size: 48px 48px, 48px 48px;
+  background-position: 0 0;
+  border-top: 1px solid var(--ink-rule);
+  touch-action: none;
+  cursor: grab;
+}
+.stage.panning { cursor: grabbing; }
+.stage .module,
+.stage .palette,
+.stage .zoom-ctrls { cursor: auto; }
+.ctrl input[type="range"] { touch-action: auto; }
+
+/* Zoom controls — Paper chip, bottom-right of the stage. */
+.zoom-ctrls {
+  position: absolute;
+  right: 16px; bottom: 12px; z-index: 6;
+  display: flex; gap: 4px; padding: 4px;
+  background: var(--white);
+  border: 1px solid var(--ink-rule);
+  border-radius: 6px;
+  box-shadow: 0 6px 18px -8px rgba(17,17,17,.25);
+}
+.zoom-ctrls .zoom-btn {
+  font-family: var(--f-mono);
+  font-size: 11px; font-weight: 500; letter-spacing: .04em;
+  color: var(--ink-soft); background: transparent;
+  border: 1px solid transparent; border-radius: 4px;
+  padding: 5px 9px; min-width: 30px; cursor: pointer;
+  transition: .14s var(--ease);
+}
+.zoom-ctrls .zoom-btn:hover { color: var(--ink); border-color: var(--ink-rule); background: var(--paper); }
+.zoom-ctrls .zoom-fit { font-size: 10px; letter-spacing: .08em; min-width: 52px; font-variant-numeric: tabular-nums; }
+.zoom-ctrls .zoom-fit.on { color: var(--white); border-color: var(--red); background: var(--red); }
+
+/* Rack canvas footprint */
+.rack-canvas {
+  position: relative;
+  min-height: 1000px;
+  min-width: 1200px;
+  padding: 14px;
+}
+
+/* ── palette · ports · wires ── */
+
+/* ──────────────────────────────────────────────────────────
+   PALETTE (module list) — Paper card on the Ink rack.
+   Anchored bottom-left of the stage and "opens up": the header
+   stays at the bottom (always visible), the list expands above
+   it. A max-height cap + internal overflow keeps the card from
+   spilling past the rack on short viewports.
+   ────────────────────────────────────────────────────────── */
+.palette {
+  position: absolute;
+  left: 18px; bottom: 18px;
+  /* Wide enough for two columns of items; capped to the viewport (keeping the
+     18px left/right margins) so it never overflows on a narrow phone. */
+  width: min(340px, calc(100vw - 36px));
+  /* The "Add module" head sits at the bottom; padding-bottom (7px) is the
+     gap between the head and the palette's outer bottom edge. Collapsed
+     state mirrors this value top-and-bottom so the head's vertical
+     position is identical in both states — no jump when toggling. */
+  padding: 14px 14px 7px;
+  background: var(--white);
+  border: 1px solid var(--ink-rule);
+  border-radius: 0;
+  z-index: 5;
+  box-shadow: 0 -8px 24px -12px rgba(17,17,17,.25);
+
+  /* column-reverse: head sits at the bottom, list grows above it. */
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 12px;
+  max-height: calc(100vh - 180px);
+}
+.palette-head {
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: var(--t-tracking-eyebrow); text-transform: uppercase;
+  color: var(--ink-quiet);
+  margin: 0;
+  padding: 0; width: 100%;
+  background: transparent; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  transition: color .14s var(--ease);
+  flex: 0 0 auto;
+}
+.palette-head:hover { color: var(--ink); }
+.palette-toggle {
+  font-family: var(--f-mono);
+  font-size: 14px; font-weight: 600;
+  width: 18px; height: 18px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 0;
+  background: var(--paper-2); border: 1px solid var(--ink-rule);
+  color: var(--ink-soft);
+  line-height: 1;
+}
+/* When collapsed, only the head strip is visible. Top and bottom padding
+   are both 7px (mirroring the expanded state's padding-bottom) so the
+   head sits at exactly the same Y from the palette's outer bottom edge
+   in both states — toggling never moves the "Add module" text. Total
+   collapsed height = 7 + 18 (head) + 7 + 2 (border) = 34px, one pixel
+   off the zoom-ctrls box for the sake of perfect alignment. */
+.palette.collapsed {
+  max-height: none;
+  padding: 7px 14px;
+}
+.palette-list {
+  display: flex; flex-direction: column;
+  gap: 6px;
+  /* Allow the list to shrink within the palette's max-height and scroll
+     when the module count exceeds the available room. min-height:0 is
+     required for a flex child to shrink below its content height. */
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+/* Category buckets within the list. Items flow in a 2-column grid so the
+   list stays short; the head spans both columns as a band above its items. */
+.palette-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  align-content: start;
+}
+.palette-group-head {
+  grid-column: 1 / -1;
+  font-family: var(--f-mono);
+  font-size: 9px; letter-spacing: var(--t-tracking-eyebrow); text-transform: uppercase;
+  color: var(--ink-quiet);
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--ink-rule);
+}
+/* First group's head hugs the list top; later heads get breathing room
+   above so the categories read as distinct bands. */
+.palette-group + .palette-group { margin-top: 6px; }
+.palette-item {
+  font-family: var(--f-sans);
+  font-size: 13px; letter-spacing: 0;
+  color: var(--ink);
+  background: var(--white);
+  border: 1px solid var(--ink-rule);
+  border-radius: 4px;
+  padding: 8px 10px;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 8px;
+  text-align: left;
+  transition: .14s var(--ease);
+}
+.palette-item:hover { border-color: var(--ink-quiet); background: var(--paper-2); }
+.palette-item .plus {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 3px;
+  font-family: var(--f-mono);
+  font-weight: 700; font-size: 13px; line-height: 1;
+}
+.palette-item.audio   .plus { color: var(--red);   background: var(--audio-soft); }
+.palette-item.control .plus { color: var(--rouge); background: var(--control-soft); }
+
+/* ──────────────────────────────────────────────────────────
+   PORT MARKERS — round panel-pot style.
+   Outputs: filled disc in Red/Rouge with a Paper rim ("live").
+   Inputs:  hollow ring on Paper, ringed in the signal colour.
+   ────────────────────────────────────────────────────────── */
+.module { position: relative; }
+
+.ports {
+  position: absolute;
+  display: flex; gap: 8px; z-index: 3; pointer-events: none;
+}
+.ports .port { pointer-events: auto; }
+.ports-right {
+  left: 100%; top: 50%;
+  flex-direction: column; align-items: flex-start;
+  transform: translate(-5px, -50%);
+}
+.ports-right .port { flex-direction: row; }
+.ports-left {
+  right: 100%; top: 50%;
+  flex-direction: column; align-items: flex-end;
+  transform: translate(5px, -50%);
+}
+.ports-left .port { flex-direction: row-reverse; }
+.ports-top {
+  bottom: 100%; left: 0; right: 0;
+  flex-direction: row; justify-content: center; align-items: flex-end;
+  transform: translateY(5px); flex-wrap: wrap;
+}
+.ports-top .port { flex-direction: column-reverse; align-items: center; }
+.ports-bottom {
+  top: 100%; left: 0; right: 0;
+  flex-direction: row; justify-content: center; align-items: flex-start;
+  transform: translateY(-5px); flex-wrap: wrap;
+}
+.ports-bottom .port { flex-direction: column; align-items: center; }
+
+.port {
+  background: transparent; border: none; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 5px;
+  font-family: var(--f-mono);
+  font-size: 9px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-quiet); cursor: pointer;
+  transition: color .14s var(--ease);
+}
+.port:hover { color: var(--ink); }
+.port-dot {
+  width: 16px; height: 16px; border-radius: 50%;
+  flex: 0 0 16px;
+  transition: box-shadow .14s var(--ease);
+}
+.port-out .port-dot {
+  background: var(--port-color);
+  border: 2px solid var(--paper);
+  box-shadow: 0 0 0 1px var(--port-color), 0 0 6px var(--port-color);
+}
+.port-in .port-dot {
+  background: var(--paper);
+  border: 2px solid var(--port-color);
+  box-shadow: 0 0 0 1px var(--port-color);
+}
+.port-out .port-label { font-weight: 600; color: var(--ink); }
+.port-in  .port-label { font-weight: 400; color: var(--ink-soft); font-style: italic; }
+.port-label { line-height: 1; }
+.port-anchor {
+  display: inline-block; width: 1px; height: 1px; pointer-events: none;
+}
+
+/* Armed / candidate states */
+.port.armed .port-dot {
+  box-shadow: 0 0 0 3px var(--port-color), 0 0 14px var(--port-color);
+}
+.port.armed .port-label { color: var(--ink); }
+.port.candidate .port-dot { animation: portPulse 1.4s ease-in-out infinite; }
+.port.candidate .port-label { color: var(--ink); }
+.port.drop-target .port-dot {
+  background: var(--port-color);
+  box-shadow: 0 0 0 3px var(--port-color), 0 0 18px var(--port-color);
+  animation: none;
+}
+.port.drop-target .port-label { color: var(--ink); }
+@keyframes portPulse {
+  0%, 100% { box-shadow: 0 0 0 1px var(--port-color), 0 0 6px var(--port-color); }
+  50%      { box-shadow: 0 0 0 4px transparent,        0 0 6px var(--port-color); }
+}
+
+/* ──────────────────────────────────────────────────────────
+   WIRES — patch curves between ports.
+   The <g> for each wire carries `style="color: <signal>"` so every
+   stroke/fill inherits the right Red/Rouge via `currentColor`. Gate
+   wires add a dashed pattern (set inline because the dash is data,
+   not state). Invalid-drop preview overrides the color to a warn
+   tint via the .wire-drag-invalid class.
+   ────────────────────────────────────────────────────────── */
+.wires {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 4;
+  overflow: visible;
+}
+.wires .wire { transition: opacity .14s var(--ease); }
+
+/* Invisible thick stroke acts as the click/dblclick hit area. */
+.wires .wire-hit {
+  stroke: transparent;
+  stroke-width: 14;
+  fill: none;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
+/* The visible stroke inherits the signal colour. */
+.wires .wire-stroke {
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  opacity: .9;
+}
+.wires .wire.selected .wire-stroke {
+  stroke-width: 3;
+  opacity: 1;
+  filter: drop-shadow(0 0 6px currentColor);
+}
+.wires .wire:hover .wire-stroke {
+  opacity: 1;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+/* Waypoint handles — draggable beads when a wire is selected. */
+.wires .wire-waypoint {
+  fill: currentColor;
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  pointer-events: all;
+  cursor: grab;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+/* Disconnect-X badge at the mid-curve point of a selected wire. */
+.wires .wire-disconnect { cursor: pointer; pointer-events: all; }
+.wires .wire-disconnect circle {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+.wires .wire-disconnect line {
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+
+/* Drag-to-patch preview. */
+.wires .wire-drag { pointer-events: none; }
+.wires .wire-drag-stroke {
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-dasharray: 7 5;
+  fill: none;
+  opacity: .9;
+  filter: drop-shadow(0 0 5px currentColor);
+}
+.wires .wire-drag-cursor {
+  fill: currentColor;
+  opacity: .95;
+  filter: drop-shadow(0 0 5px currentColor);
+}
+.wires .wire-drag-invalid { color: var(--invalid-wire); }
+
+/* Pitch placeholder dial — shown in the oscillator when an external
+   keyboard is wired into the pitch port (the knob is read-only). */
+.knob .dial.placeholder {
+  opacity: .35;
+  cursor: default;
+}

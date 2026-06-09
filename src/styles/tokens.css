@@ -1,0 +1,92 @@
+/* ============================================================
+   smem — lab · design system applied from Visual Identity V01
+   ──────────────────────────────────────────────────────────────
+   Palette: Paper / White / Ink / Red / Rouge.
+   Type:    IBM Plex Sans (display/body) + IBM Plex Mono (labels).
+   System maps the brand to the synth UI:
+     – Chrome (header/sidebar/narrator/transport/landing/modals)
+       sits on Paper, set in Plex Sans, with Red accents and Rouge
+       quiet emphasis — the editorial layer.
+     – Rack stage is Ink — a museum vitrine.
+     – Modules are Paper-faced "instrument specimens" with Ink
+       CRT screens. The dial mark on every knob is Red — the same
+       indicator notch that lives in the smem "e".
+     – Audio = Red (the live signal).
+       Control = Rouge (the quieter accent that shapes audio).
+       Gate   = Red dashed (the discrete on/off, kept in family).
+   ============================================================ */
+
+:root {
+  /* ── brand palette ─────────────────────────────────────── */
+  --paper:    #F4F1EA;
+  --paper-2:  #EDE9DF;   /* a hair darker for hairline fills */
+  --white:    #FFFFFF;
+  --ink:      #111111;
+  --ink-2:    #1A1A1A;   /* slight relief from pure ink */
+  --ink-3:    #232323;   /* for ports/CRT inner rings */
+  --red:      #E62528;
+  --rouge:    #7A1418;
+
+  /* ── ink-on-paper hierarchy ────────────────────────────── */
+  --ink-soft:      rgba(17,17,17,.62);
+  --ink-quiet:     rgba(17,17,17,.42);
+  --ink-faint:     rgba(17,17,17,.22);
+  --ink-rule:      rgba(17,17,17,.14);
+  --ink-rule-soft: rgba(17,17,17,.07);
+
+  /* ── paper-on-ink (for chrome that sits on the dark rack) ── */
+  --paper-soft:    rgba(244,241,234,.66);
+  --paper-quiet:   rgba(244,241,234,.42);
+  --paper-faint:   rgba(244,241,234,.22);
+  --paper-rule:    rgba(244,241,234,.14);
+
+  /* ── signal semantics ──────────────────────────────────
+     Audio   = Ink (the quietest, foundational signal — on Paper
+               it reads as a clean technical line)
+     Control = Red (the bright modulating signal — "live")
+     Gate    = Rouge (the deep event/trigger pulse)
+     Ink doesn't "glow", so audio-glow is a near-zero halo; the
+     control/gate glows match their hue. */
+  --audio:        var(--ink);
+  --audio-soft:   rgba(17,17,17,.06);
+  --audio-glow:   rgba(17,17,17,.20);
+  --control:      var(--red);
+  --control-soft: rgba(230,37,40,.12);
+  --control-glow: rgba(230,37,40,.45);
+  --gate:         var(--rouge);
+  --gate-soft:    rgba(122,20,24,.10);
+  --gate-glow:    rgba(122,20,24,.40);
+
+  /* Invalid wire (refused drop target) — a desaturated salmon that reads
+     as "wrong" without confusing with the live Red signal. */
+  --invalid-wire: #ff5252;
+
+  /* ── kept old aliases mapped onto the new system ──────── */
+  --bg:        var(--paper);
+  --panel:     var(--paper);
+  --panel-hi:  var(--white);
+  --panel-lo:  var(--paper-2);
+  --line:      var(--ink-rule);
+  --line-soft: var(--ink-rule-soft);
+  --muted:     var(--ink-soft);
+  --muted-dim: var(--ink-quiet);
+  --silk:      var(--ink-rule);
+  --silk-soft: var(--ink-rule-soft);
+
+  /* ── geometry / motion ────────────────────────────────── */
+  --mod-w: 264px; --mod-h: 420px;
+  /* Puzzle-mode rack unit. Modules in puzzle mode size in N×U
+     instead of the free-build width/height above — gives a
+     consistent grid so 1U/2U/3U pieces snap together cleanly. */
+  --u-w: 280px; --u-h: 240px;
+  --rail-w: 188px;
+  --ease: cubic-bezier(.2,.7,.2,1);
+  --radius-card: 8px;
+  --radius-knob: 999px;
+
+  /* ── type ─────────────────────────────────────────────── */
+  --f-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "JetBrains Mono", Menlo, monospace;
+  --t-tracking-mono: .14em;   /* mono labels — slight tracking */
+  --t-tracking-eyebrow: .22em;
+}

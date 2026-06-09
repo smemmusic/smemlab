@@ -1,0 +1,51 @@
+/* responsive — media queries (imported last so they override) */
+
+@media (max-width: 960px) {
+  header .legend { display: none; }
+  .header-mobile { display: block; }
+
+  /* Keep the burger pinned to the right no matter how long the journey title
+     is: the header stays a single row, and the title truncates with an
+     ellipsis instead of growing the brand and pushing the burger onto its own
+     (left-aligned) line. */
+  header { flex-wrap: nowrap; }
+  .brand { min-width: 0; }
+  .brand h1 {
+    min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .header-mobile { flex: 0 0 auto; }
+
+  .wrap {
+    grid-template-areas:
+      "header"
+      "mobile-tabs"
+      "content"
+      "transport";
+    grid-template-rows: auto auto 1fr auto;
+    grid-template-columns: 1fr;
+  }
+  .wrap.no-sidebar {
+    grid-template-areas:
+      "header"
+      "content"
+      "transport";
+    grid-template-rows: auto 1fr auto;
+  }
+  .sidebar, .main-area { grid-area: content; }
+  .mobile-tabs { display: flex; }
+  .wrap.no-sidebar .mobile-tabs { display: none; }
+
+  .wrap.mobile-view-synth .sidebar { display: none; }
+  .wrap.mobile-view-instructions .main-area { display: none; }
+
+  .sidebar { border-right: none; max-height: none; overflow-y: auto; }
+
+  .landing .card { padding: 36px 28px; }
+  .landing h1 { font-size: 40px; }
+}
+@media (max-width: 600px) {
+  .narrator h2 { font-size: 22px; }
+  .landing h1 { font-size: 32px; }
+  .landing p { font-size: 15px; }
+}

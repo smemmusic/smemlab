@@ -1,0 +1,607 @@
+/* modules — module shell + every module's controls */
+
+/* ──────────────────────────────────────────────────────────
+   MODULE — drawn the brand way: a single ink-hairline rectangle
+   on the Paper rack, no inner border, no rounded corners, no
+   corner registration marks. The kind hairline at the top is
+   the only piece of ornament — audio (ink) vs. control (red).
+   ────────────────────────────────────────────────────────── */
+.module {
+  position: relative; width: var(--mod-w);
+  background: var(--white);
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  padding: 18px 16px 16px;
+  box-shadow: none;
+  display: flex; flex-direction: column;
+  color: var(--ink);
+}
+.module.audio-mod { height: var(--mod-h); }
+/* Top hairline — encodes audio vs. control kind. Follows the
+   semantic --audio / --control tokens so any future palette
+   shift propagates automatically. */
+.module.audio-mod::after,
+.module.control-mod::after {
+  content: ""; position: absolute; left: 0; right: 0; top: -1px;
+  height: 2px;
+  pointer-events: none;
+}
+.module.audio-mod::after   { background: var(--audio); }
+.module.control-mod::after { background: var(--control); }
+
+/* Corner registration marks: removed. The .screw spans rendered by
+   Module.jsx collapse to display:none — keeping the markup stable
+   without spending bytes on visual chrome. */
+.screw { display: none; }
+
+.m-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 8px; margin-bottom: 14px;
+}
+.m-title {
+  font-family: var(--f-sans);
+  font-size: 15px; font-weight: 600;
+  letter-spacing: .04em;
+  margin: 4px 0 0;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.m-glyph { flex: 0 0 auto; width: 34px; height: 22px; opacity: .85; }
+.m-glyph path, .m-glyph rect, .m-glyph line, .m-glyph polygon, .m-glyph circle {
+  fill: none; stroke: var(--ink-soft); stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+.m-remove {
+  background: none;
+  border: 1px solid var(--ink-rule);
+  color: var(--ink-quiet);
+  width: 22px; height: 22px; border-radius: 4px;
+  cursor: pointer; font-size: 11px; line-height: 1; flex: 0 0 auto;
+  transition: .14s var(--ease);
+}
+.m-remove:hover { color: var(--red); border-color: var(--red); background: var(--audio-soft); }
+
+/* ──────────────────────────────────────────────────────────
+   CRT SCREEN — Ink interior with Paper-tinted grid/text.
+   ────────────────────────────────────────────────────────── */
+.screen {
+  position: relative; height: 108px; border-radius: 5px; overflow: hidden;
+  margin-bottom: 14px;
+  background: radial-gradient(120% 120% at 50% 40%, #1a1a1a 0%, #0e0e0e 70%, #060606 100%);
+  border: 1px solid var(--ink);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.03) inset,
+    0 1px 4px rgba(0,0,0,.4) inset;
+}
+.screen.amber { /* keep alias, drawn the same way */
+  background: radial-gradient(120% 120% at 50% 40%, #1a1a1a 0%, #0e0e0e 70%, #060606 100%);
+}
+.screen canvas { display: block; width: 100%; height: 100%; position: relative; z-index: 1; }
+.screen .scanlines {
+  position: absolute; inset: 0; pointer-events: none; z-index: 2;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,.32) 0 1px, transparent 1px 3px);
+  opacity: .35;
+}
+.screen .vignette {
+  position: absolute; inset: 0; pointer-events: none; z-index: 3;
+  background: radial-gradient(130% 120% at 50% 50%, transparent 55%, rgba(0,0,0,.55) 100%);
+}
+.screen .tag {
+  position: absolute; top: 7px; left: 9px;
+  font-family: var(--f-mono);
+  font-size: 8px; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--paper-soft); z-index: 4; opacity: .85;
+}
+.screen.display-off { display: flex; align-items: center; justify-content: center; }
+.display-off-label {
+  position: relative; z-index: 4;
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: var(--t-tracking-eyebrow); text-transform: uppercase;
+  color: var(--paper-quiet); opacity: .8;
+}
+
+/* ──────────────────────────────────────────────────────────
+   KNOB — drawn directly from the brand identity (§ 02).
+   A simple ink-stroked circle with a single thin indicator
+   line. No gradient, no shadow, no ticks — this matches the
+   "MODULE 01 / IDENTITY" plate where every knob reads as a
+   technical schematic rather than a 3D rendering.
+   ────────────────────────────────────────────────────────── */
+.ctrl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
+.ctrl-grid.one { grid-template-columns: 1fr; }
+.knob {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 6px 0 2px; user-select: none;
+}
+.knob .dial {
+  position: relative; width: 46px; height: 46px; border-radius: 50%;
+  cursor: ns-resize; touch-action: none;
+  background: transparent;
+  border: 1.25px solid var(--ink);
+  box-shadow: none;
+}
+/* Outer ring + ticks: removed entirely. The brand keeps the dial
+   to a single hairline circle. */
+.knob .dial::before { display: none; }
+.knob .ticks { display: none; }
+
+/* The indicator: an ink line anchored at the dial centre, running
+   outward to 65% of the radius — stops 8px short of the rim.
+   Geometry: dial radius = 23px (46/2). Mark length = 15px (≈65%).
+   The mark's bottom edge sits at the dial centre, top edge at y=8
+   in dial coords. transform-origin pivots at the mark's bottom edge
+   = the dial centre. */
+.knob .dial .mark {
+  position: absolute;
+  left: 50%; top: 8px;
+  width: 1.25px;
+  height: 15px;
+  border-radius: 0;
+  background: var(--ink);
+  transform-origin: 50% 15px;
+  transform: translateX(-50%);
+  box-shadow: none;
+}
+
+/* Control-module knobs follow the brand's Red "signal-on" treatment:
+   red ring + red indicator. Audio modules keep the default ink dial —
+   quieter, in line with audio = ink in the wire system. */
+.control-mod .knob .dial { border-color: var(--red); }
+.control-mod .knob .dial .mark { background: var(--red); }
+.knob .lab {
+  font-family: var(--f-mono);
+  font-size: 9px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-quiet); text-align: center; line-height: 1.2;
+}
+.knob .val {
+  font-family: var(--f-mono);
+  font-size: 11px; font-variant-numeric: tabular-nums;
+  color: var(--ink); letter-spacing: .03em;
+}
+
+/* ──────────────────────────────────────────────────────────
+   TOGGLE — bat handle on paper.
+   ────────────────────────────────────────────────────────── */
+.toggle { display: flex; align-items: center; gap: 11px; padding: 7px 0; user-select: none; }
+.module[data-id="filter"] .toggle { justify-content: center; }
+.module[data-id="amp"] .ctrl-grid.one {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+}
+.toggle .sw { position: relative; width: 34px; height: 46px; cursor: pointer; flex: 0 0 auto; }
+.toggle .plate {
+  position: absolute; left: 50%; top: 0; transform: translateX(-50%);
+  width: 30px; height: 46px; border-radius: 4px;
+  background: linear-gradient(180deg, var(--ink-2), var(--ink));
+  border: 1px solid var(--ink);
+  box-shadow: 0 1px 0 rgba(255,255,255,.04) inset;
+}
+.toggle .nut {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 22px; height: 14px;
+  background: linear-gradient(180deg, #d2cdbd, #b0aa9c);
+  clip-path: polygon(0 50%, 25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%);
+  box-shadow: 0 1px 1px rgba(0,0,0,.35);
+}
+.toggle .lever {
+  position: absolute; left: 50%; bottom: 8px;
+  width: 9px; height: 24px; border-radius: 5px;
+  transform-origin: 50% 100%;
+  background: linear-gradient(180deg, #f4f1ea, #cfcabd 55%, #a8a394);
+  box-shadow: 0 2px 4px rgba(0,0,0,.4), 0 0 0 1px rgba(0,0,0,.3);
+  transform: translateX(-50%) rotate(-22deg);
+  transition: transform .14s var(--ease);
+}
+.toggle .sw.on .lever { transform: translateX(-50%) rotate(22deg); }
+.toggle .legend-on, .toggle .legend-off {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  font-family: var(--f-mono);
+  font-size: 7px; letter-spacing: .12em; font-weight: 600;
+}
+.toggle .legend-on { top: 3px; color: var(--red); }
+.toggle .legend-off { bottom: 3px; color: var(--paper-quiet); }
+.toggle .opts { display: flex; flex-direction: column; gap: 3px; }
+.toggle .opts span {
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-quiet);
+}
+.toggle .opts span.on { color: var(--ink); font-weight: 500; }
+
+/* Selector (waveform shapes) — paper chips. */
+.selector { display: flex; gap: 5px; flex-wrap: wrap; margin: 6px 0 2px; }
+.selector button {
+  flex: 1 1 0; min-width: 46px;
+  background: var(--paper);
+  border: 1px solid var(--ink-rule); color: var(--ink-soft);
+  padding: 8px 4px; border-radius: 4px;
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: .06em; text-transform: uppercase;
+  cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  transition: .12s;
+}
+.selector button .wf { width: 26px; height: 14px; }
+.selector button .wf path { fill: none; stroke: currentColor; stroke-width: 1.6; vector-effect: non-scaling-stroke; }
+.selector button:hover { color: var(--ink); border-color: var(--ink-quiet); background: var(--paper-2); }
+.selector button.on {
+  color: var(--white); background: var(--ink); border-color: var(--ink);
+  font-weight: 500;
+}
+.control-mod .selector button.on { background: var(--rouge); border-color: var(--rouge); }
+
+/* ──────────────────────────────────────────────────────────
+   PIANO KEYBOARD — paper keys with red "on" state.
+   ────────────────────────────────────────────────────────── */
+.kb {
+  position: relative; width: 100%; height: 112px; overflow: hidden;
+  border-radius: 4px; border: 1px solid var(--ink);
+  box-shadow: 0 1px 4px rgba(0,0,0,.35) inset;
+  user-select: none; touch-action: none;
+  margin-bottom: 12px;
+}
+.kb-whites { display: flex; height: 100%; }
+.kb-blacks { position: absolute; top: 0; left: 0; right: 0; height: 64%; pointer-events: none; }
+.kb-key { display: flex; align-items: flex-end; justify-content: center; padding-bottom: 7px; cursor: pointer; transition: background .04s linear; }
+.kb-key.white {
+  flex: 1; background: linear-gradient(180deg, var(--white), var(--paper));
+  border-right: 1px solid var(--ink-quiet);
+  color: var(--ink-soft);
+}
+.kb-key.white:last-child { border-right: none; }
+.kb-key.white.on {
+  background: linear-gradient(180deg, var(--red), #b8181b);
+  color: var(--white);
+}
+.kb-key.black {
+  position: absolute; top: 0; width: 8%; height: 100%; pointer-events: auto;
+  background: linear-gradient(180deg, var(--ink-2), var(--ink));
+  border: 1px solid #000; border-radius: 0 0 3px 3px;
+  box-shadow: 0 2px 4px rgba(0,0,0,.5);
+  color: var(--paper-quiet);
+}
+.kb-key.black.on { background: linear-gradient(180deg, var(--rouge), #5a0e11); color: var(--paper); }
+.kb-label {
+  font-family: var(--f-mono);
+  font-size: 9px; font-weight: 600; letter-spacing: .1em;
+}
+
+.stepper {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-quiet);
+}
+.stepper-label b {
+  color: var(--ink); font-weight: 500;
+  letter-spacing: .04em; font-size: 13px; margin-left: 4px;
+}
+.stepper-btn {
+  width: 28px; height: 26px; border-radius: 4px;
+  background: var(--paper); border: 1px solid var(--ink-rule); color: var(--ink);
+  font-family: var(--f-mono); font-size: 14px; font-weight: 500; cursor: pointer;
+  transition: border-color .14s var(--ease);
+}
+.stepper-btn:hover { border-color: var(--ink-quiet); background: var(--paper-2); }
+
+/* ──────────────────────────────────────────────────────────
+   TRIGGER — the "signal" lamp made literal. Red dot on hold.
+   ────────────────────────────────────────────────────────── */
+.trigger-mod-body {
+  flex: 1; display: flex; flex-direction: column; align-items: stretch;
+  justify-content: center; gap: 10px;
+  padding: 10px 0 14px;
+}
+.trigger-button {
+  position: relative;
+  width: 100%; padding: 26px 14px;
+  background: var(--paper);
+  border: 1.5px solid var(--gate);
+  border-radius: 0;
+  color: var(--gate);
+  font-family: var(--f-mono); font-weight: 600;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  cursor: pointer; user-select: none; touch-action: none;
+  transition: background .08s linear, color .08s linear, box-shadow .12s var(--ease);
+  box-shadow: 0 0 0 0 transparent;
+}
+.trigger-button:hover { background: var(--gate-soft); }
+.trigger-button.held, .trigger-button:active {
+  background: var(--gate); color: var(--white);
+  box-shadow: 0 0 22px -2px var(--gate-glow);
+}
+.trigger-button:disabled {
+  opacity: .35; cursor: default; pointer-events: none;
+}
+/* Indicator lamps — shared base for the trigger / clock / counter / mux LEDs.
+   Each rule below adds only its own size; the lit ("on") states differ:
+   white (trigger), gate (clock + counter), rouge (mux). */
+.trigger-lamp, .clock-lamp, .counter-led, .mux-led {
+  border-radius: 50%;
+  background: var(--gate-soft);
+  box-shadow: 0 0 0 1px var(--ink-rule) inset;
+  transition: background .06s linear, box-shadow .06s linear;
+}
+.clock-lamp.on, .counter-bit.on .counter-led {
+  background: var(--gate);
+  box-shadow: 0 0 14px var(--gate-glow), 0 0 0 1px rgba(0,0,0,.25) inset;
+}
+.trigger-lamp { width: 11px; height: 11px; margin-bottom: 4px; }
+.trigger-button.held .trigger-lamp {
+  background: var(--white);
+  box-shadow: 0 0 12px var(--gate-glow), 0 0 0 1px rgba(0,0,0,.25) inset;
+}
+.trigger-label {
+  font-family: var(--f-mono);
+  font-size: 13px; letter-spacing: .18em; text-transform: uppercase;
+}
+.trigger-sub {
+  font-family: var(--f-mono);
+  font-size: 9px; letter-spacing: .16em; text-transform: uppercase;
+  opacity: .8;
+}
+.trigger-shortcut { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.trigger-shortcut-label {
+  font-family: var(--f-mono);
+  font-size: 9px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--ink-quiet);
+}
+.trigger-shortcut-btn {
+  min-width: 64px; padding: 5px 10px;
+  background: transparent;
+  border: 1px solid var(--ink-rule); border-radius: 0;
+  color: var(--gate);
+  font-family: var(--f-mono); font-weight: 600; font-size: 11px;
+  letter-spacing: .12em; text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color .14s var(--ease), background .14s var(--ease);
+}
+.trigger-shortcut-btn:hover { border-color: var(--gate); background: var(--gate-soft); }
+.trigger-shortcut-btn.capturing {
+  border-color: var(--gate); background: var(--gate-soft);
+  animation: trigger-shortcut-pulse 1s ease-in-out infinite;
+}
+@keyframes trigger-shortcut-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(122,20,24,0); }
+  50%      { box-shadow: 0 0 0 3px rgba(122,20,24,.18); }
+}
+
+/* ──────────────────────────────────────────────────────────
+   CLOCK
+   ────────────────────────────────────────────────────────── */
+.clock-body {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: stretch;
+  justify-content: center; gap: 14px; padding: 10px 6px 14px;
+}
+.clock-lamp-row { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 4px 0; }
+.clock-lamp { width: 14px; height: 14px; }
+.clock-lamp-label {
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--ink-quiet); min-width: 64px;
+}
+.clock-run-btn {
+  width: 28px; height: 22px; padding: 0;
+  background: transparent;
+  border: 1.5px solid var(--ink-rule);
+  border-radius: 4px; color: var(--ink-soft);
+  font-family: var(--f-mono); font-size: 11px; line-height: 1;
+  cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+  transition: border-color .14s var(--ease), color .14s var(--ease), background .14s var(--ease);
+}
+.clock-run-btn:hover { border-color: var(--ink-quiet); color: var(--ink); }
+.clock-run-btn.on {
+  border-color: var(--gate); color: var(--gate); background: var(--gate-soft);
+}
+.clock-run-btn.on:hover { background: rgba(122,20,24,.18); }
+
+/* ──────────────────────────────────────────────────────────
+   DRUM SEQUENCER
+   ────────────────────────────────────────────────────────── */
+.module[data-id="drumseq"] { width: 540px; }
+.drumseq-body { flex: 1; display: flex; flex-direction: column; gap: 6px; padding: 4px 0 10px; }
+.drumseq-track { display: flex; align-items: center; gap: 8px; }
+.drumseq-track-label {
+  flex: 0 0 28px; height: 24px;
+  background: transparent;
+  border: 1px solid var(--ink-rule); border-radius: 4px;
+  color: var(--ink-soft);
+  font-family: var(--f-mono); font-size: 11px; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase;
+  cursor: pointer; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: color .14s var(--ease), border-color .14s var(--ease);
+}
+.drumseq-track-label:hover { color: var(--ink); border-color: var(--ink-quiet); }
+.drumseq-cells { display: flex; gap: 8px; flex: 1; }
+.drumseq-group { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; flex: 1; }
+.drumseq-cell {
+  height: 24px;
+  background: var(--paper-2);
+  border: 1px solid var(--ink-rule); border-radius: 3px;
+  cursor: pointer; padding: 0;
+  transition: background .08s linear, border-color .08s linear, box-shadow .08s linear;
+}
+.drumseq-cell:hover { border-color: var(--ink-quiet); }
+.drumseq-cell.on {
+  background: var(--gate); border-color: var(--gate);
+  box-shadow: 0 0 6px var(--gate-glow);
+}
+.drumseq-cell.playing { border-color: var(--ink); }
+.drumseq-cell.on.playing {
+  box-shadow: 0 0 14px var(--gate-glow), 0 0 0 1px var(--ink) inset;
+}
+
+/* ──────────────────────────────────────────────────────────
+   PLACARD — tooltip set on Paper.
+   ────────────────────────────────────────────────────────── */
+.placard {
+  position: fixed;
+  padding: 12px 14px;
+  background: var(--white);
+  border: 1px solid var(--ink-rule);
+  border-radius: 6px;
+  box-shadow: 0 14px 28px -8px rgba(0,0,0,.35);
+  font-family: var(--f-sans); font-weight: 300;
+  font-size: 13px; line-height: 1.6;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+  z-index: 60; pointer-events: none;
+  animation: placard-in .15s var(--ease) forwards;
+}
+@keyframes placard-in { from { opacity: 0; } to { opacity: 1; } }
+.placard.above { transform: translateY(-100%); }
+.placard b { color: var(--ink); font-weight: 500; }
+.placard i, .placard em { color: var(--rouge); font-style: italic; }
+
+/* Speaker output flourish. */
+.spk {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  flex: 1;
+  color: var(--red);
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
+}
+
+/* ── interaction · inverter · cvmix · atv · offset · sequencer ── */
+
+/* Module interaction */
+.module.draggable .m-head { cursor: grab; }
+.module.draggable .m-head:active { cursor: grabbing; }
+body.module-dragging,
+body.module-dragging * { cursor: grabbing !important; }
+.module.draggable { transition: box-shadow .14s var(--ease); }
+.module.draggable:hover {
+  /* Module is borderless-shadow by default; a subtle ink halo on hover
+     is enough to signal grabability without re-introducing depth. */
+  box-shadow: 0 2px 0 var(--ink-rule-soft);
+}
+
+/* ──────────────────────────────────────────────────────────
+   INVERTER — text block on paper.
+   ────────────────────────────────────────────────────────── */
+.inverter-body { padding: 24px 12px; }
+.inverter-symbol {
+  display: flex; align-items: center; gap: 14px;
+  font-family: var(--f-mono);
+  font-size: 13px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink);
+}
+.inverter-symbol .inv-label { color: var(--rouge); font-weight: 700; }
+.inverter-symbol .inv-op {
+  color: var(--ink-soft);
+  padding: 6px 12px;
+  border: 1px solid var(--ink-rule); border-radius: 4px;
+  background: var(--paper-2);
+  letter-spacing: .04em;
+}
+
+/* CV Mixer */
+.cvmix-body {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+  padding: 14px 10px; gap: 18px;
+}
+.cvmix-row { display: flex; align-items: flex-start; justify-content: space-around; width: 100%; gap: 6px; }
+.cvmix-strip { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.cvmix-phase {
+  font-family: var(--f-mono);
+  font-size: 11px; font-weight: 700;
+  color: var(--ink-soft);
+  background: var(--paper-2);
+  border: 1px solid var(--ink-rule); border-radius: 3px;
+  width: 26px; height: 22px; cursor: pointer;
+  transition: .14s var(--ease);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.cvmix-phase:hover { border-color: var(--ink-quiet); }
+.cvmix-phase.on {
+  color: var(--white); background: var(--rouge); border-color: var(--rouge);
+  box-shadow: 0 0 8px var(--control-glow);
+}
+.cvmix-master {
+  display: flex; justify-content: center; width: 100%;
+  padding-top: 10px; border-top: 1px dashed var(--ink-rule);
+}
+
+/* Attenuverter */
+.atv-body { padding: 18px 12px; }
+.atv-axis {
+  display: flex; justify-content: space-between;
+  width: 80%;
+  font-family: var(--f-mono);
+  font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--ink-quiet);
+}
+.atv-axis .neg  { color: var(--red); }
+.atv-axis .pos  { color: var(--rouge); }
+.atv-axis .zero { color: var(--ink-soft); }
+
+/* Offset — a one-knob constant source; trim its height to a compact tile (it
+   shares the .atv-body layout with the attenuverter, so scope by type). Width
+   stays at the default; drop the outer padding, the axis row and the hint so
+   it collapses to roughly just the knob. */
+.module[data-id="offset"] { padding-top: 10px; padding-bottom: 8px; }
+.module[data-id="offset"] .atv-body { padding: 4px 8px; gap: 6px; }
+.module[data-id="offset"] .atv-axis { display: none; }
+.module[data-id="offset"] .atv-hint { display: none; }
+
+/* ──────────────────────────────────────────────────────────
+   SEQUENCER MODULES — Counter, Multiplexer, Quantizer
+   ────────────────────────────────────────────────────────── */
+/* Centered module bodies — the shared column-centered layout used by the
+   inverter, attenuverter and the sequencer modules. inverter/atv set only
+   their own padding (above); the sequencer trio shares one padding. */
+.inverter-body, .atv-body,
+.counter-body, .mux-body, .quant-body {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px;
+}
+.counter-body, .mux-body, .quant-body { padding: 14px 12px; }
+.inverter-hint, .atv-hint,
+.counter-hint, .mux-hint, .quant-hint {
+  font-family: var(--f-mono);
+  font-size: 9px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-quiet);
+}
+
+/* Counter — decimal readout + two binary LEDs */
+.counter-readout {
+  font-family: var(--f-mono);
+  font-size: 30px; line-height: 1; font-weight: 600; color: var(--ink);
+}
+.counter-bits { display: flex; gap: 20px; }
+.counter-bit { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.counter-led { width: 16px; height: 16px; }
+.counter-bit-label {
+  font-family: var(--f-mono);
+  font-size: 9px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-quiet);
+}
+
+/* The 8→1 mux carries 12 ports (8 in + 3 address + out); give it more width
+   so the input markers along the edge aren't cramped. */
+.module[data-id="mux8"] { width: 440px; }
+
+/* Multiplexer — step lamps (4 or 8; wraps if the row runs out of room) */
+.mux-steps { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.mux-step { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.mux-led { width: 14px; height: 14px; }
+.mux-step.on .mux-led {
+  background: var(--rouge);
+  box-shadow: 0 0 12px var(--control-glow), 0 0 0 1px rgba(0,0,0,.25) inset;
+}
+.mux-step-label {
+  font-family: var(--f-mono);
+  font-size: 10px; color: var(--ink-quiet);
+}
+
+/* Quantizer — note readout above scale + range controls */
+.quant-readout {
+  font-family: var(--f-mono);
+  font-size: 26px; line-height: 1; font-weight: 600; color: var(--ink);
+}
