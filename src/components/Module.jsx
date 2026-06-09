@@ -94,6 +94,11 @@ export function Module({ type, instanceId, children }) {
   if (puzzle?.w !== undefined) moduleStyle["--puzzle-w"] = puzzle.w;
   if (puzzle?.h !== undefined) moduleStyle["--puzzle-h"] = puzzle.h;
 
+  // Free-build width: a module may declare a custom panel width in its manifest
+  // (meta.width, in px). Override the --mod-w token on the element so the size
+  // lives with the module definition instead of a .module[data-id] CSS rule.
+  if (manifest.meta.width !== undefined) moduleStyle["--mod-w"] = `${manifest.meta.width}px`;
+
   // In puzzle mode the rack owns the layout (no drag) and the module reads as
   // a fixed piece, so we drop the `draggable` class and the remove button.
   const classes = [

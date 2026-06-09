@@ -14,7 +14,7 @@ export const DrumSeq = {
   type: "drumseq",
   Cls: DrumSeqModule,
   Panel: DrumSeqPanel,
-  meta: { title: "Drum Seq" },
+  meta: { title: "Drum Seq", width: 540 },
   defaults: () => ({ pattern: starterPattern() }),
   placard:
     "A 4-track × 16-step gate <b>sequencer</b>. The <b>clock</b> input advances one step per pulse; <b>reset</b> jumps back to step 1. Each row drives one of the four numbered gate outputs — toggle a step to fire that track's gate when the playhead lands on it. Click a track number to clear that row.",

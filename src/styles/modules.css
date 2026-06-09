@@ -399,9 +399,8 @@
 .clock-run-btn.on:hover { background: rgba(122,20,24,.18); }
 
 /* ──────────────────────────────────────────────────────────
-   DRUM SEQUENCER
+   DRUM SEQUENCER  (panel width lives in the manifest — meta.width)
    ────────────────────────────────────────────────────────── */
-.module[data-id="drumseq"] { width: 540px; }
 .drumseq-body { flex: 1; display: flex; flex-direction: column; gap: 6px; padding: 4px 0 10px; }
 .drumseq-track { display: flex; align-items: center; gap: 8px; }
 .drumseq-track-label {
@@ -583,9 +582,6 @@ body.module-dragging * { cursor: grabbing !important; }
   color: var(--ink-quiet);
 }
 
-/* The 8→1 mux carries 12 ports (8 in + 3 address + out); give it more width
-   so the input markers along the edge aren't cramped. */
-.module[data-id="mux8"] { width: 440px; }
 
 /* Multiplexer — step lamps (4 or 8; wraps if the row runs out of room) */
 .mux-steps { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
