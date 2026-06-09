@@ -6,6 +6,10 @@
 //   - panel.jsx  exports the React panel (instance-aware via ModuleInstanceContext)
 //   - glyph.jsx  exports the m-head silkscreen SVG (or `null`)
 //
+// Closely-related modules may be grouped under a family subfolder that also
+// holds shared code — e.g. the envelopes live in `src/modules/envelopes/`
+// (adsrenv/, arenv/, adenv/) and extend the common `EnvelopeModule` base there.
+//
 // validateManifest runs at import time on every module; a missing or malformed
 // manifest throws loudly at app startup so silent UI/audio bugs from forgotten
 // registry entries become impossible.

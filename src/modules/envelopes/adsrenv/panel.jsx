@@ -1,14 +1,14 @@
-import { useSynthStore } from "../../store/useSynthStore.js";
-import { getEngine } from "../../audio/engineSingleton.js";
-import { Knob } from "../../components/controls/Knob.jsx";
-import { Canvas } from "../../components/viz/Canvas.jsx";
-import { drawEnv } from "../../components/viz/drawEnv.js";
-import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
-import { usePuzzleShow } from "../../content/puzzleHooks.js";
+import { useSynthStore } from "../../../store/useSynthStore.js";
+import { getEngine } from "../../../audio/engineSingleton.js";
+import { Knob } from "../../../components/controls/Knob.jsx";
+import { Canvas } from "../../../components/viz/Canvas.jsx";
+import { drawEnv } from "../../../components/viz/drawEnv.js";
+import { useModuleInstance } from "../../../components/ModuleInstanceContext.js";
+import { usePuzzleShow } from "../../../content/puzzleHooks.js";
 
 const DEFAULT_PARAMS = { a: 0.05, d: 0.2, s: -8, r: 0.4 };
 
-export function EnvelopePanel() {
+export function AdsrEnvelopePanel() {
   const { instanceId: id } = useModuleInstance();
   const show = usePuzzleShow(id);
 

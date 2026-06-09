@@ -138,7 +138,14 @@ export function validatePatchObject(obj) {
         typeof c.fromId !== "string" || typeof c.fromPort !== "string" ||
         typeof c.toId !== "string"   || typeof c.toPort !== "string") return null;
   }
-  return { modules: cloneDeep(p.modules), connections: cloneDeep(p.connections) };
+  // Legacy patch files used module type "env" for the ADSR envelope (renamed
+  // to "adsrenv" when the envelope family moved under a shared base class).
+  // Map it forward so older exported patches still import. The sustainDb→s
+  // param rename is handled downstream by the envelope module/panel.
+  const modules = cloneDeep(p.modules).map((m) =>
+    m.type === "env" ? { ...m, type: "adsrenv" } : m,
+  );
+  return { modules, connections: cloneDeep(p.connections) };
 }
 
 // Replace the live graph with a saved patch. Drops journey context so a
@@ -566,7 +573,7 @@ export const useSynthStore = create(
       }),
       {
         name: "smem-v1",
-        version: 15,
+        version: 16,
         partialize: (s) => ({
           modules: s.modules,
           connections: s.connections,
@@ -615,6 +622,22 @@ export const useSynthStore = create(
             renameInModules(persisted.modules);
             for (const p of persisted.savedPatches || []) {
               renameInModules(p?.patch?.modules);
+            }
+          }
+          if (version < 16) {
+            // Module type `env` renamed to `adsrenv` — the envelope family
+            // (ADSR/AR/AD) now shares a base class and lives under
+            // modules/envelopes/. Rename in live modules and every saved patch
+            // so existing patches keep loading.
+            const renameType = (mods) => {
+              if (!Array.isArray(mods)) return;
+              for (const m of mods) {
+                if (m?.type === "env") m.type = "adsrenv";
+              }
+            };
+            renameType(persisted.modules);
+            for (const p of persisted.savedPatches || []) {
+              renameType(p?.patch?.modules);
             }
           }
           return persisted;

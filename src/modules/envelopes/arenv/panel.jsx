@@ -1,9 +1,9 @@
-import { useSynthStore } from "../../store/useSynthStore.js";
-import { getEngine } from "../../audio/engineSingleton.js";
-import { Knob } from "../../components/controls/Knob.jsx";
-import { Canvas } from "../../components/viz/Canvas.jsx";
-import { drawEnv } from "../../components/viz/drawEnv.js";
-import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
+import { useSynthStore } from "../../../store/useSynthStore.js";
+import { getEngine } from "../../../audio/engineSingleton.js";
+import { Knob } from "../../../components/controls/Knob.jsx";
+import { Canvas } from "../../../components/viz/Canvas.jsx";
+import { drawEnv } from "../../../components/viz/drawEnv.js";
+import { useModuleInstance } from "../../../components/ModuleInstanceContext.js";
 
 const DEFAULT_PARAMS = { a: 0.05, r: 0.3 };
 

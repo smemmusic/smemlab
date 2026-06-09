@@ -150,7 +150,7 @@ export default {
       addLabel: "Add Envelope",
       adds: {
         modules: [
-          { id: "env",  type: "env",  params: { a: 0.05, d: 0.2, s: -8, r: 0.4 }, position: { x: 800,  y: 520 } },
+          { id: "env",  type: "adsrenv",  params: { a: 0.05, d: 0.2, s: -8, r: 0.4 }, position: { x: 800,  y: 520 } },
           { id: "trigger", type: "trigger", params: {},                                       position: { x: 1200, y: 520 } },
         ],
         connections: [

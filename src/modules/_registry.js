@@ -6,9 +6,9 @@ import { validateManifest } from "./_types.js";
 import { Oscillator } from "./oscillator/index.js";
 import { Filter }     from "./filter/index.js";
 import { Amp }        from "./amp/index.js";
-import { Env }        from "./env/index.js";
-import { ArEnv }      from "./arenv/index.js";
-import { AdEnv }      from "./adenv/index.js";
+import { AdsrEnv }    from "./envelopes/adsrenv/index.js";
+import { ArEnv }      from "./envelopes/arenv/index.js";
+import { AdEnv }      from "./envelopes/adenv/index.js";
 import { Lfo }        from "./lfo/index.js";
 import { Keyboard }   from "./keyboard/index.js";
 import { Trigger }    from "./trigger/index.js";
@@ -28,7 +28,7 @@ import { Offset }      from "./offset/index.js";
 import { AudioMixer }  from "./audiomixer/index.js";
 
 export const MODULES = [
-  Oscillator, Filter, Amp, Env, ArEnv, AdEnv, Lfo,
+  Oscillator, Filter, Amp, AdsrEnv, ArEnv, AdEnv, Lfo,
   Keyboard, Trigger, Clock, DrumSeq, Counter, Counter3, Multiplexer, Mux8, Quantizer, Output,
   Inverter, CvMixer, Attenuator, Attenuverter, Offset, AudioMixer,
 ];
@@ -41,7 +41,7 @@ export const MODULES = [
 // store guarantees, so it isn't user-addable.
 const PALETTE_GROUPS = [
   { key: "audio",      label: "Audio",      types: ["oscillator", "filter", "audiomixer", "amp"] },
-  { key: "modulation", label: "Modulation", types: ["env", "arenv", "adenv", "lfo"] },
+  { key: "modulation", label: "Modulation", types: ["adsrenv", "arenv", "adenv", "lfo"] },
   { key: "trigger",    label: "Trigger",    types: ["keyboard", "trigger", "clock", "drumseq"] },
   { key: "logic",      label: "Logic",      types: ["counter", "counter3", "multiplexer", "mux8"] },
   { key: "utility",    label: "Utility",    types: ["quantizer", "inverter", "attenuator", "attenuverter", "cvmixer", "offset"] },
