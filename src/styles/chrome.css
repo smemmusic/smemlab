@@ -35,7 +35,7 @@ header {
 .legend {
   display: flex; align-items: center; gap: 18px;
   font-family: var(--f-mono);
-  font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
+  font-size: 10px; letter-spacing: var(--t-tracking-wide); text-transform: uppercase;
   color: var(--ink-soft);
 }
 .legend i { display: inline-block; width: 16px; height: 2px; border-radius: 1px; margin-right: 8px; vertical-align: middle; }
@@ -52,7 +52,7 @@ header {
 /* Look + hover come from .btn-ghost (primitives.css); the bare .icon-btn
    selector styles both the desktop legend and the mobile burger copies. */
 .icon-btn {
-  font-family: var(--f-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+  font-family: var(--f-mono); font-size: 10px; letter-spacing: var(--t-tracking-mono); text-transform: uppercase;
   border-radius: 5px;
   padding: 6px 10px;
   display: inline-flex; align-items: center; gap: 6px;
@@ -145,7 +145,7 @@ header {
   content: "TRY";
   font-family: var(--f-mono);
   font-style: normal;
-  font-size: 9px; letter-spacing: .2em;
+  font-size: 9px; letter-spacing: var(--t-tracking-eyebrow);
   color: var(--red);
   border: 1px solid var(--audio-soft);
   padding: 2px 6px; border-radius: 2px;
@@ -180,7 +180,7 @@ header {
   font-family: var(--f-mono);
   font-style: normal;
   font-size: 9px;
-  letter-spacing: .14em;
+  letter-spacing: var(--t-tracking-mono);
   color: var(--rouge);
   font-variant-numeric: tabular-nums;
 }
@@ -203,7 +203,7 @@ header {
    shared typography + geometry. */
 .narrator .prevbtn, .narrator .nextbtn {
   font-family: var(--f-mono);
-  font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+  font-size: 10px; letter-spacing: var(--t-tracking-mono); text-transform: uppercase;
   font-weight: 500;
   padding: 10px 16px; border-radius: 6px;
 }
@@ -222,7 +222,7 @@ header {
 .narrator .go-further h3 {
   margin: 0 0 6px;
   font-family: var(--f-mono);
-  font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+  font-size: 11px; letter-spacing: var(--t-tracking-mono); text-transform: uppercase;
   font-weight: 600; color: var(--ink);
 }
 .narrator .go-further p {
@@ -231,7 +231,7 @@ header {
 }
 .narrator .go-further-btn {
   font-family: var(--f-mono);
-  font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+  font-size: 10px; letter-spacing: var(--t-tracking-mono); text-transform: uppercase;
   font-weight: 500;
   padding: 10px 16px; border-radius: 6px;
 }
@@ -240,7 +240,7 @@ header {
 .narrator-back {
   position: absolute; top: 8px; right: 8px;
   font-family: var(--f-mono);
-  font-size: 9px; letter-spacing: .16em; text-transform: uppercase;
+  font-size: 9px; letter-spacing: var(--t-tracking-wide); text-transform: uppercase;
   border-radius: 4px;
   padding: 4px 8px;
 }
@@ -268,7 +268,7 @@ header {
 }
 .power {
   display: flex; align-items: center; gap: 11px;
-  font-family: var(--f-mono); font-size: 12px; letter-spacing: .14em;
+  font-family: var(--f-mono); font-size: 12px; letter-spacing: var(--t-tracking-mono);
   text-transform: uppercase; font-weight: 600;
   background: var(--red); color: var(--white);
   border: 1.5px solid var(--red);
@@ -287,7 +287,7 @@ header {
 .power .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--white); }
 .power.off .dot { background: var(--ink-quiet); }
 .gate {
-  font-family: var(--f-mono); font-size: 12px; letter-spacing: .14em;
+  font-family: var(--f-mono); font-size: 12px; letter-spacing: var(--t-tracking-mono);
   text-transform: uppercase; font-weight: 600;
   color: var(--red);
   background: var(--audio-soft);
@@ -300,12 +300,12 @@ header {
   opacity: .35; pointer-events: none;
   border-color: var(--ink-rule); color: var(--ink-quiet); background: transparent;
 }
-.gate .sub { display: block; font-size: 8px; letter-spacing: .16em; opacity: .75; margin-top: 2px; }
+.gate .sub { display: block; font-size: 8px; letter-spacing: var(--t-tracking-wide); opacity: .75; margin-top: 2px; }
 .vol {
   display: flex; align-items: center; gap: 12px; margin-left: auto;
   min-width: 210px; color: var(--ink-quiet);
   font-family: var(--f-mono);
-  font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+  font-size: 11px; letter-spacing: var(--t-tracking-mono); text-transform: uppercase;
 }
 .vol input { flex: 1; -webkit-appearance: none; appearance: none; height: 30px; background: transparent; cursor: pointer; }
 .vol input::-webkit-slider-runnable-track { height: 3px; border-radius: 2px; background: var(--ink-rule); }
@@ -380,7 +380,7 @@ header {
 .setting-readout {
   font-family: var(--f-mono);
   font-variant-numeric: tabular-nums; font-size: 16px;
-  color: var(--ink); letter-spacing: .02em;
+  color: var(--ink); letter-spacing: var(--t-tracking-tight);
 }
 
 /* ──────────────────────────────────────────────────────────
@@ -398,7 +398,7 @@ header {
 .patch-input:focus { outline: none; border-color: var(--ink); }
 .patch-btn {
   font-family: var(--f-mono);
-  font-size: 11px; letter-spacing: .14em; text-transform: uppercase; font-weight: 600;
+  font-size: 11px; letter-spacing: var(--t-tracking-mono); text-transform: uppercase; font-weight: 600;
   color: var(--white); background: var(--ink); border: 1px solid var(--ink); border-radius: 4px;
   padding: 9px 16px; cursor: pointer; transition: .14s var(--ease);
   display: inline-flex; align-items: center; justify-content: center;
@@ -445,14 +445,14 @@ header {
 .patch-date {
   grid-area: date;
   font-family: var(--f-mono);
-  font-size: 10px; color: var(--ink-quiet); letter-spacing: .04em;
+  font-size: 10px; color: var(--ink-quiet); letter-spacing: var(--t-tracking-tight);
 }
 .patch-actions { grid-area: actions; display: flex; gap: 6px; align-items: center; }
 
 .patch-upload { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
 .patch-upload-hint { margin: 0; flex: 1 1 200px; }
 .patch-error {
-  font-family: var(--f-mono); font-size: 11px; letter-spacing: .04em;
+  font-family: var(--f-mono); font-size: 11px; letter-spacing: var(--t-tracking-tight);
   color: var(--rouge);
   background: var(--control-soft);
   border: 1px solid var(--rouge);
@@ -519,7 +519,7 @@ header {
   margin-top: 6px;
   display: inline-flex; align-items: center; gap: 12px;
   font-family: var(--f-mono);
-  font-size: 13px; letter-spacing: .16em; text-transform: uppercase;
+  font-size: 13px; letter-spacing: var(--t-tracking-wide); text-transform: uppercase;
   font-weight: 600; color: var(--white);
   background: var(--red); border: 1.5px solid var(--red);
   padding: 16px 30px; border-radius: 6px; cursor: pointer;
@@ -570,7 +570,7 @@ header {
 .landing .journey-card .cta {
   margin-top: auto;
   font-family: var(--f-mono);
-  font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
+  font-size: 10px; letter-spacing: var(--t-tracking-wide); text-transform: uppercase;
   color: var(--red); font-weight: 600;
 }
 .landing .journey-card.free { border-color: var(--ink-rule); }
@@ -625,7 +625,7 @@ header {
   display: flex; flex-wrap: wrap; gap: 14px;
   padding-bottom: 10px; border-bottom: 1px solid var(--ink-rule);
   font-family: var(--f-mono);
-  font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+  font-size: 10px; letter-spacing: var(--t-tracking-mono); text-transform: uppercase;
   color: var(--ink-soft);
 }
 .burger-legend i { display: inline-block; width: 16px; height: 2px; border-radius: 1px; margin-right: 6px; vertical-align: middle; }
@@ -644,7 +644,7 @@ header {
   flex: 1; padding: 12px 8px;
   background: transparent; border: none; border-bottom: 2px solid transparent;
   font-family: var(--f-mono);
-  font-size: 11px; letter-spacing: .18em; text-transform: uppercase; font-weight: 600;
+  font-size: 11px; letter-spacing: var(--t-tracking-wide); text-transform: uppercase; font-weight: 600;
   color: var(--ink-soft); cursor: pointer; transition: .14s var(--ease);
 }
 .mobile-tab:hover { color: var(--ink); }

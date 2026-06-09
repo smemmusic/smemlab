@@ -41,7 +41,7 @@
 .m-title {
   font-family: var(--f-sans);
   font-size: 15px; font-weight: 600;
-  letter-spacing: .04em;
+  letter-spacing: var(--t-tracking-tight);
   margin: 4px 0 0;
   text-transform: uppercase;
   color: var(--ink);
@@ -89,7 +89,7 @@
 .screen .tag {
   position: absolute; top: 7px; left: 9px;
   font-family: var(--f-mono);
-  font-size: 8px; letter-spacing: .2em; text-transform: uppercase;
+  font-size: 8px; letter-spacing: var(--t-tracking-eyebrow); text-transform: uppercase;
   color: var(--paper-soft); z-index: 4; opacity: .85;
 }
 .screen.display-off { display: flex; align-items: center; justify-content: center; }
@@ -150,13 +150,13 @@
 .control-mod .knob .dial .mark { background: var(--red); }
 .knob .lab {
   font-family: var(--f-mono);
-  font-size: 9px; letter-spacing: .14em; text-transform: uppercase;
+  font-size: 9px; letter-spacing: var(--t-tracking-mono); text-transform: uppercase;
   color: var(--ink-quiet); text-align: center; line-height: 1.2;
 }
 .knob .val {
   font-family: var(--f-mono);
   font-size: 11px; font-variant-numeric: tabular-nums;
-  color: var(--ink); letter-spacing: .03em;
+  color: var(--ink); letter-spacing: var(--t-tracking-tight);
 }
 
 /* ──────────────────────────────────────────────────────────
@@ -198,14 +198,14 @@
 .toggle .legend-on, .toggle .legend-off {
   position: absolute; left: 50%; transform: translateX(-50%);
   font-family: var(--f-mono);
-  font-size: 7px; letter-spacing: .12em; font-weight: 600;
+  font-size: 7px; letter-spacing: var(--t-tracking-mono); font-weight: 600;
 }
 .toggle .legend-on { top: 3px; color: var(--red); }
 .toggle .legend-off { bottom: 3px; color: var(--paper-quiet); }
 .toggle .opts { display: flex; flex-direction: column; gap: 3px; }
 .toggle .opts span {
   font-family: var(--f-mono);
-  font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+  font-size: 10px; letter-spacing: var(--t-tracking-mono); text-transform: uppercase;
   color: var(--ink-quiet);
 }
 .toggle .opts span.on { color: var(--ink); font-weight: 500; }
@@ -218,7 +218,7 @@
   border: 1px solid var(--ink-rule); color: var(--ink-soft);
   padding: 8px 4px; border-radius: 4px;
   font-family: var(--f-mono);
-  font-size: 10px; letter-spacing: .06em; text-transform: uppercase;
+  font-size: 10px; letter-spacing: var(--t-tracking-snug); text-transform: uppercase;
   cursor: pointer;
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   transition: .12s;
@@ -265,18 +265,18 @@
 .kb-key.black.on { background: linear-gradient(180deg, var(--rouge), #5a0e11); color: var(--paper); }
 .kb-label {
   font-family: var(--f-mono);
-  font-size: 9px; font-weight: 600; letter-spacing: .1em;
+  font-size: 9px; font-weight: 600; letter-spacing: var(--t-tracking-snug);
 }
 
 .stepper {
   display: flex; align-items: center; justify-content: center; gap: 12px;
   font-family: var(--f-mono);
-  font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+  font-size: 10px; letter-spacing: var(--t-tracking-mono); text-transform: uppercase;
   color: var(--ink-quiet);
 }
 .stepper-label b {
   color: var(--ink); font-weight: 500;
-  letter-spacing: .04em; font-size: 13px; margin-left: 4px;
+  letter-spacing: var(--t-tracking-tight); font-size: 13px; margin-left: 4px;
 }
 .stepper-btn {
   width: 28px; height: 26px; border-radius: 4px;
@@ -335,17 +335,17 @@
 }
 .trigger-label {
   font-family: var(--f-mono);
-  font-size: 13px; letter-spacing: .18em; text-transform: uppercase;
+  font-size: 13px; letter-spacing: var(--t-tracking-wide); text-transform: uppercase;
 }
 .trigger-sub {
   font-family: var(--f-mono);
-  font-size: 9px; letter-spacing: .16em; text-transform: uppercase;
+  font-size: 9px; letter-spacing: var(--t-tracking-wide); text-transform: uppercase;
   opacity: .8;
 }
 .trigger-shortcut { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .trigger-shortcut-label {
   font-family: var(--f-mono);
-  font-size: 9px; letter-spacing: .16em; text-transform: uppercase;
+  font-size: 9px; letter-spacing: var(--t-tracking-wide); text-transform: uppercase;
   color: var(--ink-quiet);
 }
 .trigger-shortcut-btn {
@@ -354,7 +354,7 @@
   border: 1px solid var(--ink-rule); border-radius: 0;
   color: var(--gate);
   font-family: var(--f-mono); font-weight: 600; font-size: 11px;
-  letter-spacing: .12em; text-transform: uppercase;
+  letter-spacing: var(--t-tracking-mono); text-transform: uppercase;
   cursor: pointer;
   transition: border-color .14s var(--ease), background .14s var(--ease);
 }
@@ -380,7 +380,7 @@
 .clock-lamp { width: 14px; height: 14px; }
 .clock-lamp-label {
   font-family: var(--f-mono);
-  font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
+  font-size: 10px; letter-spacing: var(--t-tracking-wide); text-transform: uppercase;
   color: var(--ink-quiet); min-width: 64px;
 }
 .clock-run-btn {
@@ -410,7 +410,7 @@
   border: 1px solid var(--ink-rule); border-radius: 4px;
   color: var(--ink-soft);
   font-family: var(--f-mono); font-size: 11px; font-weight: 600;
-  letter-spacing: .12em; text-transform: uppercase;
+  letter-spacing: var(--t-tracking-mono); text-transform: uppercase;
   cursor: pointer; padding: 0;
   display: inline-flex; align-items: center; justify-content: center;
   transition: color .14s var(--ease), border-color .14s var(--ease);
@@ -463,7 +463,7 @@
   flex: 1;
   color: var(--red);
   font-family: var(--f-mono);
-  font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
+  font-size: 10px; letter-spacing: var(--t-tracking-wide); text-transform: uppercase;
 }
 
 /* ── interaction · inverter · cvmix · atv · offset · sequencer ── */
@@ -487,7 +487,7 @@ body.module-dragging * { cursor: grabbing !important; }
 .inverter-symbol {
   display: flex; align-items: center; gap: 14px;
   font-family: var(--f-mono);
-  font-size: 13px; letter-spacing: .12em; text-transform: uppercase;
+  font-size: 13px; letter-spacing: var(--t-tracking-mono); text-transform: uppercase;
   color: var(--ink);
 }
 .inverter-symbol .inv-label { color: var(--rouge); font-weight: 700; }
@@ -496,7 +496,7 @@ body.module-dragging * { cursor: grabbing !important; }
   padding: 6px 12px;
   border: 1px solid var(--ink-rule); border-radius: 4px;
   background: var(--paper-2);
-  letter-spacing: .04em;
+  letter-spacing: var(--t-tracking-tight);
 }
 
 /* CV Mixer */
@@ -533,7 +533,7 @@ body.module-dragging * { cursor: grabbing !important; }
   display: flex; justify-content: space-between;
   width: 80%;
   font-family: var(--f-mono);
-  font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
+  font-size: 10px; letter-spacing: var(--t-tracking-wide); text-transform: uppercase;
   color: var(--ink-quiet);
 }
 .atv-axis .neg  { color: var(--red); }
@@ -565,7 +565,7 @@ body.module-dragging * { cursor: grabbing !important; }
 .inverter-hint, .atv-hint,
 .counter-hint, .mux-hint, .quant-hint {
   font-family: var(--f-mono);
-  font-size: 9px; letter-spacing: .14em; text-transform: uppercase;
+  font-size: 9px; letter-spacing: var(--t-tracking-mono); text-transform: uppercase;
   color: var(--ink-quiet);
 }
 
@@ -579,7 +579,7 @@ body.module-dragging * { cursor: grabbing !important; }
 .counter-led { width: 16px; height: 16px; }
 .counter-bit-label {
   font-family: var(--f-mono);
-  font-size: 9px; letter-spacing: .12em; text-transform: uppercase;
+  font-size: 9px; letter-spacing: var(--t-tracking-mono); text-transform: uppercase;
   color: var(--ink-quiet);
 }
 

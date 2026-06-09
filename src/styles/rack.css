@@ -36,14 +36,14 @@
 }
 .zoom-ctrls .zoom-btn {
   font-family: var(--f-mono);
-  font-size: 11px; font-weight: 500; letter-spacing: .04em;
+  font-size: 11px; font-weight: 500; letter-spacing: var(--t-tracking-tight);
   color: var(--ink-soft); background: transparent;
   border: 1px solid transparent; border-radius: 4px;
   padding: 5px 9px; min-width: 30px; cursor: pointer;
   transition: .14s var(--ease);
 }
 .zoom-ctrls .zoom-btn:hover { color: var(--ink); border-color: var(--ink-rule); background: var(--paper); }
-.zoom-ctrls .zoom-fit { font-size: 10px; letter-spacing: .08em; min-width: 52px; font-variant-numeric: tabular-nums; }
+.zoom-ctrls .zoom-fit { font-size: 10px; letter-spacing: var(--t-tracking-snug); min-width: 52px; font-variant-numeric: tabular-nums; }
 .zoom-ctrls .zoom-fit.on { color: var(--white); border-color: var(--red); background: var(--red); }
 
 /* Rack canvas footprint */
@@ -212,7 +212,7 @@
   display: inline-flex; align-items: center; justify-content: center;
   gap: 5px;
   font-family: var(--f-mono);
-  font-size: 9px; letter-spacing: .12em; text-transform: uppercase;
+  font-size: 9px; letter-spacing: var(--t-tracking-mono); text-transform: uppercase;
   color: var(--ink-quiet); cursor: pointer;
   transition: color .14s var(--ease);
 }

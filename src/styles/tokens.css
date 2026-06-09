@@ -87,6 +87,12 @@
   /* ── type ─────────────────────────────────────────────── */
   --f-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, "JetBrains Mono", Menlo, monospace;
-  --t-tracking-mono: .14em;   /* mono labels — slight tracking */
-  --t-tracking-eyebrow: .22em;
+  /* Mono letter-spacing scale — tight numeric readouts up to wide eyebrows.
+     One step per ~.02em; every label/eyebrow picks a step instead of an
+     ad-hoc value, so the tracking stays consistent across the UI. */
+  --t-tracking-tight:   .04em;   /* numeric readouts / tabular values */
+  --t-tracking-snug:    .08em;   /* tight labels (keys, small chips) */
+  --t-tracking-mono:    .14em;   /* default mono label — slight tracking */
+  --t-tracking-wide:    .16em;   /* looser sub-labels / lamp labels */
+  --t-tracking-eyebrow: .22em;   /* section eyebrows */
 }
