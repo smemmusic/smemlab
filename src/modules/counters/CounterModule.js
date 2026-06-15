@@ -1,6 +1,5 @@
 import { AudioModule } from "../../audio/AudioModule.js";
 import { GateAggregator } from "../../audio/GateAggregator.js";
-import { getEngine } from "../../audio/engineSingleton.js";
 import { MODULE_KIND, PORT_TYPE, PORT_DIR } from "../../audio/graph/types.js";
 
 // Shared base for the binary counters. A rising edge on `clock` advances the
@@ -54,12 +53,9 @@ export class CounterModule extends AudioModule {
   }
 
   _emitBits() {
-    try {
-      const engine = getEngine();
-      for (let b = 0; b < this.bits; b++) {
-        engine.emitGate(this.id, `bit${b}`, this.id, (this.count & (1 << b)) !== 0);
-      }
-    } catch {}
+    for (let b = 0; b < this.bits; b++) {
+      this.emitGate(`bit${b}`, (this.count & (1 << b)) !== 0);
+    }
   }
 
   setParam() {}

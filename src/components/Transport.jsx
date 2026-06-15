@@ -1,10 +1,10 @@
-import { useSynthStore } from "../store/useSynthStore.js";
+import { useSynthStore, selectVol } from "../store/useSynthStore.js";
 import { TRANSPORT } from "../content/ui.js";
 import { getEngine } from "../audio/engineSingleton.js";
 
 export function Transport() {
   const playing = useSynthStore((s) => s.playing);
-  const vol     = useSynthStore((s) => s.vol);
+  const vol     = useSynthStore(selectVol);
 
   const setVol  = useSynthStore((s) => s.setVol);
   const setPlay = useSynthStore((s) => s.setPlaying);

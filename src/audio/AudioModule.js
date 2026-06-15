@@ -39,6 +39,12 @@ export class AudioModule {
     // Modules with switch inputs flip this on automatically; others (the amp's
     // CV-driven gain) set it explicitly in their constructor.
     this._pollOnFrame = false;
+    // Gate-output sink, injected by GraphEngine.addModule (bound to this
+    // module's id). Lets control modules fan rising/falling edges out to wired
+    // destinations via emitGate() without importing the engine singleton —
+    // composition over the global. Null until the module is added to a graph,
+    // so emitGate() is a safe no-op in isolation (unit tests, pre-wire build).
+    this._gateSink = null;
   }
 
   // ---- Typed-port API ----
@@ -75,6 +81,12 @@ export class AudioModule {
   // handlers in its constructor.
   onGate(portName, sourceId, active) { this._gateInputs[portName]?.(sourceId, active); }
   _registerGateInput(name, handler)  { this._gateInputs[name] = handler; }
+
+  // Gate output: the counterpart to onGate. Control modules (clock, counters,
+  // drum sequencer) call this to fan an edge out of one of their gate output
+  // ports to every wired destination. Routes through the engine-injected
+  // `_gateSink` (see constructor) — a no-op until the module is in a graph.
+  emitGate(portName, active) { this._gateSink?.(portName, active); }
 
   // ---- Port registration helpers (called by subclass constructors) ----
 

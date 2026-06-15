@@ -3,7 +3,6 @@ import {
   MODULE_KIND, PORT_TYPE, PORT_DIR, CV_POLARITY,
   CONTROL_KIND, CONTROL_CURVE,
 } from "../../audio/graph/types.js";
-import { getEngine } from "../../audio/engineSingleton.js";
 import { useSynthStore } from "../../store/useSynthStore.js";
 
 // Each output port emits a gate at the base rate scaled by `factor`. The
@@ -151,7 +150,6 @@ export class ClockModule extends AudioModule {
 
   _onTick() {
     if (!this.running) return;
-    const engine = getEngine();
     // Estimate the current tick spacing for pulse-width scaling. Off by the
     // CV contribution but only used to size the gate-low timeout, not the
     // rising edge — close enough.
@@ -165,13 +163,13 @@ export class ClockModule extends AudioModule {
       const periodMs = baseTickMs * ticks;
       const pulseMs = Math.max(5, Math.min(80, periodMs * 0.5));
       if (out.name === "x1") this.lastBeatAt = performance.now();
-      engine.emitGate(this.id, out.name, this.id, true);
+      this.emitGate(out.name, true);
       // Schedule the falling edge and track the timer so dispose() can cancel
       // it. The timer removes itself from the list when it fires, so the list
       // only ever holds genuinely-pending releases (no unbounded growth, and no
       // dropped-without-clearing references that could leave a gate stuck high).
       const t = setTimeout(() => {
-        engine.emitGate(this.id, out.name, this.id, false);
+        this.emitGate(out.name, false);
         const i = this._releaseTimers.indexOf(t);
         if (i !== -1) this._releaseTimers.splice(i, 1);
       }, pulseMs);
@@ -191,12 +189,7 @@ export class ClockModule extends AudioModule {
       if (!value) {
         // Close any output that might currently be high so a downstream
         // envelope doesn't sustain forever while the clock is stopped.
-        try {
-          const engine = getEngine();
-          for (const out of CLOCK_OUTPUTS) {
-            engine.emitGate(this.id, out.name, this.id, false);
-          }
-        } catch {}
+        for (const out of CLOCK_OUTPUTS) this.emitGate(out.name, false);
       }
     }
   }
@@ -215,12 +208,7 @@ export class ClockModule extends AudioModule {
       this._sink = null;
     }
     // Close every gate so envelopes downstream don't latch high after delete.
-    try {
-      const engine = getEngine();
-      for (const out of CLOCK_OUTPUTS) {
-        engine.emitGate(this.id, out.name, this.id, false);
-      }
-    } catch {}
+    for (const out of CLOCK_OUTPUTS) this.emitGate(out.name, false);
     super.dispose();
   }
 }

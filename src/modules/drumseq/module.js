@@ -1,7 +1,6 @@
 import { AudioModule } from "../../audio/AudioModule.js";
 import { GateAggregator } from "../../audio/GateAggregator.js";
 import { MODULE_KIND, PORT_TYPE, PORT_DIR } from "../../audio/graph/types.js";
-import { getEngine } from "../../audio/engineSingleton.js";
 
 export const TRACKS = 4;
 export const STEPS = 16;
@@ -59,22 +58,20 @@ export class DrumSeqModule extends AudioModule {
 
   _advance() {
     this.stepIdx = (this.stepIdx + 1) % STEPS;
-    const engine = getEngine();
     const pat = this.pattern;
     for (let t = 0; t < TRACKS; t++) {
       const row = pat[t];
       if (!row || !row[this.stepIdx]) continue;
       const name = TRACK_OUTPUTS[t];
-      engine.emitGate(this.id, name, this.id, true);
+      this.emitGate(name, true);
       this._activeOuts.add(name);
     }
   }
 
   _closeAll() {
     if (this._activeOuts.size === 0) return;
-    const engine = getEngine();
     for (const name of this._activeOuts) {
-      engine.emitGate(this.id, name, this.id, false);
+      this.emitGate(name, false);
     }
     this._activeOuts.clear();
   }

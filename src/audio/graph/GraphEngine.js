@@ -127,6 +127,11 @@ export class GraphEngine {
     const instance = new manifest.Cls(this.ctx, merged);
     instance.id = moduleId;
     instance.type = type;
+    // Inject the gate-output sink (bound to this module's id) so control
+    // modules emit edges via this.emitGate(port, active) instead of importing
+    // the engine singleton. Set before start() so a module that emits on start
+    // (counters pushing their initial address) reaches its destinations.
+    instance._gateSink = (port, active) => this.emitGate(moduleId, port, moduleId, active);
     if (this.isRunning()) instance.start?.();
     // Newly-added modules inherit the current global visuals state so taps
     // stay consistent if a module is added while visuals are off.
