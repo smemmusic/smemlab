@@ -166,13 +166,16 @@ export class ClockModule extends AudioModule {
       const pulseMs = Math.max(5, Math.min(80, periodMs * 0.5));
       if (out.name === "x1") this.lastBeatAt = performance.now();
       engine.emitGate(this.id, out.name, this.id, true);
+      // Schedule the falling edge and track the timer so dispose() can cancel
+      // it. The timer removes itself from the list when it fires, so the list
+      // only ever holds genuinely-pending releases (no unbounded growth, and no
+      // dropped-without-clearing references that could leave a gate stuck high).
       const t = setTimeout(() => {
         engine.emitGate(this.id, out.name, this.id, false);
+        const i = this._releaseTimers.indexOf(t);
+        if (i !== -1) this._releaseTimers.splice(i, 1);
       }, pulseMs);
       this._releaseTimers.push(t);
-    }
-    if (this._releaseTimers.length > 32) {
-      this._releaseTimers = this._releaseTimers.slice(-16);
     }
     this._counter = (this._counter + 1) % COUNTER_MOD;
   }

@@ -25,7 +25,10 @@ export class OutputModule extends AudioModule {
     this.outTap = ctx.createAnalyser();
     this.outTap.fftSize = 2048;
     this.master = ctx.createGain();
-    this.master.gain.value = volToGain(vol);
+    // Remember the intended master gain so fadeIn() can restore it after a
+    // fadeOut() (power-cycle) without needing the vol value pushed again.
+    this.targetGain = volToGain(vol);
+    this.master.gain.value = this.targetGain;
 
     this.shaper = ctx.createWaveShaper();
     const curve = new Float32Array(1024);
@@ -47,23 +50,28 @@ export class OutputModule extends AudioModule {
     this._makeCvInput("vol", 1, this.master.gain);
   }
 
-  setVol(v) { this.master.gain.setTargetAtTime(volToGain(v), this.ctx.currentTime, 0.02); }
+  setVol(v) {
+    this.targetGain = volToGain(v);
+    this.master.gain.setTargetAtTime(this.targetGain, this.ctx.currentTime, 0.02);
+  }
 
   setParam(name, value) {
     if (name === "vol") this.setVol(value);
   }
 
+  // De-click ramp before the context is suspended (power off).
   fadeOut() {
     const t = this.ctx.currentTime;
     this.master.gain.cancelScheduledValues(t);
-    this.master.gain.setValueAtTime(this.master.gain.value, t);
+    this.master.gain.setValueAtTime(Math.max(0.0001, this.master.gain.value), t);
     this.master.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
   }
-  fadeIn(vol) {
+  // Ramp back to the remembered target after the context resumes (power on).
+  fadeIn() {
     const t = this.ctx.currentTime;
     this.master.gain.cancelScheduledValues(t);
-    this.master.gain.setValueAtTime(0.0001, t);
-    this.master.gain.exponentialRampToValueAtTime(Math.max(0.0002, volToGain(vol)), t + 0.04);
+    this.master.gain.setValueAtTime(Math.max(0.0001, this.master.gain.value), t);
+    this.master.gain.exponentialRampToValueAtTime(Math.max(0.0002, this.targetGain), t + 0.04);
   }
   getAnalyser() { return this.outTap; }
 

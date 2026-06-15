@@ -90,6 +90,13 @@ export class GraphEngine {
 
   isRunning() { return !!this.ctx && this.ctx.state === "running"; }
 
+  // Pause the audio thread (power off). Keeps the whole graph intact — nodes,
+  // oscillators and connections survive — so start() just resumes. The context
+  // clock freezes, so callers must finish any de-click ramp before calling this.
+  suspend() {
+    if (this.ctx && this.ctx.state === "running") this.ctx.suspend().catch(() => {});
+  }
+
   // Global visuals toggle. Walks every live module and asks it to connect or
   // disconnect its viz-only analyser side-branches. Newly-added modules also
   // pick up the current state in addModule().

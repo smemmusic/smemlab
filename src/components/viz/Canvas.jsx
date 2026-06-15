@@ -60,11 +60,15 @@ export function Canvas({ draw, data, animate = true, deps = [], tag, screenClass
     return () => cancelAnimationFrame(rafRef.current);
   }, [animate, visualsEnabled]);
 
+  // Non-animated canvases redraw when their caller-supplied `deps` change.
+  // Collapse `deps` to a single stable-length key so the dependency array stays
+  // a fixed size across renders (a raw `deps` spread of varying length violates
+  // the rules-of-hooks contract).
+  const depsKey = deps.join("");
   useEffect(() => {
-    if (!visualsEnabled) return;
-    if (animate) return;     // RAF handles redraws when animating
+    if (!visualsEnabled || animate) return;     // RAF handles redraws when animating
     once();
-  }, deps);
+  }, [visualsEnabled, animate, depsKey]);
 
   useEffect(() => {
     if (!visualsEnabled) return;

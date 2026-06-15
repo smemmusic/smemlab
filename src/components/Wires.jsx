@@ -273,6 +273,12 @@ export function Wires({ containerRef, panX = 0, panY = 0 }) {
   // selected connection.
   useEffect(() => {
     function onKey(e) {
+      // Don't hijack Backspace/Delete while the user is typing in a field
+      // (e.g. renaming a patch) — that would delete the selected wire instead
+      // of a character.
+      const el = e.target;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" ||
+                 el.tagName === "SELECT" || el.isContentEditable)) return;
       if (e.key === "Delete" || e.key === "Backspace") {
         if (selectedId) {
           disconnectModules(selectedId);

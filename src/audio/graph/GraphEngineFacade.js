@@ -8,6 +8,7 @@ import { GraphEngine } from "./GraphEngine.js";
 export class GraphEngineFacade {
   constructor() {
     this.graph = new GraphEngine();
+    this._suspendTimer = null;
   }
 
   // ---- Lifecycle ----
@@ -15,30 +16,23 @@ export class GraphEngineFacade {
   isRunning() { return this.graph.isRunning(); }
 
   start() {
-    this.graph.start();
-    // GraphEngine.start() calls instance.start?.() on every module already.
+    // Cancel a still-pending suspend from a quick off→on so we don't power down
+    // the context we're turning back on.
+    if (this._suspendTimer) { clearTimeout(this._suspendTimer); this._suspendTimer = null; }
+    this.graph.start();              // creates / resumes the context, (re)starts modules
+    for (const m of this.graph.listModules()) m.fadeIn?.();
   }
 
   stop() {
-    // Fade every output module's master gain, then rebuild every oscillator
-    // (WebAudio's OscillatorNode.start() can only be called once per node, so
-    // re-using the same instance after stop is impossible — we tear it down
-    // and recreate with the same params + outgoing connections).
-    for (const m of this.graph.listModules()) {
-      m.fadeOut?.();
-    }
-    setTimeout(() => {
-      for (const m of this.graph.listModules().slice()) {
-        if (m.type !== "oscillator") continue;
-        const params = { ...m.params };
-        const downstream = this._snapshotOutgoing(m.id);
-        this.graph.removeModule(m.id);
-        this.graph.addModule({ id: m.id, type: "oscillator", params });
-        for (const c of downstream) {
-          try { this.graph.addConnection(c); } catch {}
-        }
-      }
-    }, 90);
+    // De-click ramp, then suspend the context once the ramp has finished — the
+    // whole graph (oscillators, nodes, connections) stays intact and resumes on
+    // start(). The clock freezes when suspended, so we wait out the fade first.
+    for (const m of this.graph.listModules()) m.fadeOut?.();
+    if (this._suspendTimer) clearTimeout(this._suspendTimer);
+    this._suspendTimer = setTimeout(() => {
+      this._suspendTimer = null;
+      this.graph.suspend();
+    }, 60);
   }
 
   // ---- Synchronous panel hooks ----
@@ -87,12 +81,4 @@ export class GraphEngineFacade {
   // Direct access to the GraphEngine. The bridge uses this; the smoke-test
   // helper in engineSingleton uses this.
   getGraph() { return this.graph; }
-
-  // ---- Internal ----
-
-  _snapshotOutgoing(moduleId) {
-    return this.graph.listConnections()
-      .filter((c) => c.fromId === moduleId)
-      .map((c) => ({ id: c.id, fromId: c.fromId, fromPort: c.fromPort, toId: c.toId, toPort: c.toPort }));
-  }
 }
