@@ -4,9 +4,7 @@ import { getEngine } from "../../audio/engineSingleton.js";
 import { Knob } from "../../components/controls/Knob.jsx";
 import { Toggle } from "../../components/controls/Toggle.jsx";
 import { Stepper } from "../../components/controls/Stepper.jsx";
-import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
-
-const DEFAULT_PARAMS = { mode: "sync", freq: 2, running: true };
+import { useModuleParams } from "../../components/ModuleInstanceContext.js";
 
 const MODE_OPTIONS = [
   { value: "sync", label: "Sync", short: "SYNC" },
@@ -14,12 +12,9 @@ const MODE_OPTIONS = [
 ];
 
 export function ClockPanel() {
-  const { instanceId: id } = useModuleInstance();
-  const params = useSynthStore((s) => s.modules.find((m) => m.id === id)?.params) || DEFAULT_PARAMS;
+  const [params, set, id] = useModuleParams();
   const bpm    = useSynthStore((s) => s.bpm);
   const setBpm = useSynthStore((s) => s.setBpm);
-  const setModuleParam = useSynthStore((s) => s.setModuleParam);
-  const set = (k, v) => setModuleParam(id, k, v);
 
   // Blink the LED for ~80ms after each x1 beat. The module records
   // lastBeatAt on every x1 rising edge; the panel polls it per frame.

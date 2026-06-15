@@ -1,22 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { useSynthStore } from "../../store/useSynthStore.js";
 import { getEngine } from "../../audio/engineSingleton.js";
-import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
-import { STEPS, TRACKS } from "./module.js";
+import { useModuleParams } from "../../components/ModuleInstanceContext.js";
+import { STEPS } from "./module.js";
 
 const TRACK_LABELS = ["1", "2", "3", "4"];
 
-function emptyPattern() {
-  return Array.from({ length: TRACKS }, () => Array(STEPS).fill(false));
-}
-
-const DEFAULT_PARAMS = { pattern: emptyPattern() };
-
 export function DrumSeqPanel() {
-  const { instanceId: id } = useModuleInstance();
-  const params  = useSynthStore((s) => s.modules.find((m) => m.id === id)?.params) || DEFAULT_PARAMS;
-  const setModuleParam = useSynthStore((s) => s.setModuleParam);
-  const pattern = params.pattern || DEFAULT_PARAMS.pattern;
+  const [params, setParam, id] = useModuleParams();
+  const pattern = params.pattern;
 
   // Mirror the module's live stepIdx for the playhead column highlight.
   // setState short-circuits when the value is unchanged so we don't re-render
@@ -38,14 +29,14 @@ export function DrumSeqPanel() {
     const next = pattern.map((row, t) =>
       t === track ? row.map((v, s) => (s === stepIdx ? !v : v)) : row
     );
-    setModuleParam(id, "pattern", next);
+    setParam("pattern", next);
   }
 
   function clearTrack(track) {
     const next = pattern.map((row, t) =>
       t === track ? Array(STEPS).fill(false) : row
     );
-    setModuleParam(id, "pattern", next);
+    setParam("pattern", next);
   }
 
   return (

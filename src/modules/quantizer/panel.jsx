@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { useSynthStore } from "../../store/useSynthStore.js";
 import { getEngine } from "../../audio/engineSingleton.js";
 import { Knob } from "../../components/controls/Knob.jsx";
 import { Selector } from "../../components/controls/Selector.jsx";
 import { Stepper } from "../../components/controls/Stepper.jsx";
-import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
+import { useModuleParams } from "../../components/ModuleInstanceContext.js";
 
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
@@ -14,8 +13,6 @@ const SCALE_OPTIONS = [
   { value: "minor",      label: "Min" },
   { value: "pentatonic", label: "Pent" },
 ];
-
-const DEFAULT_PARAMS = { range: 24, root: 0, scale: "major" };
 
 // Semitones above the oscillator's base note → a readable note name. The base
 // note is arbitrary (the quantizer only emits an interval), so this is for
@@ -27,9 +24,7 @@ function noteName(semi) {
 }
 
 export function QuantizerPanel() {
-  const { instanceId: id } = useModuleInstance();
-  const params = useSynthStore((s) => s.modules.find((m) => m.id === id)?.params) || DEFAULT_PARAMS;
-  const setModuleParam = useSynthStore((s) => s.setModuleParam);
+  const [params, setParam, id] = useModuleParams();
 
   const [note, setNote] = useState(0);
   const rafRef = useRef(0);
@@ -50,14 +45,14 @@ export function QuantizerPanel() {
       <Selector
         options={SCALE_OPTIONS}
         value={params.scale ?? "major"}
-        onChange={(v) => setModuleParam(id, "scale", v)}
+        onChange={(v) => setParam("scale", v)}
       />
       <Stepper
         label="Root"
         value={params.root ?? 0}
         min={0} max={11}
         format={(v) => NOTE_NAMES[((v % 12) + 12) % 12]}
-        onChange={(v) => setModuleParam(id, "root", v)}
+        onChange={(v) => setParam("root", v)}
       />
       <div className="ctrl-grid one">
         <Knob
@@ -65,7 +60,7 @@ export function QuantizerPanel() {
           value={params.range ?? 24}
           min={12} max={36} step={1}
           unit="st"
-          onChange={(v) => setModuleParam(id, "range", v)}
+          onChange={(v) => setParam("range", v)}
         />
       </div>
       <div className="quant-hint">snap to scale</div>

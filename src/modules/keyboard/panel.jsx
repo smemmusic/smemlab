@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { useSynthStore } from "../../store/useSynthStore.js";
 import { getEngine } from "../../audio/engineSingleton.js";
 import { Stepper } from "../../components/controls/Stepper.jsx";
-import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
+import { useModuleParams } from "../../components/ModuleInstanceContext.js";
 import { usePuzzleShow } from "../../content/puzzleHooks.js";
 
 const KEY_TO_SEMI = {
@@ -28,19 +27,16 @@ const BLACK_NOTES = [
   { semi: 10, pcName: "A#", kbd: "U", leftPct: 75.0 - 4 }
 ];
 
-const DEFAULT_PARAMS = { octave: 4 };
 const OCTAVE_MIN = 0;
 const OCTAVE_MAX = 6;
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
 export function KeyboardPanel() {
-  const { instanceId: id } = useModuleInstance();
+  const [params, setParam, id] = useModuleParams();
   const show = usePuzzleShow(id);
 
-  const params = useSynthStore((s) => s.modules.find((m) => m.id === id)?.params) || DEFAULT_PARAMS;
   const octave = params.octave ?? 4;
-  const setModuleParam = useSynthStore((s) => s.setModuleParam);
-  const setOctave = (v) => setModuleParam(id, "octave", v);
+  const setOctave = (v) => setParam("octave", v);
 
   const heldRef = useRef([]);
   const [pressed, setPressed] = useState(new Set());

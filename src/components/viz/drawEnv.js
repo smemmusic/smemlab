@@ -17,7 +17,7 @@ export function drawEnv(ctx, w, h, data) {
   const xS = xD + 0.45 * sx;
   const xR = xS + e.r * sx;
   const yPk = dbY(0);
-  const yS  = dbY(e.s ?? e.sustainDb ?? -8);
+  const yS  = dbY(e.s ?? -8);
   const y0  = dbY(DB_FLOOR);
 
   // 0 dB ceiling marker

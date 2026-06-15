@@ -157,8 +157,7 @@ export function validatePatchObject(obj) {
         typeof c.toId !== "string"   || typeof c.toPort !== "string") return null;
   }
   // Map any renamed module types forward so older exported patches still
-  // import (see LEGACY_TYPE_RENAMES). Param-level migrations (e.g. the
-  // envelope's sustainDb→s) are handled downstream by the module/panel.
+  // import (see LEGACY_TYPE_RENAMES).
   const modules = cloneDeep(p.modules);
   renameLegacyTypes(modules);
   return { modules, connections: cloneDeep(p.connections) };
@@ -621,24 +620,6 @@ export const useSynthStore = create(
               journeyId: null,
               ui: { armedSource: null, selectedConnectionId: null, focusedModuleSlot: null, viewScale: 1, mobileView: "synth" },
             };
-          }
-          if (version < 15) {
-            // env param `sustainDb` renamed to `s` for consistency with a/d/r.
-            // Walk live modules and every savedPatch so the visitor's existing
-            // patches keep their sustain value after the rename.
-            const renameInModules = (mods) => {
-              if (!Array.isArray(mods)) return;
-              for (const m of mods) {
-                if (m?.type === "env" && m.params?.sustainDb !== undefined) {
-                  if (m.params.s === undefined) m.params.s = m.params.sustainDb;
-                  delete m.params.sustainDb;
-                }
-              }
-            };
-            renameInModules(persisted.modules);
-            for (const p of persisted.savedPatches || []) {
-              renameInModules(p?.patch?.modules);
-            }
           }
           if (version < 16) {
             // Module types renamed as several families moved under shared base

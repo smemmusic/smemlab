@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useSynthStore } from "../../store/useSynthStore.js";
 import { getEngine } from "../../audio/engineSingleton.js";
-import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
+import { useModuleParams } from "../../components/ModuleInstanceContext.js";
 import { usePuzzleShow } from "../../content/puzzleHooks.js";
 
 // Manual gate trigger. Press-and-hold button: opens the gate while pressed,
@@ -10,8 +9,6 @@ import { usePuzzleShow } from "../../content/puzzleHooks.js";
 //
 // Each instance has its own `shortcut` (KeyboardEvent.code, default "Space") so
 // two Triggers can play independent voices from different keys.
-
-const DEFAULT_PARAMS = { shortcut: "Space" };
 
 // KeyboardEvent.code → display label. Anything not listed falls through to a
 // stripped form of the code itself.
@@ -30,12 +27,10 @@ function displayShortcut(code) {
 }
 
 export function TriggerPanel() {
-  const { instanceId: id } = useModuleInstance();
+  const [params, setParam, id] = useModuleParams();
   const show = usePuzzleShow(id);
 
-  const params = useSynthStore((s) => s.modules.find((m) => m.id === id)?.params) || DEFAULT_PARAMS;
   const shortcut = params.shortcut ?? "Space";
-  const setModuleParam = useSynthStore((s) => s.setModuleParam);
 
   const [held, setHeld] = useState(false);
   const [capturing, setCapturing] = useState(false);
@@ -66,7 +61,7 @@ export function TriggerPanel() {
         // Swallow the keystroke and use it as the new binding. Escape cancels.
         e.preventDefault();
         if (e.code === "Escape") { setCapturing(false); return; }
-        setModuleParam(idRef.current, "shortcut", e.code);
+        setParam("shortcut", e.code);
         setCapturing(false);
         return;
       }

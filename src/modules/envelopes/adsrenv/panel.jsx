@@ -3,28 +3,17 @@ import { getEngine } from "../../../audio/engineSingleton.js";
 import { Knob } from "../../../components/controls/Knob.jsx";
 import { Canvas } from "../../../components/viz/Canvas.jsx";
 import { drawEnv } from "../../../components/viz/drawEnv.js";
-import { useModuleInstance } from "../../../components/ModuleInstanceContext.js";
+import { useModuleParams } from "../../../components/ModuleInstanceContext.js";
 import { usePuzzleShow } from "../../../content/puzzleHooks.js";
 
-const DEFAULT_PARAMS = { a: 0.05, d: 0.2, s: -8, r: 0.4 };
-
 export function AdsrEnvelopePanel() {
-  const { instanceId: id } = useModuleInstance();
+  const [params, setParam, id] = useModuleParams();
   const show = usePuzzleShow(id);
 
-  const rawParams = useSynthStore((s) => s.modules.find((m) => m.id === id)?.params) || DEFAULT_PARAMS;
-  // Backward compat: a few code paths can land an unmigrated env module
-  // into the store (imported patch files, journey deltas saved before the
-  // sustainDb → s rename). Normalise here so the rest of the panel sees a
-  // single canonical shape.
-  const params = (rawParams.s === undefined && rawParams.sustainDb !== undefined)
-    ? { ...rawParams, s: rawParams.sustainDb }
-    : rawParams;
   const playing = useSynthStore((s) => s.playing);
-  const setModuleParam = useSynthStore((s) => s.setModuleParam);
 
   function applyPartial(partial) {
-    for (const [k, v] of Object.entries(partial)) setModuleParam(id, k, v);
+    for (const [k, v] of Object.entries(partial)) setParam(k, v);
   }
 
   const engine = getEngine();

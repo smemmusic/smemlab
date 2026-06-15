@@ -1,12 +1,5 @@
-import { useSynthStore } from "../../store/useSynthStore.js";
 import { Knob } from "../../components/controls/Knob.jsx";
-import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
-
-const DEFAULT_PARAMS = {
-  g1: 0, g2: 0, g3: 0, g4: 0,
-  p1: false, p2: false, p3: false, p4: false,
-  master: 0,
-};
+import { useModuleParams } from "../../components/ModuleInstanceContext.js";
 
 function ChannelStrip({ idx, dbValue, phaseValue, onDbChange, onPhaseChange }) {
   return (
@@ -33,10 +26,7 @@ function ChannelStrip({ idx, dbValue, phaseValue, onDbChange, onPhaseChange }) {
 }
 
 export function CvMixerPanel() {
-  const { instanceId } = useModuleInstance();
-  const params = useSynthStore((s) => s.modules.find((m) => m.id === instanceId)?.params) || DEFAULT_PARAMS;
-  const setModuleParam = useSynthStore((s) => s.setModuleParam);
-  const set = (k, v) => setModuleParam(instanceId, k, v);
+  const [params, set] = useModuleParams();
 
   return (
     <div className="cvmix-body">

@@ -3,19 +3,14 @@ import { getEngine } from "../../../audio/engineSingleton.js";
 import { Knob } from "../../../components/controls/Knob.jsx";
 import { Canvas } from "../../../components/viz/Canvas.jsx";
 import { drawAdEnv } from "../../../components/viz/drawAdEnv.js";
-import { useModuleInstance } from "../../../components/ModuleInstanceContext.js";
-
-const DEFAULT_PARAMS = { a: 0.005, d: 0.4 };
+import { useModuleParams } from "../../../components/ModuleInstanceContext.js";
 
 export function AdEnvelopePanel() {
-  const { instanceId: id } = useModuleInstance();
-
-  const params  = useSynthStore((s) => s.modules.find((m) => m.id === id)?.params) || DEFAULT_PARAMS;
+  const [params, setParam, id] = useModuleParams();
   const playing = useSynthStore((s) => s.playing);
-  const setModuleParam = useSynthStore((s) => s.setModuleParam);
 
   function applyPartial(partial) {
-    for (const [k, v] of Object.entries(partial)) setModuleParam(id, k, v);
+    for (const [k, v] of Object.entries(partial)) setParam(k, v);
   }
 
   const engine = getEngine();

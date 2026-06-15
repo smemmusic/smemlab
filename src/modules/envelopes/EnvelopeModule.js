@@ -15,7 +15,6 @@ import { MODULE_KIND, PORT_TYPE, PORT_DIR, CV_POLARITY } from "../../audio/graph
 //   - _effective()     — sum each knob with its CV-input contribution, clamped.
 //   - _onGateOpen()    — schedule the attack(/decay/sustain) ramps + set phase.
 //   - _onGateClose()   — schedule the release (inherited no-op for one-shot AD).
-// Optional hooks for legacy patch keys: _migrateParams() / _aliasParam().
 export class EnvelopeModule extends AudioModule {
   static KIND = MODULE_KIND.CONTROL;
   static PORTS = [
@@ -25,7 +24,7 @@ export class EnvelopeModule extends AudioModule {
 
   constructor(ctx, params) {
     super(ctx);
-    this.params = this._migrateParams({ ...params });
+    this.params = { ...params };
 
     // Internal gain — drives the meter readout only; not exposed as audio.
     this.node = ctx.createGain();
@@ -60,7 +59,6 @@ export class EnvelopeModule extends AudioModule {
   getStart()         { return this.envStart; }
 
   setParam(name, value) {
-    name = this._aliasParam(name);
     if (this.constructor.CONTROLS.some((c) => c.name === name)) {
       this.setParams({ [name]: value });
     }
@@ -93,8 +91,6 @@ export class EnvelopeModule extends AudioModule {
   }
 
   // ── subclass hooks (override) ──────────────────────────────────
-  _migrateParams(p) { return p; }
-  _aliasParam(name) { return name; }
   _onGateOpen()  {}
   _onGateClose() {}
 }

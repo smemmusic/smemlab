@@ -108,7 +108,7 @@ export function Module({ type, instanceId, children }) {
   ].join(" ");
 
   return (
-    <ModuleInstanceContext.Provider value={{ instanceId, type }}>
+    <ModuleInstanceContext.Provider value={{ instanceId, type, manifest }}>
       <div
         ref={moduleRef}
         className={classes}

@@ -1,8 +1,5 @@
-import { useSynthStore } from "../../store/useSynthStore.js";
 import { Knob } from "../../components/controls/Knob.jsx";
-import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
-
-const DEFAULT_PARAMS = { amount: 1 };
+import { useModuleParams } from "../../components/ModuleInstanceContext.js";
 
 function amountReadout(v) {
   if (v < 0.005) return "0";
@@ -10,9 +7,7 @@ function amountReadout(v) {
 }
 
 export function AttenuatorPanel() {
-  const { instanceId } = useModuleInstance();
-  const params = useSynthStore((s) => s.modules.find((m) => m.id === instanceId)?.params) || DEFAULT_PARAMS;
-  const setModuleParam = useSynthStore((s) => s.setModuleParam);
+  const [params, setParam] = useModuleParams();
 
   return (
     <div className="atv-body">
@@ -26,7 +21,7 @@ export function AttenuatorPanel() {
           value={params.amount}
           min={0} max={1} step={0.01}
           unit={amountReadout(params.amount)}
-          onChange={(v) => setModuleParam(instanceId, "amount", v)}
+          onChange={(v) => setParam("amount", v)}
         />
       </div>
       <div className="atv-hint">left: silent · right: pass</div>

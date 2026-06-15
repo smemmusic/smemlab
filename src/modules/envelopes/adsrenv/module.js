@@ -14,16 +14,6 @@ export class AdsrEnvelopeModule extends EnvelopeModule {
     { name: "r", kind: CONTROL_KIND.KNOB, range: [0.001, 4], curve: CONTROL_CURVE.EXP,    cvRange: 4,  cvPolarity: CV_POLARITY.UNIPOLAR },
   ];
 
-  // Backward compat: patches saved before the rename stored the sustain value
-  // under `sustainDb`. Map it forward both at construction and on live setParam
-  // so old patch files / unmigrated store entries still load.
-  _migrateParams(p) {
-    if (p.sustainDb !== undefined && p.s === undefined) p.s = p.sustainDb;
-    delete p.sustainDb;
-    return p;
-  }
-  _aliasParam(name) { return name === "sustainDb" ? "s" : name; }
-
   // Sum each ADSR knob with its CV-input contribution and clamp to the knob
   // ranges. CV inputs are unipolar so they can only push parameters upward —
   // longer a/d/r, less-negative (louder) sustain.

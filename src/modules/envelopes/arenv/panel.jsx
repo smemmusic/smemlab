@@ -3,22 +3,17 @@ import { getEngine } from "../../../audio/engineSingleton.js";
 import { Knob } from "../../../components/controls/Knob.jsx";
 import { Canvas } from "../../../components/viz/Canvas.jsx";
 import { drawEnv } from "../../../components/viz/drawEnv.js";
-import { useModuleInstance } from "../../../components/ModuleInstanceContext.js";
-
-const DEFAULT_PARAMS = { a: 0.05, r: 0.3 };
+import { useModuleParams } from "../../../components/ModuleInstanceContext.js";
 
 // drawEnv expects an ADSR data shape; synthesising `d: 0, s: 0`
 // degenerates the curve into an AR triangle with a flat top, so we get the
 // same visualiser (and live phase dot) without a second draw helper.
 export function ArEnvelopePanel() {
-  const { instanceId: id } = useModuleInstance();
-
-  const params  = useSynthStore((s) => s.modules.find((m) => m.id === id)?.params) || DEFAULT_PARAMS;
+  const [params, setParam, id] = useModuleParams();
   const playing = useSynthStore((s) => s.playing);
-  const setModuleParam = useSynthStore((s) => s.setModuleParam);
 
   function applyPartial(partial) {
-    for (const [k, v] of Object.entries(partial)) setModuleParam(id, k, v);
+    for (const [k, v] of Object.entries(partial)) setParam(k, v);
   }
 
   const engine = getEngine();

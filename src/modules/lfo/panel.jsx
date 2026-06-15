@@ -3,7 +3,7 @@ import { Knob } from "../../components/controls/Knob.jsx";
 import { Selector } from "../../components/controls/Selector.jsx";
 import { Canvas } from "../../components/viz/Canvas.jsx";
 import { drawLfo } from "../../components/viz/drawLfo.js";
-import { useModuleInstance } from "../../components/ModuleInstanceContext.js";
+import { useModuleParams } from "../../components/ModuleInstanceContext.js";
 import { usePuzzleShow } from "../../content/puzzleHooks.js";
 
 const LFO_SHAPES = [
@@ -13,19 +13,15 @@ const LFO_SHAPES = [
   { value: "square",   label: "Sq",   wf: "square" }
 ];
 
-const DEFAULT_PARAMS = { rate: 5, depth: 0.4, shape: "sine" };
-
 export function LfoPanel() {
-  const { instanceId: id } = useModuleInstance();
+  const [params, setParam, id] = useModuleParams();
   const show = usePuzzleShow(id);
 
-  const params    = useSynthStore((s) => s.modules.find((m) => m.id === id)?.params) || DEFAULT_PARAMS;
   const edge      = useSynthStore((s) => s.scope.edge);
   const threshold = useSynthStore((s) => s.scope.threshold);
-  const setModuleParam = useSynthStore((s) => s.setModuleParam);
 
   function applyPartial(partial) {
-    for (const [k, v] of Object.entries(partial)) setModuleParam(id, k, v);
+    for (const [k, v] of Object.entries(partial)) setParam(k, v);
   }
 
   const data = { lfo: params, edge, threshold };
