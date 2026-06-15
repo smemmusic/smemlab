@@ -12,6 +12,9 @@ function patchModuleParams(modules, id, partial) {
     changed = true;
     return { ...m, params: { ...m.params, ...partial } };
   });
+  if (!changed && import.meta.env?.DEV) {
+    console.warn(`[store] setParams targeted absent module id "${id}" — no-op`);
+  }
   return changed ? next : modules;
 }
 
@@ -396,6 +399,9 @@ export const useSynthStore = create(
           // delta after a Prev → Next round-trip just snaps to the same coords.
           if (delta.setPositions && typeof delta.setPositions === "object") {
             for (const [moduleId, pos] of Object.entries(delta.setPositions)) {
+              if (import.meta.env?.DEV && !modules.some((m) => m.id === moduleId)) {
+                console.warn(`[store] setPositions targeted absent module id "${moduleId}" — no-op`);
+              }
               modules = modules.map((m) => m.id === moduleId
                 ? { ...m, position: { x: pos.x, y: pos.y } }
                 : m);
