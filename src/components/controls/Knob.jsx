@@ -1,5 +1,6 @@
 // Drag-up-to-increase knob. Shift = fine. -135° → +135° sweep over [min..max].
 // Logarithmic range supported via the `log` prop.
+import { startPointerDrag } from "../dragGesture.js";
 
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
@@ -20,22 +21,18 @@ export function Knob({ label, value, min, max, step, unit, log, onChange, format
 
   function down(e) {
     e.preventDefault();
-    const startY = e.clientY;
     const startNorm = clamp(norm, 0, 1);
     const fine = e.shiftKey ? 0.25 : 1;
-    function move(ev) {
-      const dy = startY - ev.clientY;
-      const nn = clamp(startNorm + (dy / 200) * fine, 0, 1);
-      let v = log ? min * Math.pow(max / min, nn) : min + nn * (max - min);
-      if (step) v = Math.round(v / step) * step;
-      onChange(clamp(v, min, max));
-    }
-    function up() {
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", up);
-    }
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", up);
+    // No threshold — the knob tracks from the first pixel. Drag up = increase,
+    // and the gesture's dy is (client − start) so up is negative; negate it.
+    startPointerDrag(e, {
+      onMove: ({ dy }) => {
+        const nn = clamp(startNorm + ((-dy) / 200) * fine, 0, 1);
+        let v = log ? min * Math.pow(max / min, nn) : min + nn * (max - min);
+        if (step) v = Math.round(v / step) * step;
+        onChange(clamp(v, min, max));
+      },
+    });
   }
 
   return (

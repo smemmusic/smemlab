@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, useLayoutEffect } from "react";
 import { useSynthStore } from "../store/useSynthStore.js";
-import { PORT_TYPE, PORT_DIR, listStaticPorts } from "../audio/graph/types.js";
+import { PORT_TYPE, listStaticPorts } from "../audio/graph/types.js";
 import { byType } from "../modules/_registry.js";
 import { usePuzzleConfig } from "../content/puzzleHooks.js";
+import { portEdge, EDGE_TANGENT, PORT_COLOR_VAR } from "./portGeometry.js";
+import { startPointerDrag } from "./dragGesture.js";
 
 function lookupPort(modules, moduleId, portName) {
   const m = modules.find((x) => x.id === moduleId);
@@ -11,29 +13,6 @@ function lookupPort(modules, moduleId, portName) {
   if (!manifest) return null;
   return listStaticPorts(manifest.Cls).find((p) => p.name === portName) || null;
 }
-
-// Mirrors the placement rule in ModulePorts.jsx — audio sits left/right,
-// CV/pitch/gate sit top/bottom — so the bezier handle leaves the port in the
-// direction the port actually emerges from the module.
-function portEdge(port) {
-  if (!port) return "right";
-  if (port.type === PORT_TYPE.AUDIO) return port.dir === PORT_DIR.IN ? "left" : "right";
-  return port.dir === PORT_DIR.OUT ? "top" : "bottom";
-}
-
-const EDGE_TANGENT = {
-  right:  [ 1,  0],
-  left:   [-1,  0],
-  top:    [ 0, -1],
-  bottom: [ 0,  1],
-};
-
-const TYPE_COLOR = {
-  [PORT_TYPE.AUDIO]: "var(--audio)",
-  [PORT_TYPE.CV]:    "var(--control)",
-  [PORT_TYPE.PITCH]: "var(--control)",
-  [PORT_TYPE.GATE]:  "var(--gate)",
-};
 
 // Brand collapses the palette to Red (audio) + Rouge (control) + Red (gate).
 // To keep the audio/gate distinction without leaving the palette, gate wires
@@ -337,26 +316,13 @@ export function Wires({ containerRef, panX = 0, panY = 0 }) {
     if (e.button !== 0 && e.pointerType === "mouse") return;
     e.stopPropagation();
     e.preventDefault();
-    const startX = e.clientX;
-    const startY = e.clientY;
     const orig = connections.find((c) => c.id === conn.id)?.waypoints?.[wpIndex];
     if (!orig) return;
-    const scale = viewScale > 0 ? viewScale : 1;
-    let didMove = false;
-    function onMove(ev) {
-      const dx = (ev.clientX - startX) / scale;
-      const dy = (ev.clientY - startY) / scale;
-      if (Math.abs(dx) + Math.abs(dy) > 2) didMove = true;
-      if (didMove) {
-        moveWaypoint(conn.id, wpIndex, { x: orig.x + dx, y: orig.y + dy });
-      }
-    }
-    function onUp() {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-    }
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
+    startPointerDrag(e, {
+      threshold: 2,
+      scale: viewScale,
+      onMove: ({ dx, dy }) => moveWaypoint(conn.id, wpIndex, { x: orig.x + dx, y: orig.y + dy }),
+    });
   }
 
   function onWaypointDoubleClick(e, conn, wpIndex) {
@@ -371,7 +337,7 @@ export function Wires({ containerRef, panX = 0, panY = 0 }) {
     <svg className="wires">
       {paths.map((p) => {
         const isSelected = p.id === selectedId;
-        const color = TYPE_COLOR[p.type] || "var(--audio)";
+        const color = PORT_COLOR_VAR[p.type] || "var(--audio)";
         return (
           <g key={p.id} className={"wire " + (isSelected ? "selected" : "")} style={{ color }}>
             {/* Wider invisible hit area for easy clicking + dblclick-to-insert-waypoint */}
@@ -415,7 +381,7 @@ export function Wires({ containerRef, panX = 0, panY = 0 }) {
       })}
       {dragPreview && (
         <g className={"wire wire-drag" + (dragPreview.invalid ? " wire-drag-invalid" : "")}
-           style={dragPreview.invalid ? undefined : { color: TYPE_COLOR[dragPreview.type] || "var(--audio)" }}>
+           style={dragPreview.invalid ? undefined : { color: PORT_COLOR_VAR[dragPreview.type] || "var(--audio)" }}>
           <path className="wire-drag-stroke" d={dragPreview.d} />
           <circle
             className={"wire-drag-cursor" + (dragPreview.active ? " active" : "")}

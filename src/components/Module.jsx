@@ -4,6 +4,7 @@ import { ModuleInstanceContext } from "./ModuleInstanceContext.js";
 import { ModulePorts } from "./ModulePorts.jsx";
 import { byType } from "../modules/_registry.js";
 import { usePuzzleModule } from "../content/puzzleHooks.js";
+import { startPointerDrag } from "./dragGesture.js";
 
 // Selectors that identify interactive children — clicks on these should NOT
 // trigger module focus (they have their own handlers, e.g. knob dragging,
@@ -44,33 +45,24 @@ export function Module({ type, instanceId, children }) {
     if (puzzle) return;
     e.preventDefault();
     dragDidMoveRef.current = false;
-    const startX = e.clientX;
-    const startY = e.clientY;
     const origX = effectivePosition.x;
     const origY = effectivePosition.y;
-    // Divide screen-pixel deltas by the current view scale so the dragged
-    // module tracks the cursor when the stage is zoomed in or out.
-    const scale = viewScale > 0 ? viewScale : 1;
-    function onMove(ev) {
-      const dx = (ev.clientX - startX) / scale;
-      const dy = (ev.clientY - startY) / scale;
-      if (Math.abs(dx) + Math.abs(dy) > 3) dragDidMoveRef.current = true;
-      if (dragDidMoveRef.current) {
-        // Clamp the dragged position to non-negative so users can't lose a
-        // module off the top-left corner of the rack. The store itself no
-        // longer clamps (so the puzzle-mode snap can settle on sub-pixel
-        // negative offsets without ping-ponging against the floor).
-        setModulePosition(instanceId, Math.max(0, origX + dx), Math.max(0, origY + dy));
-      }
-    }
-    function onUp() {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      document.body.classList.remove("module-dragging");
-    }
     document.body.classList.add("module-dragging");
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
+    // Deltas (and the 3px threshold) are divided by the view scale so the
+    // module tracks the cursor when the stage is zoomed. Crossing the threshold
+    // marks the gesture as a drag so the trailing click doesn't also focus it.
+    startPointerDrag(e, {
+      threshold: 3,
+      scale: viewScale,
+      onStart: () => { dragDidMoveRef.current = true; },
+      onMove: ({ dx, dy }) => {
+        // Clamp to non-negative so users can't lose a module off the top-left
+        // corner. The store no longer clamps (so the puzzle-mode snap can settle
+        // on sub-pixel negative offsets without ping-ponging against the floor).
+        setModulePosition(instanceId, Math.max(0, origX + dx), Math.max(0, origY + dy));
+      },
+      onEnd: () => { document.body.classList.remove("module-dragging"); },
+    });
   }
 
   function onModuleClick(e) {

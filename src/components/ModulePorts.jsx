@@ -1,25 +1,16 @@
 import { PortMarker } from "./PortMarker.jsx";
-import { PORT_TYPE, PORT_DIR, listStaticPorts } from "../audio/graph/types.js";
+import { listStaticPorts } from "../audio/graph/types.js";
 import { byType } from "../modules/_registry.js";
 import { usePuzzleModule } from "../content/puzzleHooks.js";
+import { portEdge } from "./portGeometry.js";
 
-// Layout:
-//   audio in   → left  edge
-//   audio out  → right edge
-//   CV/pitch/gate OUT → top edge
-//   CV/pitch/gate IN  → bottom edge
-// Within an edge, ports are distributed evenly.
+// Group ports by which edge they sit on (see portGeometry.portEdge): audio on
+// the horizontal edges, CV/pitch/gate on the vertical edges. Order within an
+// edge is preserved so flex distributes them evenly.
 function layoutPorts(ports) {
-  const left   = ports.filter((p) => p.type === PORT_TYPE.AUDIO && p.dir === PORT_DIR.IN);
-  const right  = ports.filter((p) => p.type === PORT_TYPE.AUDIO && p.dir === PORT_DIR.OUT);
-  const top    = ports.filter((p) => p.type !== PORT_TYPE.AUDIO && p.dir === PORT_DIR.OUT);
-  const bottom = ports.filter((p) => p.type !== PORT_TYPE.AUDIO && p.dir === PORT_DIR.IN);
-  return { left, right, top, bottom };
-}
-
-function portEdge(port) {
-  if (port.type === PORT_TYPE.AUDIO) return port.dir === PORT_DIR.IN ? "left" : "right";
-  return port.dir === PORT_DIR.OUT ? "top" : "bottom";
+  const groups = { left: [], right: [], top: [], bottom: [] };
+  for (const p of ports) groups[portEdge(p)].push(p);
+  return groups;
 }
 
 // Unit constants — must match --u-w / --u-h in global.css. Hardcoded here so

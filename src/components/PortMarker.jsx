@@ -1,7 +1,9 @@
 import { useRef } from "react";
 import { useSynthStore } from "../store/useSynthStore.js";
-import { PORT_TYPE, PORT_DIR, portsCompatible } from "../audio/graph/types.js";
+import { PORT_DIR, portsCompatible } from "../audio/graph/types.js";
 import { usePuzzleModule } from "../content/puzzleHooks.js";
+import { portEdge, PORT_COLOR_VAR } from "./portGeometry.js";
+import { startPointerDrag } from "./dragGesture.js";
 
 // Visual port socket. Two ways to patch, both supported at once:
 //
@@ -17,21 +19,7 @@ import { usePuzzleModule } from "../content/puzzleHooks.js";
 // Stage-level Escape clears the arm. Compatibility uses portsCompatible() —
 // type-checked plus the CV → pitch coercion rule.
 
-const TYPE_COLOR_VAR = {
-  [PORT_TYPE.AUDIO]: "var(--audio)",
-  [PORT_TYPE.CV]:    "var(--control)",
-  [PORT_TYPE.PITCH]: "var(--control)",
-  [PORT_TYPE.GATE]:  "var(--gate)",
-};
-
 const DRAG_THRESHOLD = 4; // px of movement before a press becomes a drag
-
-// Which edge of the module a port sits on. Mirrors the layout in
-// ModulePorts.jsx — audio on horizontal edges, CV/pitch/gate on vertical.
-function portEdge(port) {
-  if (port.type === PORT_TYPE.AUDIO) return port.dir === PORT_DIR.IN ? "left" : "right";
-  return port.dir === PORT_DIR.OUT ? "top" : "bottom";
-}
 
 // Classic puzzle-piece tab/notch. The boundary is a three-arc construction:
 //
@@ -193,44 +181,35 @@ export function PortMarker({ moduleId, port }) {
     // Clear any stale suppression from a previous drag that ended without a
     // follow-up click (drop on a different port fires no click on the source).
     suppressClickRef.current = false;
-    const startX = e.clientX;
-    const startY = e.clientY;
-    let dragging = false;
-
-    function onMove(ev) {
-      if (!dragging) {
-        if (Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY) <= DRAG_THRESHOLD) return;
-        dragging = true;
+    startPointerDrag(e, {
+      threshold: DRAG_THRESHOLD,
+      onStart: (ev) => {
         armSource(moduleId, port.name, port.type);
         startDragWire(moduleId, port.name, port.type, ev.clientX, ev.clientY);
-      }
-      ev.preventDefault(); // suppress text selection while dragging
-      const target = compatibleInputAt(ev.clientX, ev.clientY);
-      updateDragWire(
-        ev.clientX, ev.clientY,
-        target ? `${target.moduleId}:${target.portName}` : null,
-        !!(target && target.duplicate),
-      );
-    }
-
-    function onUp(ev) {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      if (!dragging) return; // plain click — handleClick() will arm the source
-      suppressClickRef.current = true;
-      const target = compatibleInputAt(ev.clientX, ev.clientY);
-      endDragWire();
-      // Refuse the drop when it would duplicate an existing wire — the red
-      // preview already told the user this isn't allowed. Treat it like a
-      // drop on empty space (source stays armed).
-      if (target && !target.duplicate) {
-        connectModules(moduleId, port.name, target.moduleId, target.portName);
-        clearArmedSource();
-      }
-    }
-
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
+      },
+      onMove: ({ clientX, clientY, ev }) => {
+        ev.preventDefault(); // suppress text selection while dragging
+        const target = compatibleInputAt(clientX, clientY);
+        updateDragWire(
+          clientX, clientY,
+          target ? `${target.moduleId}:${target.portName}` : null,
+          !!(target && target.duplicate),
+        );
+      },
+      onEnd: ({ moved, ev }) => {
+        if (!moved) return; // plain click — handleClick() will arm the source
+        suppressClickRef.current = true;
+        const target = compatibleInputAt(ev.clientX, ev.clientY);
+        endDragWire();
+        // Refuse the drop when it would duplicate an existing wire — the red
+        // preview already told the user this isn't allowed. Treat it like a
+        // drop on empty space (source stays armed).
+        if (target && !target.duplicate) {
+          connectModules(moduleId, port.name, target.moduleId, target.portName);
+          clearArmedSource();
+        }
+      },
+    });
   }
 
   function handleClick(e) {
@@ -265,7 +244,7 @@ export function PortMarker({ moduleId, port }) {
     clearArmedSource();
   }
 
-  const color = TYPE_COLOR_VAR[port.type] || "var(--muted)";
+  const color = PORT_COLOR_VAR[port.type] || "var(--muted)";
   const cls = [
     "port",
     `port-${port.dir}`,
