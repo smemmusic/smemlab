@@ -13,7 +13,7 @@ export function Mux8Panel() {
   useEffect(() => {
     function tick() {
       const m = getEngine().getGraph().getModule(id);
-      const i = m?.index ?? 0;
+      const i = m?.getIndex?.() ?? 0;
       setIndex((prev) => (prev === i ? prev : i));
       rafRef.current = requestAnimationFrame(tick);
     }

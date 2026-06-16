@@ -2,7 +2,7 @@ import { GraphEngineFacade } from "./graph/GraphEngineFacade.js";
 
 // getEngine() returns the GraphEngineFacade — a thin wrapper around the
 // typed-port GraphEngine that exposes the synchronous methods panels +
-// Transport call directly (start/stop, emitGate, playMidi, the visualiser
+// Transport call directly (start/stop, setGate, playMidi, the visualiser
 // hooks). Module + connection lifecycle is owned by the bridge
 // (useAudioEngine.js), which diffs the store's modules + connections arrays
 // against the live GraphEngine state.

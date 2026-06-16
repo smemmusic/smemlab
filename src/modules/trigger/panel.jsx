@@ -4,8 +4,9 @@ import { useModuleParams } from "../../components/ModuleInstanceContext.js";
 import { usePuzzleShow } from "../../content/puzzleHooks.js";
 
 // Manual gate trigger. Press-and-hold button: opens the gate while pressed,
-// releases on lift. The gate emits from this instance's `gate` port and fans
-// out via engine.emitGate to whatever destinations are wired.
+// releases on lift. Setting the gate flips this instance's audio-rate gate
+// signal (a ConstantSource) high/low via engine.setGate; it then flows to wired
+// destinations entirely on the audio thread.
 //
 // Each instance has its own `shortcut` (KeyboardEvent.code, default "Space") so
 // two Triggers can play independent voices from different keys.
@@ -43,11 +44,11 @@ export function TriggerPanel() {
   capturingRef.current = capturing;
 
   function open() {
-    getEngine().emitGate(idRef.current, "gate", idRef.current, true);
+    getEngine().setGate(idRef.current, true);
     setHeld(true);
   }
   function close() {
-    getEngine().emitGate(idRef.current, "gate", idRef.current, false);
+    getEngine().setGate(idRef.current, false);
     setHeld(false);
   }
 

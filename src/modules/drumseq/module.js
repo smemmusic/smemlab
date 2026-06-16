@@ -1,5 +1,4 @@
-import { AudioModule } from "../../audio/AudioModule.js";
-import { GateAggregator } from "../../audio/GateAggregator.js";
+import { WorkletModule } from "../../audio/WorkletModule.js";
 import { MODULE_KIND, PORT_TYPE, PORT_DIR } from "../../audio/graph/types.js";
 
 export const TRACKS = 4;
@@ -12,76 +11,76 @@ function emptyPattern() {
   return Array.from({ length: TRACKS }, () => Array(STEPS).fill(false));
 }
 
-// 4×16 gate sequencer. The `clock` input advances one step per rising edge;
-// the `reset` input snaps the playhead back so the next clock fires step 1.
-// Each track has its own gate output that mirrors the incoming clock pulse
-// width whenever the current step is active for that track — so the output
-// inherits the clock's duty cycle and downstream envelopes see a clean
-// open/close per step.
-export class DrumSeqModule extends AudioModule {
+// 4×16 gate sequencer. The `clock` input advances one step per rising edge; the
+// `reset` input arms the playhead so the next clock fires step 1. Each track has
+// its own gate output that mirrors the incoming clock pulse width whenever the
+// current step is active for that track — so the output inherits the clock's
+// duty cycle and downstream envelopes see a clean open/close per step. All of it
+// (edge detection, stepping, the per-track gate) runs in an AudioWorkletProcessor
+// on the audio thread. The pattern is pushed in via postMessage.
+const DRUMSEQ_WORKLET_CODE = `
+const STEPS = ${STEPS};
+class DrumSeqProcessor extends AudioWorkletProcessor {
+  constructor() {
+    super();
+    this.step = -1;       // -1 = armed; next clock advances to step 0
+    this.pClock = 0;
+    this.pReset = 0;
+    this.pattern = null;  // TRACKS × STEPS booleans
+    this._post = 0;
+    this.port.onmessage = (e) => {
+      const d = e.data;
+      if (d && d.t === 'param' && d.name === 'pattern') this.pattern = d.value;
+    };
+  }
+  process(inputs, outputs) {
+    const clk = inputs[0] && inputs[0][0];
+    const rst = inputs[1] && inputs[1][0];
+    const T = outputs.length;
+    const len = outputs[0][0].length;
+    const pat = this.pattern;
+    for (let i = 0; i < len; i++) {
+      const c = clk ? clk[i] : 0;
+      const r = rst ? rst[i] : 0;
+      const cr = this.pClock < 0.5 && c >= 0.5; this.pClock = c;
+      const rr = this.pReset < 0.5 && r >= 0.5; this.pReset = r;
+      if (rr)      this.step = -1;
+      else if (cr) this.step = (this.step + 1) % STEPS;
+      const high = c >= 0.5 && this.step >= 0;
+      for (let t = 0; t < T; t++) {
+        const on = high && pat && pat[t] && pat[t][this.step];
+        outputs[t][0][i] = on ? 1 : 0;
+      }
+    }
+    if ((this._post = (this._post + 1) & 7) === 0) {
+      this.port.postMessage({ t: 'state', s: { stepIdx: this.step } });
+    }
+    return true;
+  }
+}
+registerProcessor('drumseq-processor', DrumSeqProcessor);
+`;
+
+export class DrumSeqModule extends WorkletModule {
   static KIND = MODULE_KIND.CONTROL;
+  static PROCESSOR = "drumseq-processor";
+  static PROCESSOR_CODE = DRUMSEQ_WORKLET_CODE;
   static PORTS = [
     { name: "clock", dir: PORT_DIR.IN, type: PORT_TYPE.GATE },
     { name: "reset", dir: PORT_DIR.IN, type: PORT_TYPE.GATE },
-    ...TRACK_OUTPUTS.map((n) => ({
-      name: n, dir: PORT_DIR.OUT, type: PORT_TYPE.GATE,
-    })),
+    ...TRACK_OUTPUTS.map((n) => ({ name: n, dir: PORT_DIR.OUT, type: PORT_TYPE.GATE })),
   ];
   static CONTROLS = [];
 
   constructor(ctx, { pattern } = {}) {
-    super(ctx);
+    super(ctx, {});
     this.pattern = pattern || emptyPattern();
-    // -1 means "armed" — next clock advances to step 0. Visible to the panel
-    // for the current-step column highlight.
-    this.stepIdx = -1;
-    this._activeOuts = new Set();   // track names currently held high
-    this._clock = new GateAggregator();
-    this._reset = new GateAggregator();
-
-    this._registerGateInput("clock", (sid, a) => this._onClock(sid, a));
-    this._registerGateInput("reset", (sid, a) => this._onReset(sid, a));
-  }
-
-  _onClock(sourceId, active) {
-    const { rising, falling } = this._clock.update(sourceId, active);
-    if (rising)       this._advance();
-    else if (falling) this._closeAll();
-  }
-
-  _onReset(sourceId, active) {
-    if (this._reset.update(sourceId, active).rising) {
-      this.stepIdx = -1;
-      this._closeAll();
-    }
-  }
-
-  _advance() {
-    this.stepIdx = (this.stepIdx + 1) % STEPS;
-    const pat = this.pattern;
-    for (let t = 0; t < TRACKS; t++) {
-      const row = pat[t];
-      if (!row || !row[this.stepIdx]) continue;
-      const name = TRACK_OUTPUTS[t];
-      this.emitGate(name, true);
-      this._activeOuts.add(name);
-    }
-  }
-
-  _closeAll() {
-    if (this._activeOuts.size === 0) return;
-    for (const name of this._activeOuts) {
-      this.emitGate(name, false);
-    }
-    this._activeOuts.clear();
+    this._postParam("pattern", this.pattern);
   }
 
   setParam(name, value) {
-    if (name === "pattern") this.pattern = value;
+    if (name === "pattern") { this.pattern = value; this._postParam("pattern", value); }
   }
 
-  dispose() {
-    this._closeAll();
-    super.dispose();
-  }
+  getStep() { return this._state.stepIdx ?? -1; }
 }

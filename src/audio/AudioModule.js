@@ -14,13 +14,16 @@ import { MODULE_KIND, PORT_TYPE, PORT_DIR } from "./graph/types.js";
 //   getAudioIn(name)  / getAudioOut(name) → AudioNode | AudioParam | null
 //   getCvIn(name)     / getCvOut(name)    → AudioNode | AudioParam | null
 //   getPitchIn(name)  / getPitchOut(name) → AudioNode | AudioParam | null
-//   onGate(portName, sourceId, active)    — gate-input modules override this
+//   getGateIn(name)   / getGateOut(name)  → AudioNode | null (gate = 0/1 signal)
+//   resolveOut/resolveIn(name, type)      → { node, bus } for the engine to wire
 //   setParam(name, value)                 — generic param dispatcher
 //   listPorts()                           — combined static PORTS + auto CV inputs
 //   getCvLevel(name)                      — post-mix CV sample (tapped inputs only)
 //
-// The default getters look up the port name in the registries the base class
-// maintains: `_audioPorts`, `_cvPorts`, `_pitchPorts`, `_gateInputs`.
+// Gates are audio-rate 0/1 signals like any other port — control logic that
+// reacts to them lives in AudioWorkletProcessors (see WorkletModule). The
+// default getters look up the port name in the registries the base class
+// maintains: `_audioPorts`, `_cvPorts`, `_pitchPorts`, `_gatePorts`.
 // Subclasses populate these in their constructor via `_register*` and `_makeCvInput`.
 
 export class AudioModule {
@@ -33,18 +36,12 @@ export class AudioModule {
     this._audioPorts = { in: {}, out: {} };
     this._cvPorts    = { in: {}, out: {} };  // .in[name] = { scaler, range, target, analyser? }
     this._pitchPorts = { in: {}, out: {} };
-    this._gateInputs = {};                    // name → handler(sourceId, active)
+    this._gatePorts  = { in: {}, out: {} };  // audio-rate 0/1 gate signal nodes (native sources)
     // Opt-in flag — when true, the engine adds this module to its per-frame
     // poller set and calls `_onPollFrame(onChange, isConnected)` each rAF tick.
-    // Modules with switch inputs flip this on automatically; others (the amp's
-    // CV-driven gain) set it explicitly in their constructor.
+    // Used for discrete switch-input detection and the amp's meter readout —
+    // never for a continuous signal (those all run on the audio thread).
     this._pollOnFrame = false;
-    // Gate-output sink, injected by GraphEngine.addModule (bound to this
-    // module's id). Lets control modules fan rising/falling edges out to wired
-    // destinations via emitGate() without importing the engine singleton —
-    // composition over the global. Null until the module is added to a graph,
-    // so emitGate() is a safe no-op in isolation (unit tests, pre-wire build).
-    this._gateSink = null;
   }
 
   // ---- Typed-port API ----
@@ -55,6 +52,30 @@ export class AudioModule {
   getCvOut(name)    { return this._cvPorts.out[name] ?? null; }
   getPitchIn(name)  { return this._pitchPorts.in[name]  ?? null; }
   getPitchOut(name) { return this._pitchPorts.out[name] ?? null; }
+  getGateIn(name)   { return this._gatePorts.in[name]  ?? null; }
+  getGateOut(name)  { return this._gatePorts.out[name] ?? null; }
+
+  // Unified port resolution used by the engine to wire connections of ANY type
+  // through a single audio-graph path. Returns { node, bus } where `node` is an
+  // AudioNode or AudioParam and `bus` is the input/output bus index (0 for
+  // native single-node ports; worklet modules override to return their bus).
+  // Gate is just an audio-rate 0/1 signal here — no special main-thread path.
+  resolveOut(name, type) {
+    let node = null;
+    if      (type === PORT_TYPE.AUDIO) node = this.getAudioOut(name);
+    else if (type === PORT_TYPE.CV)    node = this.getCvOut(name);
+    else if (type === PORT_TYPE.PITCH) node = this.getPitchOut(name);
+    else if (type === PORT_TYPE.GATE)  node = this.getGateOut(name);
+    return node ? { node, bus: 0 } : null;
+  }
+  resolveIn(name, type) {
+    let node = null;
+    if      (type === PORT_TYPE.AUDIO) node = this.getAudioIn(name);
+    else if (type === PORT_TYPE.CV)    node = this.getCvIn(name);
+    else if (type === PORT_TYPE.PITCH) node = this.getPitchIn(name);
+    else if (type === PORT_TYPE.GATE)  node = this.getGateIn(name);
+    return node ? { node, bus: 0 } : null;
+  }
 
   // Combined view: explicit static PORTS + auto-generated CV inputs from CONTROLS.
   // Controls with `cvInput: false` skip the auto-generated port (used by dense
@@ -77,22 +98,14 @@ export class AudioModule {
   // Default param dispatcher. Subclasses override.
   setParam(name, value) { this[`_set_${name}`]?.(value); }
 
-  // Gate input plumbing. The engine calls onGate; the subclass registers
-  // handlers in its constructor.
-  onGate(portName, sourceId, active) { this._gateInputs[portName]?.(sourceId, active); }
-  _registerGateInput(name, handler)  { this._gateInputs[name] = handler; }
-
-  // Gate output: the counterpart to onGate. Control modules (clock, counters,
-  // drum sequencer) call this to fan an edge out of one of their gate output
-  // ports to every wired destination. Routes through the engine-injected
-  // `_gateSink` (see constructor) — a no-op until the module is in a graph.
-  emitGate(portName, active) { this._gateSink?.(portName, active); }
-
   // ---- Port registration helpers (called by subclass constructors) ----
 
   _registerAudioIn(name, nodeOrParam)  { this._audioPorts.in[name]  = nodeOrParam; }
   _registerAudioOut(name, node)        { this._audioPorts.out[name] = node; }
   _registerCvOut(name, node)           { this._cvPorts.out[name]    = node; }
+  // Native gate-signal output (manual sources: trigger button, keyboard). The
+  // node carries an audio-rate 0/1 signal toggled by human input at currentTime.
+  _registerGateOut(name, node)         { this._gatePorts.out[name]  = node; }
   _registerPitchIn(name, nodeOrParam)  { this._pitchPorts.in[name]  = nodeOrParam; }
   _registerPitchOut(name, node)        { this._pitchPorts.out[name] = node; }
 

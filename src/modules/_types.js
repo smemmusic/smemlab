@@ -11,7 +11,8 @@
 //   - `envelopes/`  (adsrenv/, arenv/, adenv/) → EnvelopeModule
 //   - `counters/`   (counter2/, counter3/)     → CounterModule
 //   - `muxes/`      (mux4/, mux8/)             → MuxModule
-// Cross-family gate plumbing lives in `src/audio/GateAggregator.js`.
+// These families' control logic runs in AudioWorkletProcessors via WorkletModule
+// (`src/audio/WorkletModule.js`); gates are audio-rate 0/1 signals.
 //
 // validateManifest runs at import time on every module; a missing or malformed
 // manifest throws loudly at app startup so silent UI/audio bugs from forgotten

@@ -7,26 +7,28 @@ import {
 
 const KNOB_MIN_DB = -48;
 const KNOB_MAX_DB = 12;
-// Bipolar CV [-1, +1] maps linearly to a dB delta in [-CV_MAX_DB, +CV_MAX_DB]
-// which is then summed with the knob. cv = 0 → 0 dB → no contribution, so an
-// unwired CV input has no effect on the audio.
+// Bipolar CV [-1, +1] maps to a dB delta in [-CV_MAX_DB, +CV_MAX_DB], summed
+// with the knob. cv = 0 → 0 dB → no contribution, so an unwired CV input has no
+// effect on the audio.
 const CV_MAX_DB   = 48;
 const SOFTCLIP_N  = 2048;
+// Odd length so a curve sample lands exactly on cv = 0 (the WaveShaper maps
+// input 0 → index (N-1)/2). That makes "knob at -48 dB, envelope idle (cv 0)"
+// resolve to exactly 0 — true silence — instead of interpolating across the
+// floor discontinuity to a faint -54 dB.
+const CV_CURVE_N  = 1025;
 
 // Single audio amplifier stage with a tanh soft-clip on the output:
 //
-//   input ── gain ── softClip ── output
+//   input ── vca ── softClip ── output
 //
-// The CV input is treated as a bipolar dB delta: cv = 0 → 0 dB (no effect),
-// cv = +1 → +CV_MAX_DB, cv = -1 → -CV_MAX_DB. Polled at frame rate, summed
-// in plain JS with the knob value, dbToLin → gain.gain via setTargetAtTime.
-// No audio-rate math on the control path — just an AudioParam set.
-//
-// The output WaveShaper applies tanh so high gain values taper toward ±1
-// smoothly rather than hard-clipping. When the *summed* signal (knob + CV)
-// falls at or below KNOB_MIN_DB the linear gain snaps to exactly 0 — absolute
-// silence — regardless of which side pushed it there. Positive CV can still
-// lift a knob at -48 dB back above the threshold.
+// The CV input is a bipolar dB delta (cv = 0 → 0 dB; +1 → +CV_MAX_DB; -1 →
+// -CV_MAX_DB) summed with the knob. The whole gain law runs on the audio thread:
+// the summed CV signal feeds a WaveShaper whose curve maps it to the linear gain
+// `clampedDbToLin(level + cv*CV_MAX_DB)` (the exact dB sum, with `total ≤
+// KNOB_MIN_DB → 0` for true silence), and that drives the VCA gain AudioParam.
+// No rAF poll on the audio path — an envelope's ramp reaches the gain
+// sample-accurately. The analyser tap is kept only for the panel meter.
 export class AmplifierModule extends AudioModule {
   static KIND = MODULE_KIND.AUDIO;
   static PORTS = [
@@ -41,46 +43,37 @@ export class AmplifierModule extends AudioModule {
   constructor(ctx, { level }) {
     super(ctx);
     this.level = level;
-    this._cvDb = 0;                     // unwired CV → 0 dB contribution → no effect
+    this._cvDb = 0;                     // meter readout only
 
-    this.gain = ctx.createGain();
-    this.gain.gain.value = this._totalLin();
+    // VCA: intrinsic gain 0; the CV WaveShaper supplies the full gain signal.
+    this.vca = ctx.createGain();
+    this.vca.gain.value = 0;
 
     this.softClip = ctx.createWaveShaper();
     this.softClip.curve = _buildSoftClipCurve();
+    this.vca.connect(this.softClip);
 
-    this.gain.connect(this.softClip);
+    // CV path: summed CV → cvShaper(level-dependent dB curve) → vca.gain.
+    this.cvShaper = ctx.createWaveShaper();
+    this.cvShaper.curve = _buildCvCurve(this.level);
+    this.cvShaper.connect(this.vca.gain);
 
-    this._registerAudioIn("input",   this.gain);
+    this._registerAudioIn("input",   this.vca);
     this._registerAudioOut("output", this.softClip);
-    // CV input: scaler + analyser tap only; no audio-graph connection. The
-    // value is read in JS by getCvLevel and summed with the knob.
-    this._makeCvInput("level", 1, null, { tap: true });
+    // The level CV scaler (gain 1) sums all CV sources and feeds the cvShaper.
+    // A tap is kept purely for the panel meter (getCvDb), not the audio path.
+    this._makeCvInput("level", 1, this.cvShaper, { tap: true });
 
-    // Opt in to the engine's per-frame poll. `_onPollFrame` below skips its
-    // work whenever no CV is wired to "level", so an amp with no incoming
-    // modulation pays nothing per tick.
+    // Poll only to refresh the meter value; the gain itself is audio-rate.
     this._pollOnFrame = true;
   }
 
-  _totalLin() {
-    const totalDb = this.level + this._cvDb;
-    if (totalDb <= KNOB_MIN_DB) return 0;
-    return dbToLin(totalDb);
-  }
-
-  // CV's dB contribution to the gain (already scaled by CV_MAX_DB). The panel
-  // uses this for the meter so it doesn't need to mirror CV_MAX_DB itself.
+  // CV's dB contribution (for the panel meter only).
   getCvDb() { return this._cvDb; }
-
-  _applyGain() {
-    const totalLin = this._totalLin();
-    this.gain.gain.setTargetAtTime(totalLin, this.ctx.currentTime, 0.005);
-  }
 
   setLevel(db) {
     this.level = db;
-    this._applyGain();
+    this.cvShaper.curve = _buildCvCurve(db);
   }
 
   setParam(name, value) {
@@ -89,29 +82,29 @@ export class AmplifierModule extends AudioModule {
 
   _onPollFrame(onChange, isConnected) {
     super._onPollFrame(onChange, isConnected);
-    // No CV wired → no contribution. Snap cvDb back to 0 if it isn't already
-    // (covers the disconnect case after a CV had been applied), then skip the
-    // analyser read entirely.
-    if (!isConnected(this.id, "level")) {
-      if (this._cvDb !== 0) {
-        this._cvDb = 0;
-        this._applyGain();
-      }
-      return;
-    }
-    const cv = this.getCvLevel("level");
-    const cvDb = cv * CV_MAX_DB;
-    if (cvDb !== this._cvDb) {
-      this._cvDb = cvDb;
-      this._applyGain();
-    }
+    // Meter only — read the post-mix CV contribution; no effect on audio.
+    this._cvDb = isConnected(this.id, "level") ? this.getCvLevel("level") * CV_MAX_DB : 0;
   }
 
   dispose() {
-    try { this.gain.disconnect(); } catch {}
+    try { this.vca.disconnect(); } catch {}
+    try { this.cvShaper.disconnect(); } catch {}
     try { this.softClip.disconnect(); } catch {}
     super.dispose();
   }
+}
+
+// gain curve over summed CV x ∈ [-1, +1]: clampedDbToLin(level + x*CV_MAX_DB).
+// total ≤ KNOB_MIN_DB snaps to exactly 0 (absolute silence) regardless of which
+// side pushed it there; positive CV can lift a knob at -48 dB back above it.
+function _buildCvCurve(levelDb) {
+  const curve = new Float32Array(CV_CURVE_N);
+  for (let i = 0; i < CV_CURVE_N; i++) {
+    const x = (i / (CV_CURVE_N - 1)) * 2 - 1;
+    const totalDb = levelDb + x * CV_MAX_DB;
+    curve[i] = totalDb <= KNOB_MIN_DB ? 0 : dbToLin(totalDb);
+  }
+  return curve;
 }
 
 // tanh curve over [-1, +1]: near-unity at small magnitudes, smooth saturation

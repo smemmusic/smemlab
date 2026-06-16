@@ -17,7 +17,7 @@ export function DrumSeqPanel() {
   useEffect(() => {
     function tick() {
       const m = getEngine().getGraph().getModule(id);
-      const s = m?.stepIdx ?? -1;
+      const s = m?.getStep?.() ?? -1;
       setStep((prev) => (prev === s ? prev : s));
       rafRef.current = requestAnimationFrame(tick);
     }

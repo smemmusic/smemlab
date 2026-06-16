@@ -8,23 +8,40 @@
 //   addConnection({ id?, fromId, fromPort, toId, toPort }) → id
 //   removeConnection(id)
 //   setParam(id, name, value)
-//   emitGate(fromId, fromPort, sourceId, active)
 //   getModule(id) / listModules() / listConnections()
+//
+// All port types — audio, cv, gate, pitch — are audio-graph signals wired by a
+// single audio-thread path (resolveOut/resolveIn → connect). There is no
+// main-thread signal delivery: control logic lives in AudioWorkletProcessors,
+// gates are 0/1 signals, and manual sources emit ConstantSource signals.
 //
 // Module classes + defaults are looked up via `byType(type)` from the central
 // manifest registry — no per-type imports live here.
 
-import { byType } from "../../modules/_registry.js";
-import { PORT_TYPE, PORT_DIR, newId, portsCompatible } from "./types.js";
+import { byType, MODULES } from "../../modules/_registry.js";
+import { PORT_DIR, newId, portsCompatible } from "./types.js";
+import { registerWorkletProcessors, workletsReady } from "../workletLoader.js";
 
 const NOOP = () => {};
+
+// Every distinct AudioWorklet processor declared by a worklet-backed module
+// class (clock, envelopes, counters, drum-seq, mux, quantizer). Registered once
+// per context at start() so module constructors can build their nodes
+// synchronously. Deduped by name inside registerWorkletProcessors.
+function collectProcessors() {
+  const out = [];
+  for (const m of MODULES) {
+    const C = m.Cls;
+    if (C && C.PROCESSOR && C.PROCESSOR_CODE) out.push({ name: C.PROCESSOR, code: C.PROCESSOR_CODE });
+  }
+  return out;
+}
 
 export class GraphEngine {
   constructor() {
     this.ctx = null;
     this.modules = new Map();      // id → AudioModule instance
     this.connections = new Map();  // id → { id, fromId, fromPort, toId, toPort, type }
-    this._gateConnections = new Map();
     // Switch-CV poll loop (set by the bridge). One handler fans changes back
     // into the store via setModuleParam.
     this._onSwitchChange = null;
@@ -64,6 +81,10 @@ export class GraphEngine {
     if (!this.ctx) {
       const Ctor = window.AudioContext || window.webkitAudioContext;
       this.ctx = new Ctor({ latencyHint: 0.005 });
+      // Register every worklet processor up front so WorkletModule constructors
+      // can build their AudioWorkletNode synchronously. The bridge awaits
+      // whenReady() before its first reconcile.
+      this._ready = registerWorkletProcessors(this.ctx, collectProcessors());
       // Firefox and Safari always create the context in "suspended" state and
       // only flip to "running" once resume() resolves — which is asynchronous.
       // By the time it resolves, the bridge has already called addModule() for
@@ -89,6 +110,10 @@ export class GraphEngine {
   }
 
   isRunning() { return !!this.ctx && this.ctx.state === "running"; }
+
+  // Resolves once every worklet processor is registered on the context, so
+  // WorkletModule constructors can build their nodes. Null-safe before start().
+  whenReady() { return this._ready || (this.ctx ? workletsReady(this.ctx) : Promise.resolve()); }
 
   // Pause the audio thread (power off). Keeps the whole graph intact — nodes,
   // oscillators and connections survive — so start() just resumes. The context
@@ -127,11 +152,6 @@ export class GraphEngine {
     const instance = new manifest.Cls(this.ctx, merged);
     instance.id = moduleId;
     instance.type = type;
-    // Inject the gate-output sink (bound to this module's id) so control
-    // modules emit edges via this.emitGate(port, active) instead of importing
-    // the engine singleton. Set before start() so a module that emits on start
-    // (counters pushing their initial address) reaches its destinations.
-    instance._gateSink = (port, active) => this.emitGate(moduleId, port, moduleId, active);
     if (this.isRunning()) instance.start?.();
     // Newly-added modules inherit the current global visuals state so taps
     // stay consistent if a module is added while visuals are off.
@@ -171,20 +191,18 @@ export class GraphEngine {
       throw new Error(`Incompatible ports: ${fromDecl.type}.out → ${toDecl.type}.in`);
     }
 
+    // Unified routing: every port type — audio, cv, gate, pitch — is an
+    // audio-graph signal. Resolve both ends to a { node, bus } and connect on
+    // the audio thread. Gate is just a 0/1 signal; there is no main-thread path.
+    const src = from.resolveOut(fromPort, fromDecl.type);
+    const dst = to.resolveIn(toPort, toDecl.type);
+    if (!src || !dst) {
+      throw new Error(`Port wired but underlying node missing (${fromId}.${fromPort} → ${toId}.${toPort})`);
+    }
+    connectPorts(src, dst);
+
     const connId = id || newId();
     const conn = { id: connId, fromId, fromPort, toId, toPort, type: fromDecl.type };
-
-    if (toDecl.type === PORT_TYPE.GATE) {
-      this._gateConnections.set(connId, conn);
-    } else {
-      const srcNode = this._getOutNode(from, fromPort, fromDecl.type);
-      const dstNode = this._getInNode(to,   toPort,   toDecl.type);
-      if (!srcNode || !dstNode) {
-        throw new Error(`Port wired but underlying node missing (${fromId}.${fromPort} → ${toId}.${toPort})`);
-      }
-      srcNode.connect(dstNode);
-    }
-
     this.connections.set(connId, conn);
     return connId;
   }
@@ -192,18 +210,12 @@ export class GraphEngine {
   removeConnection(id) {
     const c = this.connections.get(id);
     if (!c) return;
-    if (c.type === PORT_TYPE.GATE) {
-      const to = this.modules.get(c.toId);
-      to?.onGate?.(c.toPort, c.fromId, false);
-      this._gateConnections.delete(id);
-    } else {
-      const from = this.modules.get(c.fromId);
-      const to   = this.modules.get(c.toId);
-      const srcNode = from && this._getOutNode(from, c.fromPort, c.type);
-      const dstNode = to   && this._getInNode(to,   c.toPort,   c.type);
-      if (srcNode && dstNode) {
-        try { srcNode.disconnect(dstNode); } catch {}
-      }
+    const from = this.modules.get(c.fromId);
+    const to   = this.modules.get(c.toId);
+    const src = from && from.resolveOut(c.fromPort, c.type);
+    const dst = to   && to.resolveIn(c.toPort,   c.type);
+    if (src && dst) {
+      try { disconnectPorts(src, dst); } catch {}
     }
     this.connections.delete(id);
   }
@@ -216,35 +228,22 @@ export class GraphEngine {
     m.setParam?.(name, value);
   }
 
-  // ---- Gate dispatch ----
-
-  emitGate(fromId, fromPort, sourceId, active) {
-    for (const c of this._gateConnections.values()) {
-      if (c.fromId === fromId && c.fromPort === fromPort) {
-        this.modules.get(c.toId)?.onGate(c.toPort, sourceId, active);
-      }
-    }
-  }
-
   // ---- Internal helpers ----
 
   _findPort(module, name, dir) {
     return module.listPorts().find((p) => p.name === name && p.dir === dir) || null;
   }
+}
 
-  _getOutNode(module, name, type) {
-    if (type === PORT_TYPE.AUDIO) return module.getAudioOut(name);
-    if (type === PORT_TYPE.CV)    return module.getCvOut(name);
-    if (type === PORT_TYPE.PITCH) return module.getPitchOut(name);
-    return null;
-  }
+// Connect a resolved output to a resolved input. An AudioParam destination
+// takes only the source output index; an AudioNode destination takes both
+// output and input bus indices (worklet modules expose multiple buses).
+function connectPorts(src, dst) {
+  if (dst.node instanceof AudioParam) src.node.connect(dst.node, src.bus);
+  else                                src.node.connect(dst.node, src.bus, dst.bus);
+}
 
-  _getInNode(module, name, type) {
-    if (type === PORT_TYPE.AUDIO) return module.getAudioIn(name);
-    if (type === PORT_TYPE.CV)    return module.getCvIn(name);
-    // CV → pitch coercion: a CV output landing on a pitch input goes into the
-    // pitch scaler (interpreted as V/oct directly).
-    if (type === PORT_TYPE.PITCH) return module.getPitchIn(name);
-    return null;
-  }
+function disconnectPorts(src, dst) {
+  if (dst.node instanceof AudioParam) src.node.disconnect(dst.node, src.bus);
+  else                                src.node.disconnect(dst.node, src.bus, dst.bus);
 }

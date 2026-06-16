@@ -51,7 +51,7 @@ export function KeyboardPanel() {
     setPressed(new Set(heldRef.current));
     const engine = getEngine();
     engine.playMidi(idRef.current, midi);
-    engine.emitGate(idRef.current, "gate", idRef.current, true);
+    engine.setGate(idRef.current, true);
   }
 
   function releaseMidi(midi) {
@@ -65,7 +65,7 @@ export function KeyboardPanel() {
     if (next.length > 0) {
       engine.playMidi(idRef.current, next[next.length - 1]);
     } else {
-      engine.emitGate(idRef.current, "gate", idRef.current, false);
+      engine.setGate(idRef.current, false);
     }
   }
 
@@ -99,7 +99,7 @@ export function KeyboardPanel() {
       window.removeEventListener("keydown", onDown);
       window.removeEventListener("keyup", onUp);
       if (heldRef.current.length > 0) {
-        getEngine().emitGate(idRef.current, "gate", idRef.current, false);
+        getEngine().setGate(idRef.current, false);
       }
       heldRef.current = [];
     };

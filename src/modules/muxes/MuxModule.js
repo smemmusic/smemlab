@@ -1,27 +1,74 @@
-import { AudioModule } from "../../audio/AudioModule.js";
-import { GateAggregator } from "../../audio/GateAggregator.js";
+import { WorkletModule } from "../../audio/WorkletModule.js";
 import { MODULE_KIND, PORT_TYPE, PORT_DIR, CV_POLARITY } from "../../audio/graph/types.js";
 
 // Shared base for the N→1 multiplexers (sequential switch). N CV inputs, a
 // log2(N)-bit gate address (a0 = ones, a1 = twos, …), and one CV output. The
-// addressed input passes through; the rest are muted. Each input's gain node
-// doubles as that port's CV-input scaler, so a source wired into `inN` feeds
-// its gain directly; the address sets exactly one gain to 1 (with a short slew
-// so the hand-off is click-free).
+// addressed input passes through; the rest are muted. Address lines are gate
+// signals whose sources sum on the audio bus (any source high ≥ 0.5), matching
+// the counter's bit outputs.
 //
-// Address lines are gates whose sources aggregate (see GateAggregator) so a bit
-// reads "1" whenever any source drives it — matching the counter's bit outputs.
-// Subclasses declare `static INPUTS` (N) and `static ADDR` (address port names),
-// and `static PORTS = MuxModule.portsFor(INPUTS, ADDR)`.
-//
-// The slew is short enough to read as an instant step (so the pitch lands on
-// the new note before the envelope fires) yet long enough to avoid a hard
-// discontinuity in the CV.
+// Selection, address decode, and a short click-free slew between inputs all run
+// in an AudioWorkletProcessor on the audio thread — so the pitch lands on the
+// new note (before the envelope fires) without any main-thread polling. The
+// slew is short enough to read as an instant step yet long enough to avoid a
+// hard discontinuity. Subclasses declare `static INPUTS` (N), `static ADDR`
+// (address port names), and `static PORTS = MuxModule.portsFor(INPUTS, ADDR)`.
+const MUX_WORKLET_CODE = `
 const SWITCH_TC = 0.002;
+class MuxProcessor extends AudioWorkletProcessor {
+  constructor() {
+    super();
+    this.n = 0;
+    this.bits = 0;
+    this.gain = null;   // per-input slewed selection gain
+    this.index = 0;
+    this._post = 0;
+    this.port.onmessage = (e) => {
+      const d = e.data;
+      if (d && d.t === 'param' && d.name === 'config') {
+        this.n = d.value.n; this.bits = d.value.bits;
+        this.gain = new Float32Array(this.n);
+        this.gain[0] = 1;   // input 1 (address 0) selected at rest
+      }
+    };
+  }
+  process(inputs, outputs) {
+    if (!this.n) return true;
+    const out = outputs[0][0];
+    const len = out.length;
+    const k = 1 - Math.exp(-1 / (SWITCH_TC * sampleRate));
+    for (let i = 0; i < len; i++) {
+      let idx = 0;
+      for (let b = 0; b < this.bits; b++) {
+        const ab = inputs[this.n + b];
+        const v = (ab && ab[0]) ? ab[0][i] : 0;
+        if (v >= 0.5) idx += (1 << b);
+      }
+      let acc = 0;
+      for (let j = 0; j < this.n; j++) {
+        const target = j === idx ? 1 : 0;
+        this.gain[j] += (target - this.gain[j]) * k;
+        const inj = inputs[j];
+        const s = (inj && inj[0]) ? inj[0][i] : 0;
+        acc += s * this.gain[j];
+      }
+      out[i] = acc;
+      this.index = idx;
+    }
+    if ((this._post = (this._post + 1) & 7) === 0) {
+      this.port.postMessage({ t: 'state', s: { index: this.index } });
+    }
+    return true;
+  }
+}
+registerProcessor('mux-processor', MuxProcessor);
+`;
 
-export class MuxModule extends AudioModule {
+export class MuxModule extends WorkletModule {
   static KIND = MODULE_KIND.CONTROL;
   static CONTROLS = [];
+  static PROCESSOR = "mux-processor";
+  static PROCESSOR_CODE = MUX_WORKLET_CODE;
 
   static portsFor(inputs, addr) {
     return [
@@ -32,53 +79,10 @@ export class MuxModule extends AudioModule {
   }
 
   constructor(ctx) {
-    super(ctx);
+    super(ctx, {});
     const { INPUTS, ADDR } = this.constructor;
-    this.index = 0;                  // 0..INPUTS-1, read by the panel
-    this._addr = ADDR.map(() => new GateAggregator());
-
-    this.out = ctx.createGain();
-    this.out.gain.value = 1;
-    this.gains = Array.from({ length: INPUTS }, (_, i) => {
-      const g = ctx.createGain();
-      g.gain.value = i === 0 ? 1 : 0;   // input 1 (address 0) selected at rest
-      g.connect(this.out);
-      return g;
-    });
-    // Register each selection gain as the scaler for its CV input port.
-    for (let i = 0; i < INPUTS; i++) {
-      this._cvPorts.in[`in${i + 1}`] = { scaler: this.gains[i], range: 1, target: null };
-    }
-    this._registerCvOut("out", this.out);
-
-    ADDR.forEach((name, bit) => {
-      this._registerGateInput(name, (sid, a) => this._onAddr(bit, sid, a));
-    });
+    this._postParam("config", { n: INPUTS, bits: ADDR.length });
   }
 
-  _onAddr(bit, sourceId, active) {
-    this._addr[bit].update(sourceId, active);
-    this._reselect();
-  }
-
-  _reselect() {
-    let idx = 0;
-    for (let b = 0; b < this._addr.length; b++) {
-      if (this._addr[b].isHigh) idx += 1 << b;
-    }
-    if (idx === this.index) return;
-    this.index = idx;
-    const now = this.ctx.currentTime;
-    for (let i = 0; i < this.gains.length; i++) {
-      this.gains[i].gain.setTargetAtTime(i === idx ? 1 : 0, now, SWITCH_TC);
-    }
-  }
-
-  setParam() {}
-
-  dispose() {
-    for (const g of this.gains) { try { g.disconnect(); } catch {} }
-    try { this.out.disconnect(); } catch {}
-    super.dispose();
-  }
+  getIndex() { return this._state.index ?? 0; }
 }

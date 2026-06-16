@@ -3,9 +3,11 @@ import {
   MODULE_KIND, PORT_TYPE, PORT_DIR, CV_POLARITY,
 } from "../../audio/graph/types.js";
 
-// Pure control module: emits a V/oct pitch CV and a gate. The panel
-// (KeyboardPanel) drives this with playMidi(midi); the module updates
-// pitchOut and asks the engine to fan out the gate.
+// Pure control module: emits a V/oct pitch CV and a gate, both audio-rate
+// signals carried by ConstantSources. The panel (KeyboardPanel) drives pitch via
+// playMidi(midi) and the gate via setGate(active) on key down/up — committed at
+// currentTime (the sanctioned main→audio crossing for human input); the signals
+// then flow entirely on the audio thread.
 //
 // Pitch encoding: value = (midi - 69) / 12 (A4 = 0, +1 per octave). When the
 // destination oscillator is tuned to 440 Hz, pressing A4 lands at detune = 0
@@ -25,6 +27,11 @@ export class KeyboardModule extends AudioModule {
     this.pitchOut.offset.value = 0;
     this.pitchOut.start();
     this._registerPitchOut("pitch", this.pitchOut);
+
+    this.gateOut = ctx.createConstantSource();
+    this.gateOut.offset.value = 0;
+    this.gateOut.start();
+    this._registerGateOut("gate", this.gateOut);
   }
 
   playMidi(midi) {
@@ -32,11 +39,17 @@ export class KeyboardModule extends AudioModule {
     this.pitchOut.offset.setTargetAtTime(voct, this.ctx.currentTime, 0.003);
   }
 
+  setGate(active) {
+    this.gateOut.offset.setValueAtTime(active ? 1 : 0, this.ctx.currentTime);
+  }
+
   setParam() {}
 
   dispose() {
     try { this.pitchOut.stop(); } catch {}
     try { this.pitchOut.disconnect(); } catch {}
+    try { this.gateOut.stop(); } catch {}
+    try { this.gateOut.disconnect(); } catch {}
     super.dispose();
   }
 }

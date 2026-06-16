@@ -17,7 +17,7 @@ export function AdsrEnvelopePanel() {
   }
 
   const engine = getEngine();
-  // Phase + start read from the engine module directly (updated by onGate).
+  // Phase + start come from the envelope worklet's snapshot (display only).
   const data = {
     env: params, playing,
     get phase() { return engine.getInstanceEnvPhase(id); },

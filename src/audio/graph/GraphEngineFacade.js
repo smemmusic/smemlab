@@ -37,15 +37,16 @@ export class GraphEngineFacade {
 
   // ---- Synchronous panel hooks ----
 
-  // Emit a gate event from a specific module's output port. Routes through
-  // GraphEngine's _gateConnections to every wired destination.
-  emitGate(fromId, fromPort, sourceId, active) {
-    this.graph.emitGate(fromId, fromPort, sourceId, active);
-  }
-
   // Tell a KeyboardModule instance to play a MIDI note.
   playMidi(moduleId, midi) {
     this.graph.getModule(moduleId)?.playMidi?.(midi);
+  }
+
+  // Set a manual gate source (trigger button, keyboard key) high/low. The
+  // module's gate is an audio-rate ConstantSource; this sets its offset at
+  // currentTime — the sanctioned main→audio crossing for human input.
+  setGate(moduleId, active) {
+    this.graph.getModule(moduleId)?.setGate?.(active);
   }
 
   // ---- Visualiser / introspection ----
@@ -58,10 +59,28 @@ export class GraphEngineFacade {
     return m.tap || m.getAnalyser?.() || null;
   }
 
-  // Per-instance env state for envelope panel visualisers.
-  getInstanceEnvValue(instanceId) { return this.graph.getModule(instanceId)?.getValue?.() ?? 1; }
-  getInstanceEnvPhase(instanceId) { return this.graph.getModule(instanceId)?.getPhase?.() ?? "idle"; }
-  getInstanceEnvStart(instanceId) { return this.graph.getModule(instanceId)?.getStart?.() ?? 0; }
+  // Per-instance env state for envelope panel visualisers, read from the
+  // worklet's throttled snapshot (display only). Phase is mapped to drawEnv's
+  // vocabulary (idle | ad | rel); start is a local performance.now() stamp
+  // derived from the snapshot's per-trigger counter, so the viz can animate the
+  // dot without a cross-thread clock.
+  getInstanceEnvValue(instanceId) { return this.graph.getModule(instanceId)?.getValue?.() ?? 0; }
+  getInstanceEnvPhase(instanceId) {
+    const ph = this.graph.getModule(instanceId)?.getPhase?.() ?? "idle";
+    if (ph === "idle") return "idle";
+    return ph === "release" ? "rel" : "ad";
+  }
+  getInstanceEnvStart(instanceId) {
+    const trig = this.graph.getModule(instanceId)?.getTrig?.() ?? 0;
+    if (!this._envStart) this._envStart = new Map();
+    const prev = this._envStart.get(instanceId);
+    if (!prev || prev.trig !== trig) {
+      const start = performance.now();
+      this._envStart.set(instanceId, { trig, start });
+      return start;
+    }
+    return prev.start;
+  }
 
   // Forward the global visuals toggle to every module. The bridge calls this
   // when the store's visualsEnabled changes.

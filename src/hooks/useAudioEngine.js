@@ -69,8 +69,13 @@ export function useAudioEngineBridge() {
     // facade.setOscFreqLive) survive unrelated store updates.
     const lastParams = new Map();   // id → { ...params }
 
+    // Worklet processors register asynchronously after the context is created;
+    // WorkletModule constructors (built inside reconcile's addModule) need them
+    // ready. Gate reconcile on it and re-run once they resolve.
+    let workletsReady = false;
+
     function reconcile() {
-      if (!graph.ctx) return;
+      if (!graph.ctx || !workletsReady) return;
       const { modules, connections } = get();
 
       const wantIds = new Set(modules.map((m) => m.id));
@@ -141,13 +146,17 @@ export function useAudioEngineBridge() {
         }
         return true;
       } }),
-      // When the engine flips from stopped → running, reconcile pushes
-      // everything to the freshly-created context.
+      // When the engine flips from stopped → running, wait for the worklet
+      // processors to finish registering on the new context, then reconcile —
+      // this is the first build of the graph (WorkletModule constructors need
+      // the processors ready).
       sub((s) => s.playing, (playing) => {
-        if (playing) {
+        if (!playing) return;
+        graph.whenReady().then(() => {
+          workletsReady = true;
           reconcile();
           engine.setVisualsEnabled(get().visualsEnabled);
-        }
+        });
       }),
       sub((s) => s.visualsEnabled, (enabled) => engine.setVisualsEnabled(enabled)),
     ];

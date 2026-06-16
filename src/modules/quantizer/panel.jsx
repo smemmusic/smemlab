@@ -31,7 +31,7 @@ export function QuantizerPanel() {
   useEffect(() => {
     function tick() {
       const m = getEngine().getGraph().getModule(id);
-      const n = m?.note ?? 0;
+      const n = m?.getNote?.() ?? 0;
       setNote((prev) => (prev === n ? prev : n));
       rafRef.current = requestAnimationFrame(tick);
     }

@@ -14,7 +14,7 @@ export function Counter2Panel() {
   useEffect(() => {
     function tick() {
       const m = getEngine().getGraph().getModule(id);
-      const c = m?.count ?? 0;
+      const c = m?.getCount?.() ?? 0;
       setCount((prev) => (prev === c ? prev : c));
       rafRef.current = requestAnimationFrame(tick);
     }

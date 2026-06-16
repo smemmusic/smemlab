@@ -16,14 +16,20 @@ export function ClockPanel() {
   const bpm    = useSynthStore((s) => s.bpm);
   const setBpm = useSynthStore((s) => s.setBpm);
 
-  // Blink the LED for ~80ms after each x1 beat. The module records
-  // lastBeatAt on every x1 rising edge; the panel polls it per frame.
+  // Blink the LED for ~80ms after each x1 beat. The worklet posts an
+  // incrementing beat counter on every x1 rising edge; the panel watches it
+  // change and lights the lamp for a short window.
   const [lit, setLit] = useState(false);
   const rafRef = useRef(0);
+  const lastBeat = useRef(-1);
+  const litUntil = useRef(0);
   useEffect(() => {
     function tick() {
       const m = getEngine().getGraph().getModule(id);
-      const recent = !!(m && performance.now() - m.lastBeatAt < 80);
+      const beat = m?.getBeat?.() ?? 0;
+      const now = performance.now();
+      if (beat !== lastBeat.current) { lastBeat.current = beat; litUntil.current = now + 80; }
+      const recent = now < litUntil.current;
       setLit((prev) => (prev === recent ? prev : recent));
       rafRef.current = requestAnimationFrame(tick);
     }
